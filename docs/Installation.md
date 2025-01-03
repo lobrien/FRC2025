@@ -14,7 +14,7 @@
 - Open a terminal 
 - Switch to this repository's root directory
 - Run `poetry shell` to activate the Poetry environment, **and then**
-- Run `robotpy --main src/hello_robot/hello_robot.py sim`
+- Run `robotpy --main src\hello_robot\hello_robot.py sim`
 
 You should see the simulation window:
 
