@@ -15,7 +15,7 @@ wpilib = "^2025.0.1"
 pynput = "^1.7.7"
 rubicon-objc = "0.4.0"
 pynetworktables = "^2021.0.0"
-robotpy = "2025.1.1"
+robotpy = "2025.1.1.1"
 
 [tool.poetry.group.dev.dependencies]
 mkdocs = "^1.6.1"
@@ -25,7 +25,7 @@ graphviz = "^0.20.3"
 [tool.robotpy]
 
 # Version of robotpy this project depends on
-robotpy_version = "2025.1.1"
+robotpy_version = "2025.1.1.1"
 
 # Which extra RobotPy components should be installed
 # -> equivalent to `pip install robotpy[extra1, ...]
@@ -37,10 +37,10 @@ robotpy_extras = [
     # "navx",
     # "pathplannerlib",
     # "phoenix5",
-    # "phoenix6",
+    "phoenix6",
     # "photonvision",
     # "playingwithfusion",
-    # "rev",
+    "rev",
     # "romi",
     "sim",
     # "xrp",
