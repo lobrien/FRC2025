@@ -1837,5 +1837,5 @@ robotpy-wpiutil = "2025.1.1.0"
 
 [metadata]
 lock-version = "2.1"
-python-versions = "~3.12"
-content-hash = "c49eb730121c78fb997cdd43656bcef5ce431bc881d66915b97a3242dda0b0b6"
+python-versions = "~3.13"
+content-hash = "d854102030a198bd1264a05acde639440f3a8bde514a2d0f96b8373f3dcaaa29"
