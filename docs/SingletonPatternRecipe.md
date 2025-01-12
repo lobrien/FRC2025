@@ -1,4 +1,4 @@
-from sharkbot.util.ntloggerutility import NTLoggerUtility
+from util.ntloggerutility import NTLoggerUtility
 
 # Factory Pattern recipe
 
@@ -25,7 +25,7 @@ The **Singleton pattern**:
 - Add a `logger` to the `_instance` for writing to Network Tables. 
 
 ```python   
-from sharkbot.util.ntloggerutility import NTLoggerUtility
+from util.ntloggerutility import NTLoggerUtility
 
 class Lidar:
     _instance = None
@@ -45,7 +45,7 @@ class Lidar:
 To use the `Lidar` class in the `Drive` and `Vision` subsystems, call the `get_instance` method to get the single instance of the `Lidar` class:
 
 ```python
-from sharkbot.components.lidar import Lidar
+from components.lidar import Lidar
 
 reference_to_lidar = Lidar.get_instance()
 ```

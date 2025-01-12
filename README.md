@@ -1,8 +1,15 @@
 # FRC2025
-Code for 2025 season
+Code for 2025 season.
 
-## Kickoff Decisions
+# Initializing environment
 
-- Timed or Command-based Robot?
-- Unit for length: inches, cm, feet, meters?
-- Unit for rotation: degrees, radians, turns?
+After you have cloned this repository, you will need to initialize the enironment. This will install the necessary dependencies for the project. 
+
+Follow the instructions at [Installation.md](docs/Installation.md) to initialize the environment.
+
+# Using Git
+
+Git is used for "version control." Git is a programming's team "time machine". It allows you to go back in time to see what the code looked like at a certain point in time. It also allows you to see who made changes to the code and when.
+
+Be **sure** to follow the policies in [git.md](docs/git.md).
+

@@ -14,7 +14,7 @@ the `Shooter` subsystem." If you can't think of a subsystem that the command bel
 be a utility function in the `utilities` directory rather than a command.
 2. Create a new Python file in the `commands/{subsystem}` directory. The file name should be the name of the command, with the word 
 `Command` appended to the end. For example, `commands/shooter/IdleShooterCommand.py`.
-2. Create a new class in the file. The class should inherit from the `CommandBase` class.
+2. Create a new class in the file. The class should inherit from the `Command` class.
 3. In the class, implement the `__init__` method. In this method, you should call the `requires` method and pass in the
 3. Implement the `initialize`, `execute`, `isFinished`, and `end` methods. 
 4. If the new command is a default command for a subsystem, add it to the subsystem's `default_command` attribute in the
@@ -33,19 +33,19 @@ slows.":
 
 3. In the `commands/shooter` directory, create a new file called `stopshootercommand.py` This file should be named using lower-
 case, not SnakeCase.
-3. In the file, create a new class called `StopShooterCommand` that inherits from `CommandBase`. Import any modules that
+3. In the file, create a new class called `StopShooterCommand` that inherits from `Command`. Import any modules that
 you need. (For example, `datetime` for logging the current time.)
 
 For the following steps, you can refer to the [command template](../src/sharkbot/commands/command_template.txt) for a template.
 4. In the class, implement the `__init__` method. In this method, you should call the `requires` method and pass in the
    `Shooter` subsystem. You should also create a logger object using the `NTLoggerUtility` class.
 ```python
-from commands2 import CommandBase
+from commands2 import Command
 from datetime import datetime
 
-from sharkbot.util.ntloggerutility import NTLoggerUtility
+from util.ntloggerutility import NTLoggerUtility
 
-class StopShooter(CommandBase):
+class StopShooter(Command):
     def __init__(self, shooter):
         """
                Command to stop the shooter subsystem.
