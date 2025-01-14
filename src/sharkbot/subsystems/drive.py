@@ -22,12 +22,15 @@ import wpilib
 import wpilib.drive
 import wpimath.geometry
 import wpimath.kinematics
+from rev import SparkMaxConfig
 from wpimath.controller import ProfiledPIDController
 from wpimath.trajectory import TrapezoidProfile
 
 # Import our modules.
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 from constants.driveconstants import DriveConstants
+from util.ntloggerutility import NTLoggerUtility
+
 
 # ==============================================================================
 # The drive subsystem class
@@ -36,6 +39,12 @@ from constants.driveconstants import DriveConstants
 class DriveSubsystem(commands2.Subsystem):
     def __init__(self) -> None:
         super().__init__()  # Call the Subsystem class's (the "super" part) init.
+
+        # ---------------------------------------------------------------------
+        # Set up the logging facility for this subsystem. This uses the
+        # NetworkTables logger utility class that we created.
+        # ---------------------------------------------------------------------
+        self.logger = NTLoggerUtility("DriveSubsystem")
 
         # ---------------------------------------------------------------------
         # The gyro is part of the drive system, since it helps keep the drive
@@ -50,11 +59,11 @@ class DriveSubsystem(commands2.Subsystem):
         # ---------------------------------------------------------------------
 
         # Create and configure the drive train controllers and motors, all 
-        # REV Robotics CANSparkMaxes driving NEO motors.
-        self.drive_fl = rev.CANSparkMax(DriveConstants.CAN_FL, rev.CANSparkMax.MotorType.kBrushless)
-        self.drive_fr = rev.CANSparkMax(DriveConstants.CAN_FR, rev.CANSparkMax.MotorType.kBrushless)
-        self.drive_bl = rev.CANSparkMax(DriveConstants.CAN_BL, rev.CANSparkMax.MotorType.kBrushless)
-        self.drive_br = rev.CANSparkMax(DriveConstants.CAN_BR, rev.CANSparkMax.MotorType.kBrushless)
+        # REV Robotics SparkMaxes driving NEO motors.
+        self.drive_fl = rev.SparkMax(DriveConstants.CAN_FL, rev.SparkMax.MotorType.kBrushless)
+        self.drive_fr = rev.SparkMax(DriveConstants.CAN_FR, rev.SparkMax.MotorType.kBrushless)
+        self.drive_bl = rev.SparkMax(DriveConstants.CAN_BL, rev.SparkMax.MotorType.kBrushless)
+        self.drive_br = rev.SparkMax(DriveConstants.CAN_BR, rev.SparkMax.MotorType.kBrushless)
 
         # Inversion configuration for the 2022+ WPILib MecanumDrive code, which
         # removed internal inversion for right-side motors.
@@ -66,10 +75,11 @@ class DriveSubsystem(commands2.Subsystem):
         # Set all motors to coast mode when idle/neutral.
         # Note that this is "IdleMode" rather than the "NeutralMode" 
         # nomenclature used by CTRE CANTalons.
-        self.drive_fl.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
-        self.drive_fr.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
-        self.drive_bl.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
-        self.drive_br.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        # TODO: OK to use reference for `drive`? (Or weird RAII issue?)
+        for drive in [self.drive_fl, self.drive_fr, self.drive_bl, self.drive_br]:
+            config = SparkMaxConfig()
+            config.IdleMode(rev.SparkMax.IdleMode.kCoast)
+            drive.configure(config, rev.SparkMax.ResetMode.kResetSafeParameters, rev.SparkMax.PersistMode.kPersistParameters)
 
         # Now that we have motors, we can set up an object that will handle mecanum drive.
         self.drivetrain = wpilib.drive.MecanumDrive(self.drive_fl, self.drive_bl, self.drive_fr, self.drive_br)
@@ -327,6 +337,17 @@ class DriveSubsystem(commands2.Subsystem):
         self.x_controller.reset(self.pose.X())
         self.y_controller.reset(self.pose.Y())
         self.rot_controller.reset(self.pose.rotation().degrees())
+
+    def logPeriodic(self):
+        """
+        Log information about the drive subsystem to the NetworkTables.
+        """
+        self.logger.debug("FrontLeftEncoder", self.front_left_encoder.getPosition())
+        self.logger.debug("FrontRightEncoder", self.front_right_encoder.getPosition())
+        self.logger.debug("BackLeftEncoder", self.back_left_encoder.getPosition())
+        self.logger.debug("BackRightEncoder", self.back_right_encoder.getPosition())
+        self.logger.info("GyroAngle", self.gyro.getAngle())
+        self.logger.info("PoseX", self.pose.X())
 
 
 # ==============================================================================
