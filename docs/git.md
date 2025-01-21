@@ -51,8 +51,8 @@ The best ways to avoid them are:
 
 There are a few ways to resolve merge conflicts, including graphical tools. 
 But there's no need for anything but your editor. If, when trying to push
-your commits or trying to pull changes, if you see the following dialog, 
-select "Pull then Push". ("Force push" will say "Nope, I'm certain I'm 
+your commits or trying to pull changes, you see the following dialog, 
+select "Pull then Push". ("Force push" is saying "Nope, I'm certain I'm 
 correct, use my stuff without asking any more.")
 
 ![VS Code Merge Conflict dialog](./media/git-conflicts-pull-push-ui.png)
@@ -75,7 +75,7 @@ Their code
 
 ** There often will be multiple conflicts per file! **
 
-Your job is to replace each of these blocks (including the `<<<<<` and `====` lines) with the
+Your job is to replace each of these blocks (including the `<<<<<`, `>>>>>>>>`, and `====` lines) with the
 code that you think is correct. 
 
 Generally, you'll quickly see which is correct. For instance, if you replaced a magic number
@@ -97,8 +97,8 @@ some_function(CONSTANT)
 
 Misspellings, syntax errors, and lots of other things will be equally clear. 
 
-Sometimes things will be more complex. Perhaps one of you added or deleted a whole chunk of code that 
-the other person changed and committed since the last time you pulled. In those situations, you
+Sometimes things will be more complex. Perhaps one of you added or deleted a whole chunk of code in a part of 
+the code that the other person changed and committed since the last time you pulled. In those situations, you
 need to understand what they were trying to do. Maybe one of you is correct, but often you'll need to 
 take a little bit from one and a little bit from the other.
 
