@@ -4,11 +4,24 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class DriveConstants:
     """ Drivetrain related constants"""
-    # Neo CAN bus IDs
-    CAN_FL = 4 # Front left motor
-    CAN_FR = 3 # Front right
-    CAN_BL = 2 # Back left
-    CAN_BR = 1 # Back right
+    #CAN bus IDs
+    CAN_FR = 11 # Front right
+    CAN_FL = 8 # Front left 
+    CAN_BL = 5 # Back left
+    CAN_BR = 2 # Back right
+
+    # Kraken IDs
+    DRIVE_FR = 12 # Front right
+    DRIVE_FL = 9 # Front left 
+    DRIVE_BL = 6 # Back left
+    DRIVE_BR = 3 # Back right
+
+    TURN_FR = 10 # Front right
+    TURN_FL = 7 # Front left 
+    TURN_BL = 4 # Back left
+    TURN_BR = 1 # Back right
+
+    #CAN offsets
 
     # Drivetrain geometry, gearing, etc.
     TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)
