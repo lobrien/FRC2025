@@ -23,7 +23,6 @@ import wpilib
 import wpilib.drive
 import wpimath.geometry
 import wpimath.kinematics
-
 from wpimath.controller import ProfiledPIDController
 from wpimath.trajectory import TrapezoidProfile
 from phoenix6 import hardware, controls, configs
@@ -31,6 +30,8 @@ from phoenix6 import hardware, controls, configs
 # Import our modules.
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 from constants.driveconstants import DriveConstants
+from util.ntloggerutility import NTLoggerUtility
+
 
 # ==============================================================================
 # The drive subsystem class
@@ -41,6 +42,12 @@ class DriveSubsystem(commands2.Subsystem):
         super().__init__()  # Call the Subsystem class's (the "super" part) init.
 
         # ---------------------------------------------------------------------
+        # Set up the logging facility for this subsystem. This uses the
+        # NetworkTables logger utility class that we created.
+        # ---------------------------------------------------------------------
+        self.logger = NTLoggerUtility("DriveSubsystem")
+
+        # ---------------------------------------------------------------------
         # The gyro is part of the drive system, since it helps keep the drive
         # moving the way we want.  Reset the gyro at boot in case the gyro has 
         # been powered for a while, because it drifts.
@@ -48,13 +55,46 @@ class DriveSubsystem(commands2.Subsystem):
         self.gyro = phoenix6.hardware.pigeon2(13)
         self.gyro.reset()
 
-        self.module_bl = self._initSwerveModuleFor("back_left") 
-        self.module_fr = self._initSwerveModuleFor("front_right")
-        self.module_fl = self._initSwerveModuleFor("front_left")
-        self.module_br = self._initSwerveModuleFor("back_right")
+        # ---------------------------------------------------------------------
+        # Set up motors, their encoders, and the drivetrain.
+        # ---------------------------------------------------------------------
 
-        # Now that we have motors, we can set up an object that will handle swerve drive.
-        self.drivetrain = [self.module_fl, self.module_bl, self.module_fr, self.module_br]
+        # Create and configure the drive train controllers and motors, all 
+        # REV Robotics CANSparkMaxes driving NEO motors.
+        self.drive_fl = rev.CANSparkMax(DriveConstants.CAN_FL, rev.CANSparkMax.MotorType.kBrushless)
+        self.drive_fr = rev.CANSparkMax(DriveConstants.CAN_FR, rev.CANSparkMax.MotorType.kBrushless)
+        self.drive_bl = rev.CANSparkMax(DriveConstants.CAN_BL, rev.CANSparkMax.MotorType.kBrushless)
+        self.drive_br = rev.CANSparkMax(DriveConstants.CAN_BR, rev.CANSparkMax.MotorType.kBrushless)
+
+        # Inversion configuration for the 2022+ WPILib MecanumDrive code, which
+        # removed internal inversion for right-side motors.
+        self.drive_fl.setInverted(False)  # 
+        self.drive_fr.setInverted(True)  # 
+        self.drive_bl.setInverted(False)  # 
+        self.drive_br.setInverted(True)  # 
+
+        # Set all motors to coast mode when idle/neutral.
+        # Note that this is "IdleMode" rather than the "NeutralMode" 
+        # nomenclature used by CTRE CANTalons.
+        self.drive_fl.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.drive_fr.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.drive_bl.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.drive_br.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+
+        # Now that we have motors, we can set up an object that will handle mecanum drive.
+        self.drivetrain = wpilib.drive.MecanumDrive(self.drive_fl, self.drive_bl, self.drive_fr, self.drive_br)
+
+        # Get encoders for each motor.
+        self.front_left_encoder = self.drive_fl.getEncoder()
+        self.front_right_encoder = self.drive_fr.getEncoder()
+        self.back_left_encoder = self.drive_bl.getEncoder()
+        self.back_right_encoder = self.drive_br.getEncoder()
+        # Reset the encoders as they could be at any position after some runs.
+        self.front_left_encoder.setPosition(0.0)
+        self.front_right_encoder.setPosition(0.0)
+        self.back_left_encoder.setPosition(0.0)
+        self.back_right_encoder.setPosition(0.0)
+>>>>>>> 0cc33288cbd44d49f96bd9e910daf77f714e134e
 
         # ---------------------------------------------------------------------
         # Set up odometry, that is figuring out how far we have driven. Example:
@@ -297,6 +337,17 @@ class DriveSubsystem(commands2.Subsystem):
         self.x_controller.reset(self.pose.X())
         self.y_controller.reset(self.pose.Y())
         self.rot_controller.reset(self.pose.rotation().degrees())
+
+    def logPeriodic(self):
+        """
+        Log information about the drive subsystem to the NetworkTables.
+        """
+        self.logger.debug("FrontLeftEncoder", self.front_left_encoder.getPosition())
+        self.logger.debug("FrontRightEncoder", self.front_right_encoder.getPosition())
+        self.logger.debug("BackLeftEncoder", self.back_left_encoder.getPosition())
+        self.logger.debug("BackRightEncoder", self.back_right_encoder.getPosition())
+        self.logger.info("GyroAngle", self.gyro.getAngle())
+        self.logger.info("PoseX", self.pose.X())
 
 
 # ==============================================================================
