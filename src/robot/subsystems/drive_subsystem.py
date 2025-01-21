@@ -63,3 +63,5 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
     def periodic(self):
         wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.drive_subsystem.turn_motor.get_position().value))
+
+        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self.get_cancoder()))
