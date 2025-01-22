@@ -9,17 +9,17 @@ from wpimath import geometry
 class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def __init__(self):
         # super().__init__()  # Allows the class to call parent class
-        self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(10)  # Configure motors
-        self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(12)  
+        self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(7)  # Configure motors
+        self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(9) # turn = 10, drive = 12
 
-        self.can_coder = phoenix6.hardware.cancoder.CANcoder(11)
-
-        # self.drive_motor.set_position(0)
+        self.can_coder = phoenix6.hardware.cancoder.CANcoder(8) #11
 
         self.configuration = phoenix6.configs.TalonFXConfiguration()
 
         self.configuration.motor_output.inverted = phoenix6.signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         self.configuration.motor_output.neutral_mode = phoenix6.signals.NeutralModeValue.COAST
+
+        self.can_coder.configurator.set_position(0)
 
         # Configuration 
         self.drive_motor.configurator.apply(self.configuration)
@@ -59,9 +59,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.drive_motor.set(drive_speed)
 
     def get_cancoder(self):
-        return geometry.Rotation2d.fromRotations(self.can_coder.get_absolute_position().value())
+        return self.can_coder.get_absolute_position().value
 
     def periodic(self):
-        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.drive_subsystem.turn_motor.get_position().value))
+        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value))
 
         wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self.get_cancoder()))

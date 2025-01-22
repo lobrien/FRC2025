@@ -1,4 +1,5 @@
 import commands2
+import wpilib
 
 # from commands import DriveForwardCommand
 from subsystems import drive_subsystem
@@ -10,16 +11,12 @@ class RobotContainer:
         # self.autonomous_command = CommandGroup()  # Make into a group of commands
         # self.autonomous_command.addSequential(self.forward_command)  # Add drive forward command to auto
 
-        desired_rotations = self.drive_subsystem.get_cancoder(),
-
-        self.drive_joystick = commands2.button.CommandXboxController(0)
+        self.drive_controller = wpilib.XboxController(0)
 
         self.drive_subsystem.setDefaultCommand(
             commands2.RunCommand(
-                lambda: self.drive_subsystem.drive(self.drive_joystick.getLeftY(),self.drive_joystick.getLeftX()),
+                lambda: self.drive_subsystem.drive(self.drive_controller.getLeftY(),self.drive_controller.getLeftX()),
 
-                self.drive_subsystem.turn_motor.set_control(self.drive_subsystem.position_request.with_position(desired_rotations)),
-                
                 self.drive_subsystem
             )
         )
