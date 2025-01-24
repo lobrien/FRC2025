@@ -2,17 +2,19 @@ import phoenix6
 import commands2
 import wpimath
 import wpilib
+import math
 
-from wpimath import geometry
+from constants.driveconstants import DriveConstants
 
 # DriveSubsystem Class
 class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def __init__(self):
-        # super().__init__()  # Allows the class to call parent class
-        self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(7)  # Configure motors
-        self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(9) # turn = 10, drive = 12
 
-        self.can_coder = phoenix6.hardware.cancoder.CANcoder(8) #11
+        # super().__init__()  # Allows the class to call parent class
+        self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.TURN_FL)  # Configure motors
+        self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.DRIVE_FL) # Motor's ID numbers
+
+        self.can_coder = phoenix6.hardware.cancoder.CANcoder(DriveConstants.CAN_FL) #ID number
 
         self.configuration = phoenix6.configs.TalonFXConfiguration()
 
@@ -58,10 +60,27 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.turn_motor.set(turn_speed)
         self.drive_motor.set(drive_speed)
 
-    def get_cancoder(self):
-        return self.can_coder.get_absolute_position().value
+    def get_can_coder(self) -> float:
+        return self.can_coder.get_position().value()
+    
+    def distance_traveled(self):
+        rev_when_booted = self.get_can_coder()
+        pos_when_booted = rev_when_booted * 2 * math.pi * DriveConstants.WHEEL_RADIUS
+
+        return pos_when_booted
+    
+    # def turn(self, degrees):
+    #     """ Begins turning the robot requested degrees. Negative degrees turn CCW. 
+    #     Numbers >360 or <-360 will rotate the robot more than once.
+    #     """
+    #     position = degrees / 360 # The number of turns (including fractions)
+    #     self.turn_motor.set_control(self.position_request.with_position(position))
+    
+    def set_pos_with_degree(self):
+        degrees = self.distance_traveled()
+
+        self.turn_motor.set_control(self.mm_pos_request.with_position(degrees))
 
     def periodic(self):
-        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value))
-
-        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self.get_cancoder()))
+        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value()))
+        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self.get_can_coder()))

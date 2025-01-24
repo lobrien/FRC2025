@@ -1,10 +1,10 @@
 import commands2
+import commands2.command
 import wpilib 
 import wpimath 
 
 import robot_container
 from subsystems import drive_subsystem
-from wpimath import applyDeadband
 
 # Robot Class
 class Robot(commands2.TimedCommandRobot):
@@ -15,16 +15,14 @@ class Robot(commands2.TimedCommandRobot):
     def disabledPeriodic(self):
         pass
 
+    def autonomousPeriodic(self):
+        self.auto_command = self.container.get_auto_commands()
+
     def teleopPeriodic(self):
-        self.desired_Ydeadband = applyDeadband(self.container.drive_controller.getLeftY(), 0.5)
-        self.desired_Xdeadband = applyDeadband(self.container.drive_controller.getLeftX(), 0.5) 
-        self.a = self.container.drive_controller.getAButton()
+        self.teleop_command = self.container.get_teleop_commands()
+        self.teleop_command.schedule
 
-        desired_pos = int(self.drive_subsystem.get_cancoder())
+        a = self.container.drive_controller.getAButton()
 
-        wpilib.SmartDashboard.putString('Left Y', 'at: {:5.1f}'.format(self.desired_Ydeadband))
-        wpilib.SmartDashboard.putString('Left X', 'at: {:5.1f}'.format(self.desired_Xdeadband))
-
-        if self.a:
-            self.drive_subsystem.turn_motor.set_control(self.drive_subsystem.mm_pos_request.with_position(desired_pos))
-            print("Going to 0 of CAN")
+        if a:
+            self.drive_subsystem.set_pos_with_degree()
