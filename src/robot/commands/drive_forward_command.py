@@ -4,6 +4,7 @@ import commands2
 # DriveForwardCommand Class
 class DriveForwardCommand(commands2.Command): 
     def __init__(self, drive_subsystem, duration, speed = 0.5):
+        super().__init__()
         self.drive_subsystem = drive_subsystem
         self.duration = duration
         self.speed = speed  # Default speed is 0.5

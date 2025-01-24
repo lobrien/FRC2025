@@ -9,8 +9,8 @@ from constants.driveconstants import DriveConstants
 # DriveSubsystem Class
 class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def __init__(self):
+        super().__init__()  # Allows the class to call parent class
 
-        # super().__init__()  # Allows the class to call parent class
         self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.TURN_FL)  # Configure motors
         self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.DRIVE_FL) # Motor's ID numbers
 
@@ -55,13 +55,12 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
 
-
     def drive(self, drive_speed, turn_speed):
         self.turn_motor.set(turn_speed)
         self.drive_motor.set(drive_speed)
 
     def get_can_coder(self) -> float:
-        return self.can_coder.get_position().value()
+        return self.can_coder.get_position().value   #the .value property doesn't seem to have () at the end
     
     def distance_traveled(self):
         rev_when_booted = self.get_can_coder()
@@ -77,10 +76,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     #     self.turn_motor.set_control(self.position_request.with_position(position))
     
     def set_pos_with_degree(self):
-        degrees = self.distance_traveled()
+        degrees = self.distance_traveled() / 360 #Turn rotation value to degrees with this math
 
         self.turn_motor.set_control(self.mm_pos_request.with_position(degrees))
 
     def periodic(self):
-        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value()))
+        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value)) 
         wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self.get_can_coder()))
