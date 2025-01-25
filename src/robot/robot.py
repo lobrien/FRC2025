@@ -1,7 +1,8 @@
 import commands2
 import commands2.command
 import wpilib 
-import wpimath 
+import wpimath
+from commands2 import CommandScheduler
 
 import robot_container
 from subsystems import drive_subsystem
@@ -13,21 +14,15 @@ class Robot(commands2.TimedCommandRobot):
     def robotInit(self):
         self.container = robot_container.RobotContainer()
         self.drive_subsystem = drive_subsystem.DriveSubsystem()
-        # self.test_drive = drive_test.DriveSubsystemTest
 
-        # self.test_drive.test_initialize_drive_system()
+    ###### CAUTION! CAUTION! ###### CAUTION! CAUTION! ######
+    # Do not change anything beneath this line during debugging.
+    # It is important to keep the robot periodic and autonomous init methods as they are.
 
-    def disabledPeriodic(self):
-        pass
+    def robotPeriodic(self):
+        CommandScheduler.getInstance().run()
 
-    def autonomousPeriodic(self):
-        # self.auto_command = self.container.get_auto_commands()
-        pass
-
-    def teleopPeriodic(self):
-        # self.teleop_command = self.container.get_teleop_commands()
-        # self.teleop_command.schedule
-
-
-        if OperatorInterfaceConstants.BUTTON_A: #Implement the new constant file
-            self.drive_subsystem.set_pos_with_degree()
+    def autonomousInit(self):
+        self.autonomous_command = self.container.get_auto_command()
+        if self.autonomous_command is not None:
+            self.autonomous_command.schedule()
