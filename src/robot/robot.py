@@ -6,7 +6,6 @@ from commands2 import CommandScheduler
 
 import robot_container
 from subsystems import drive_subsystem
-from tests import drive_test
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 
 # Robot Class

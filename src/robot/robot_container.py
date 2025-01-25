@@ -15,15 +15,25 @@ class RobotContainer:
     def __init__(self):
         self.drive_subsystem = DriveSubsystem() #Update the array when ready
         self.controller = CommandXboxController(OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT)
-        self.autonomous_command = DriveForwardCommand(self.drive_subsystem, 5)
+        self.autonomous_command = DriveForwardCommand(self.drive_subsystem, duration=5)
+
+        self.teleop_command = DriveWithJoystickCommand(self.drive_subsystem, driving_percent=self.get_drive_value_from_joystick) #The teleop command is the drive with joystick commmand which takes the drive subsystem and the getting drive value function
 
 
         self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
 
-        applyDeadband(value=self.controller.getLeftY(), deadband=0.1) #deleted the deadband command and set it here
-        applyDeadband(value=self.controller.getLeftX(), deadband=0.1)
-
+        self.drive_subsystem.setDefaultCommand(self.teleop_command) #Set the teleop command as the default for drive subsystem
+    
     def get_auto_command(self):
         return self.autonomous_command
+    
+    def get_drive_value_from_joystick(self):
+        turn_percent = self.controller.getLeftX()  #Get the joystick values 
+        drive_percent = self.controller.getLeftY()
+
+        turn_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1) #Apply deadband to the values above            
+        drive_percent = applyDeadband(value=self.controller.getLeftX(), deadband=0.1)
+
+        return turn_percent, drive_percent  #Gives us these variables when we call this function
     
 
