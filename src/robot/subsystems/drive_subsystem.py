@@ -11,10 +11,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def __init__(self):
         super().__init__()  # Allows the class to call parent class
 
-        self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.TURN_FL)  # Configure motors
-        self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.DRIVE_FL) # Motor's ID numbers
+        self.turn_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.TURN_BL)  # Configure motors
+        self.drive_motor = phoenix6.hardware.talon_fx.TalonFX(DriveConstants.DRIVE_BL) # Motor's ID numbers
 
-        self.can_coder = phoenix6.hardware.cancoder.CANcoder(DriveConstants.CAN_FL) #ID number
+        self.can_coder = phoenix6.hardware.cancoder.CANcoder(DriveConstants.CAN_BL) #ID number
 
         self.configuration = phoenix6.configs.TalonFXConfiguration()
 
@@ -55,15 +55,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
 
-    def drive(self, drive_speed, turn_speed):
+    def drive(self, drive_speed:float, turn_speed:float) -> None:
         self.turn_motor.set(turn_speed)
         self.drive_motor.set(drive_speed)
 
-    def get_can_coder(self) -> float:
+    def _get_can_coder(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
         return self.can_coder.get_position().value   #the .value property doesn't seem to have () at the end
     
     def distance_traveled(self):
-        rev_when_booted = self.get_can_coder()
+        rev_when_booted = self._get_can_coder()
         pos_when_booted = rev_when_booted * 2 * math.pi * DriveConstants.WHEEL_RADIUS
 
         return pos_when_booted
@@ -82,4 +82,4 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
     def periodic(self):
         wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value)) 
-        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self.get_can_coder()))
+        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self._get_can_coder()))
