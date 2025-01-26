@@ -19,8 +19,13 @@ from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 ###### CAUTION! CAUTION! ###### CAUTION! CAUTION! ######
 # This class is unlikely to require modification.
 class Robot(commands2.TimedCommandRobot):
-    def robotInit(self):
+    def __init__(self):
+        super().__init__()
         self.container = robot_container.RobotContainer()
+        self.autonomous_command = None
+
+    def robotInit(self):
+        pass
 
     # Robot overall lifecycle methods
     def robotInit(self):
@@ -36,7 +41,7 @@ class Robot(commands2.TimedCommandRobot):
     def autonomousInit(self):
         self.autonomous_command = self.container.get_auto_command()
         if self.autonomous_command is not None:
-            self.autonomous_command.schedule()
+            self.autonomous_command.schedule() # Note that this is a single command for all of autonomous
 
     def autonomousPeriodic(self):
         pass

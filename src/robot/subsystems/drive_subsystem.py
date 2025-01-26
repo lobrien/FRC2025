@@ -87,7 +87,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         sc = self.turn_motor.set_control(request)
         print(f"status code {sc}")
         # self.turn_motor.set_position(pct)
-        
+
+    # This periodic function is called every 20ms during the robotPeriodic phase
+    # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
+        print(".", end="", flush=True)
         wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value)) 
         wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self._get_can_coder()))
