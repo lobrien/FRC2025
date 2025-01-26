@@ -10,6 +10,7 @@ from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_forward_command import DriveForwardCommand
 from commands.drive_with_joystick_command import DriveWithJoystickCommand
+from commands.turn_to_angle_command import TurnToAngleCommand
 
 class RobotContainer:
     def __init__(self):
@@ -17,15 +18,25 @@ class RobotContainer:
         self.controller = CommandXboxController(OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT)
         self.autonomous_command = DriveForwardCommand(self.drive_subsystem, duration=5)
 
-        self.teleop_command = DriveWithJoystickCommand(self.drive_subsystem, driving_percent=self.get_drive_value_from_joystick) #The teleop command is the drive with joystick commmand which takes the drive subsystem and the getting drive value function
-
+        self.teleop_command = TurnToAngleCommand(self.drive_subsystem, should_set_fn=self.set_45_degrees)
+        
+        # DriveWithJoystickCommand(self.drive_subsystem, driving_percent=self.get_drive_value_from_joystick) #The teleop command is the drive with joystick commmand which takes the drive subsystem and the getting drive value function
+                
 
         self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
+        self.controller.b().onTrue(TurnToAngleCommand(self.drive_subsystem, lambda: True))
 
         self.drive_subsystem.setDefaultCommand(self.teleop_command) #Set the teleop command as the default for drive subsystem
     
     def get_auto_command(self):
         return self.autonomous_command
+
+    def set_45_degrees(self):
+        right_joystick_x = self.controller.getRightX() > abs(0.1)
+
+        print(right_joystick_x)
+
+        return right_joystick_x
     
     def get_drive_value_from_joystick(self):
         turn_percent = self.controller.getLeftX()  #Get the joystick values 

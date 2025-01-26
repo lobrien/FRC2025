@@ -4,6 +4,7 @@ import wpimath
 import wpilib
 import math
 
+
 from constants.driveconstants import DriveConstants
 
 # DriveSubsystem Class
@@ -55,18 +56,19 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
 
+
     def drive(self, drive_speed:float, turn_speed:float) -> None:
         self.turn_motor.set(turn_speed)
         self.drive_motor.set(drive_speed)
 
     def _get_can_coder(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
-        return self.can_coder.get_position().value   #the .value property doesn't seem to have () at the end
+        return self.can_coder.get_absolute_position().value   #the .value property doesn't seem to have () at the end
     
-    def distance_traveled(self):
-        rev_when_booted = self._get_can_coder()
-        pos_when_booted = rev_when_booted * 2 * math.pi * DriveConstants.WHEEL_RADIUS
+    def _get_wheel_degree(self) -> float:   #angle from -180 to 180 of the wheel
+        can_coder_angle_pct = self._get_can_coder()
+        angle_degrees = 180 * can_coder_angle_pct
 
-        return pos_when_booted
+        return angle_degrees
     
     # def turn(self, degrees):
     #     """ Begins turning the robot requested degrees. Negative degrees turn CCW. 
@@ -75,11 +77,17 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     #     position = degrees / 360 # The number of turns (including fractions)
     #     self.turn_motor.set_control(self.position_request.with_position(position))
     
-    def set_pos_with_degree(self):
-        degrees = self.distance_traveled() / 360 #Turn rotation value to degrees with this math
+    def set_drive_angle(self, desired_angle_degrees):
+        print(f"Setting angle to 45 from {self.turn_motor.get_position().value}")
+        # convert degrees to range -1 to 1
+        pct = desired_angle_degrees / 180.0
 
-        self.turn_motor.set_control(self.mm_pos_request.with_position(degrees))
-
+        ticks = 512
+        request = self.position_request.with_position(ticks)
+        sc = self.turn_motor.set_control(request)
+        print(f"status code {sc}")
+        # self.turn_motor.set_position(pct)
+        
     def periodic(self):
         wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value)) 
         wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self._get_can_coder()))
