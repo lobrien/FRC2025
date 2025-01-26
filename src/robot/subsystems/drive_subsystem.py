@@ -7,7 +7,12 @@ import math
 
 from constants.driveconstants import DriveConstants
 
-# DriveSubsystem Class
+# The `DriveSubsystem` class is a `Subsystem` that contains the robot's drive motors and sensors. It
+# is responsible for moving the robot around on the field. Public methods exposed by this class
+# should make logical sense for *any* kind of drive, whether it be tank, arcade, swerve, or hovercraft.
+# For instance, you wouldn't want to expose a `setLeftSpeed` method for a swerve drive, because that
+# doesn't make sense for a swerve drive. Instead, you would want to expose a `drive` method that takes
+# a speed and a rotation, because that makes sense for *any* kind of drive.
 class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def __init__(self):
         super().__init__()  # Allows the class to call parent class
@@ -56,7 +61,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
 
-
     def drive(self, drive_speed:float, turn_speed:float) -> None:
         self.turn_motor.set(turn_speed)
         self.drive_motor.set(drive_speed)
@@ -69,14 +73,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         angle_degrees = 180 * can_coder_angle_pct
 
         return angle_degrees
-    
-    # def turn(self, degrees):
-    #     """ Begins turning the robot requested degrees. Negative degrees turn CCW. 
-    #     Numbers >360 or <-360 will rotate the robot more than once.
-    #     """
-    #     position = degrees / 360 # The number of turns (including fractions)
-    #     self.turn_motor.set_control(self.position_request.with_position(position))
-    
+
     def set_drive_angle(self, desired_angle_degrees):
         print(f"Setting angle to 45 from {self.turn_motor.get_position().value}")
         # convert degrees to range -1 to 1
