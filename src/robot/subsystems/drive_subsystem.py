@@ -61,6 +61,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
 
+    # Sets the drive to the given speed and rotation, expressed as percentages
+    # of full speed. The speed and rotation values range from -1 to 1.
+    # Note that the drive will continue at those values until told otherwise
     def drive(self, drive_speed:float, turn_speed:float) -> None:
         self.turn_motor.set(turn_speed)
         self.drive_motor.set(drive_speed)
@@ -88,6 +91,5 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # This periodic function is called every 20ms during the robotPeriodic phase
     # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
-        print(".", end="", flush=True)
-        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value)) 
+        wpilib.SmartDashboard.putString('FR pos', 'rotations: {:5.1f}'.format(self.turn_motor.get_position().value))
         wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {:5.1f}'.format(self._get_can_coder()))
