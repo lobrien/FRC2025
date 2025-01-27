@@ -7,6 +7,9 @@ import math
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
 
+from wpimath.estimator import SwerveDrive4PoseEstimator
+from wpimath.kinematics import SwerveDrive4Kinematics
+
 # The `DriveSubsystem` class is a `Subsystem` that contains the robot's drive motors and sensors. It
 # is responsible for moving the robot around on the field. Public methods exposed by this class
 # should make logical sense for *any* kind of drive, whether it be tank, arcade, swerve, or hovercraft.
@@ -18,19 +21,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         super().__init__()  # Allows the class to call parent class
 
         self.modules = [
-            SwerveModule(DriveConstants.DRIVE_FR, DriveConstants.TURN_FR),
-            SwerveModule(DriveConstants.DRIVE_FL, DriveConstants.TURN_FL),
-            SwerveModule(DriveConstants.DRIVE_BL, DriveConstants.TURN_BL),
-            SwerveModule(DriveConstants.DRIVE_BR, DriveConstants.TURN_BR),
+            SwerveModule(DriveConstants.DRIVE_FR, DriveConstants.TURN_FR, DriveConstants.CAN_FR),
+            SwerveModule(DriveConstants.DRIVE_FL, DriveConstants.TURN_FL, DriveConstants.CAN_FL),
+            SwerveModule(DriveConstants.DRIVE_BL, DriveConstants.TURN_BL, DriveConstants.CAN_BL),
+            SwerveModule(DriveConstants.DRIVE_BR, DriveConstants.TURN_BR, DriveConstants.CAN_BR),
         ]
         self.FrontRightModule = self.modules[0]
         self.FrontLeftModule = self.modules[1]
         self.BackLeftModule = self.modules[2]
         self.BackRightModule = self.modules[3]
-
-
-        self.can_coder = phoenix6.hardware.cancoder.CANcoder(DriveConstants.CAN_BL) #ID number
-        self.can_coder.configurator.set_position(0)
 
         # Either brake or coast, depending on motor configuration; we chose brake above.
         self.brake_request = phoenix6.controls.NeutralOut()
@@ -40,6 +39,24 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
+
+        self.pose_estimator = self._initialize_pose_estimator()
+
+    def _initialize_pose_estimator(self) -> SwerveDrive4PoseEstimator:
+        kinematics = SwerveDrive4Kinematics(
+            self._get_module_translations()
+        )
+        pose_estimator = SwerveDrive4PoseEstimator(
+            kinematics=kinematics,
+            gyro_angle=0,
+            initial_pose=wpimath.geometry.Pose2d(),
+        )
+        return pose_estimator
+
+    def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
+        states = []
+        for module in self.modules:
+            states.append(module.get_location())
 
     # Sets the drive to the given speed and rotation, expressed as percentages
     # of full speed. The speed and rotation values range from -1 to 1.

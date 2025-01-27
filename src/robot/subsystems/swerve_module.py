@@ -1,39 +1,18 @@
 from phoenix6.controls import PositionVoltage
+from phoenix6.hardware import CANcoder
 from phoenix6.hardware.talon_fx import TalonFX
-from phoenix6.configs import TalonFXConfiguration
+from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
 
 class SwerveModule:
-    def __init__(self, drive_motor_bus_id, turn_motor_bus_id):
+    def __init__(self, drive_motor_bus_id, turn_motor_bus_id, cancoder_bus_id):
         self.drive_motor = TalonFX(drive_motor_bus_id)
         self.turn_motor = TalonFX(turn_motor_bus_id)
+        self.can_coder = CANcoder(cancoder_bus_id)  # ID number
 
-        self.configuration = TalonFXConfiguration()
-
-        self.configuration.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
-        self.configuration.motor_output.neutral_mode = NeutralModeValue.COAST
-
-        # Set control loop parameters for "slot 0", the profile we'll use for position control.
-        self.configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
-        self.configuration.slot0.k_i = 0.0  # No integral control
-        self.configuration.slot0.k_d = 0.0  # No differential component
-        # Voltage control mode peak outputs.  I'm only using a reduced voltage
-        # for this test because it is an unloaded and barely secured motor.
-        # Ordinarily, we would not change the default value, which is 16V.
-        self.configuration.voltage.peak_forward_voltage = 6  # Peak output voltage of 6V.
-        self.configuration.voltage.peak_reverse_voltage = -6  # And likewise for reverse.
-
-        # Set control loop parameters for slot 1, which we'll use with motion magic position control
-        self.configuration.slot1.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
-        self.configuration.slot1.k_i = 0.0  # No integral control
-        self.configuration.slot1.k_d = 0.0  # No differential component
-        # And set the motion magic parameters.
-        self.configuration.motion_magic.motion_magic_cruise_velocity = 1  # 1 rotation/sec
-        self.configuration.motion_magic.motion_magic_acceleration = 1  # Take approximately 1 sec (vel/accel) to get to full speed
-        self.configuration.motion_magic.motion_magic_jerk = 10  # Take approx. 0.1 sec (accel/jerk) to reach max accel.
-
-        self.drive_motor.configurator.apply(self.configuration)
-        self.turn_motor.configurator.apply(self.configuration)
+        self.turn_motor.configurator.apply(self._configure_turn_motor())
+        self.drive_motor.configurator.apply(self._configure_drive_motor())
+        self.can_coder.configurator.apply(self._configure_cancoder())
 
     def set_drive_speed(self, speed):
         self.drive_motor.set(speed)
@@ -47,3 +26,59 @@ class SwerveModule:
     def get_turn_angle(self):
         return self.turn_motor.get_position()
 
+    def get_location(self):
+        self.get_position().translation()
+
+    def _configure_turn_motor(self):
+        configuration = TalonFXConfiguration()
+
+        configuration.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+        configuration.motor_output.neutral_mode = NeutralModeValue.COAST
+
+        # Set control loop parameters for "slot 0", the profile we'll use for position control.
+        configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
+        configuration.slot0.k_i = 0.0  # No integral control
+        configuration.slot0.k_d = 0.0  # No differential component
+        # Voltage control mode peak outputs.  I'm only using a reduced voltage
+        # for this test because it is an unloaded and barely secured motor.
+        # Ordinarily, we would not change the default value, which is 16V.
+        configuration.voltage.peak_forward_voltage = 6  # Peak output voltage of 6V.
+        configuration.voltage.peak_reverse_voltage = -6  # And likewise for reverse.
+
+        return configuration
+
+    def _configure_drive_motor(self):
+        configuration = TalonFXConfiguration()
+
+        configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
+        configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
+
+        # Set control loop parameters for "slot 0", the profile we'll use for position control.
+        configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
+        configuration.slot0.k_i = 0.0  # No integral control
+        configuration.slot0.k_d = 0.0  # No differential component
+        # Voltage control mode peak outputs.  I'm only using a reduced voltage
+        # for this test because it is an unloaded and barely secured motor.
+        # Ordinarily, we would not change the default value, which is 16V.
+        configuration.voltage.peak_forward_voltage = 6  # Peak output voltage of 6V.
+        configuration.voltage.peak_reverse_voltage = -6  # And likewise for reverse.
+
+        return configuration
+
+
+    def _configure_cancoder(self):
+        configuration = CANcoderConfiguration()
+        configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
+        configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
+
+        # Set control loop parameters for "slot 0", the profile we'll use for position control.
+        configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
+        configuration.slot0.k_i = 0.0  # No integral control
+        configuration.slot0.k_d = 0.0  # No differential component
+        # Voltage control mode peak outputs.  I'm only using a reduced voltage
+        # for this test because it is an unloaded and barely secured motor.
+        # Ordinarily, we would not change the default value, which is 16V.
+        configuration.voltage.peak_forward_voltage = 6  # Peak output voltage of 6V.
+        configuration.voltage.peak_reverse_voltage = -6  # And likewise for reverse.
+
+        return configuration
