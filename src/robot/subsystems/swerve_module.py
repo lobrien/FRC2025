@@ -1,7 +1,7 @@
-from phoenix6.hardware.talonfx import TalonFX
+from phoenix6.controls import PositionVoltage
+from phoenix6.hardware.talon_fx import TalonFX
 from phoenix6.configs import TalonFXConfiguration
-import phoenix6.signals
-from phoenix6 import PositionVoltage
+from phoenix6.signals import InvertedValue, NeutralModeValue
 
 class SwerveModule:
     def __init__(self, drive_motor_bus_id, turn_motor_bus_id):
@@ -40,7 +40,7 @@ class SwerveModule:
 
     def set_turn_angle(self, angle_degrees):
         # Position request starts at position 0, but can be modified later.
-        position_request = phoenix6.controls.PositionVoltage(0).with_slot(0)
+        position_request = PositionVoltage(0).with_slot(0)
         self.turn_motor.set(position_request) # ???
         raise NotImplementedError("set_turn_angle not implemented yet")
 
