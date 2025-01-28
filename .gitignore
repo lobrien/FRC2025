@@ -169,3 +169,4 @@ simgui-ds.json
 simgui-window.json
 
 ctre_sim
+/src/robot/logs
