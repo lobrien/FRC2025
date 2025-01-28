@@ -69,7 +69,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             list[Translation2d]: List of module positions in meters
         """
 
-        # TODO: Check. Are these the right values?
+        # TODO: Check. Are these the right values? Is inches correct unit?
         half_length = DriveConstants.WHEELBASE_HALF_LENGTH * 1/0.0254  # Convert to inches
         half_width = DriveConstants.TRACK_HALF_WIDTH * 1/0.0254  # Convert to inches
 
@@ -94,6 +94,17 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
             module.set_drive_speed(drive_speed)
             module.set_turn_speed(turn_speed)
+
+    def _get_can_coder(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
+        return self.can_coder.get_absolute_position().value   #Because it's a property and not a method, .value doesn't have () at the end
+    
+    def _get_wheel_degree(self) -> float:   #angle from -180 to 180 of the wheel
+        can_coder_angle_pct = self._get_can_coder()
+        angle_degrees = 180 * can_coder_angle_pct
+
+        # What about module[i].get_turn_angle()? Would that be better?
+
+        return angle_degrees
 
     def set_drive_angle(self, desired_angle_degrees):
         # Hard-coded solely to BL module for now, since that's what we have running
