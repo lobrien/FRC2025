@@ -4,12 +4,14 @@ import wpimath
 import wpilib
 import math
 
+from wpimath.geometry import Rotation2d
+
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
 
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.kinematics import SwerveDrive4Kinematics
-from wpimath import geometry 
+from wpimath import geometry
 from phoenix6.controls import NeutralOut, PositionVoltage
 
 # The `DriveSubsystem` class is a `Subsystem` that contains the robot's drive motors and sensors. It
@@ -33,23 +35,57 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.BackLeftModule = self.modules[2]
         self.BackRightModule = self.modules[3]
 
-        # self.pose_estimator = self._initialize_pose_estimator()   #???
+        # Either brake or coast, depending on motor configuration; we chose brake above.
+        self.brake_request = phoenix6.controls.NeutralOut()
 
-    # def _initialize_pose_estimator(self) -> SwerveDrive4PoseEstimator:  #???
-    #     kinematics = SwerveDrive4Kinematics(
-    #         self._get_module_translations()
-    #     )
-    #     pose_estimator = SwerveDrive4PoseEstimator(
-    #         kinematics=kinematics,
-    #         gyro_angle=0,
-    #         initial_pose=geometry.Pose2d(),
-    #     )
-    #     return pose_estimator
+        # Position request starts at position 0, but can be modified later.
+        self.position_request = phoenix6.controls.PositionVoltage(0).with_slot(0)
 
-    # def _get_module_translations(self) -> list[geometry.Translation2d]:  #???
-    #     states = []
-    #     for module in self.modules:
-    #         states.append(module.get_location())
+        # A motion magic (MM) position request. MM smooths the acceleration.
+        self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
+
+        self.pose_estimator = self._initialize_pose_estimator()
+
+    def _initialize_pose_estimator(self) -> SwerveDrive4PoseEstimator:
+        kinematics = SwerveDrive4Kinematics(
+            *self._get_module_translations()
+        )
+        module_positions = [module.get_position() for module in self.modules]
+        pose_estimator = SwerveDrive4PoseEstimator(
+            kinematics=kinematics,
+            gyroAngle=Rotation2d(),
+            modulePositions=module_positions,
+            initialPose=wpimath.geometry.Pose2d(),
+        )
+        return pose_estimator
+
+    def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
+        """
+        Returns the physical positions of each swerve module relative to the center of the robot.
+        The order should match the order of modules in self.modules:
+        [FrontRight, FrontLeft, BackLeft, BackRight]
+
+        Returns:
+            list[Translation2d]: List of module positions in meters
+        """
+
+        # TODO: Check. Are these the right values?
+        half_length = DriveConstants.WHEELBASE_HALF_LENGTH * 1/0.0254  # Convert to inches
+        half_width = DriveConstants.TRACK_HALF_WIDTH * 1/0.0254  # Convert to inches
+
+        # Create Translation2d objects for each module position
+        # The coordinate system is:
+        # - Positive x is forward
+        # - Positive y is left
+        # - Origin (0,0) is at robot center
+        translations = [
+            wpimath.geometry.Translation2d(half_length, -half_width),  # Front Right
+            wpimath.geometry.Translation2d(half_length, half_width),  # Front Left
+            wpimath.geometry.Translation2d(-half_length, half_width),  # Back Left
+            wpimath.geometry.Translation2d(-half_length, -half_width),  # Back Right
+        ]
+
+        return translations
 
     # Sets the drive to the given speed and rotation, expressed as percentages
     # of full speed. The speed and rotation values range from -1 to 1.
@@ -66,8 +102,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         #for module in self.modules:
         #    module.set_turn_angle_degrees(desired_angle_degrees)
 
+    # This periodic function is called every 20ms during the robotPeriodic phase
+    # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
-        wpilib.SmartDashboard.putString('Motor pos', 'rotations: {:5.1f}'.format(self.BackLeftModule.get_turn_angle()))
-        wpilib.SmartDashboard.putString('Can coder pos', 'rotations: {:5.1f}'.format(self.BackLeftModule._get_can_coder_pos()))
-
-    
+        wpilib.SmartDashboard.putString('FR pos', 'rotations: {}'.format(self.FrontRightModule.get_position()))
+        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {}'.format(self.FrontRightModule.can_coder.get_absolute_position()))

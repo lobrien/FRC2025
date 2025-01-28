@@ -23,6 +23,11 @@ class Robot(commands2.TimedCommandRobot):
         super().__init__()
         self.container = robot_container.RobotContainer()
         self.autonomous_command = None
+        if Robot.isReal():
+            print("Robot is real")
+        else:
+            print("Robot is not real")
+        #breakpoint()
 
     def robotInit(self):
         pass

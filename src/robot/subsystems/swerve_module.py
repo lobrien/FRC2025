@@ -3,6 +3,8 @@ from phoenix6.hardware import CANcoder
 from phoenix6.hardware.talon_fx import TalonFX
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
+from wpimath.kinematics import SwerveModulePosition
+
 import wpilib
 
 from constants.driveconstants import DriveConstants
@@ -25,7 +27,7 @@ class SwerveModule:
 
     def set_drive_speed(self, speed):
         self.drive_motor.set(speed)
-    
+
     def set_turn_speed(self, speed):
         self.turn_motor.set(speed)
 
@@ -77,7 +79,7 @@ class SwerveModule:
         configuration = CANcoderConfiguration()
 
         return configuration
-    
+
     def _get_can_coder_pos(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
         return self.can_coder.get_absolute_position().value   #the .value property doesn't seem to have () at the end
 
@@ -86,6 +88,6 @@ class SwerveModule:
 
     def deg_to_rot(self, deg):
         return deg / 360 * DriveConstants.TURN_GEAR_RATIO
-    
+
     def rot_to_deg(self, rot):
         return rot * 360 / DriveConstants.TURN_GEAR_RATIO
