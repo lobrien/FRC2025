@@ -29,6 +29,11 @@ class DriveConstants:
     WHEEL_DIA = 4  # 4" diameter
     WHEEL_RADIUS = WHEEL_DIA / 2
 
+    # Free speed from https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/java/SwerveWithPathPlanner/src/main/java/frc/robot/generated/TunerConstants.java
+    # TODO: This needs to be changed to our measured velocity at max voltage (place holder value is phoenix6 @ 12V according to above link)
+    FREE_SPEED = 4.69 # m/s
+
+
     # # PID controller constants (gains)
     # # Proportional constant only at the moment, all others assumed zero.
     # PIDX_KP = 1       # X dimension PID controller's proportional constant

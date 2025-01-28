@@ -2,9 +2,11 @@ import commands2
 import phoenix6
 import wpilib
 import wpimath
+from wpilib import SmartDashboard
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d
-from wpimath.kinematics import SwerveDrive4Kinematics
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry
+from wpimath.units import degrees, radians, meters, inches, metersToInches
 
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
@@ -40,20 +42,17 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # A motion magic (MM) position request. MM smooths the acceleration.
         self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
 
-        self.pose_estimator = self._initialize_pose_estimator()
+        self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
 
-    def _initialize_pose_estimator(self) -> SwerveDrive4PoseEstimator:
-        kinematics = SwerveDrive4Kinematics(
-            *self._get_module_translations()
-        )
+        self.odometry = self._initialize_odometry(kinematics=self.kinematics)
+
+    def _initialize_odometry(self, kinematics) -> SwerveDrive4Odometry:
         module_positions = [module.get_position() for module in self.modules]
-        pose_estimator = SwerveDrive4PoseEstimator(
+        return SwerveDrive4Odometry(
             kinematics=kinematics,
-            gyroAngle=Rotation2d(),
-            modulePositions=module_positions,
-            initialPose=wpimath.geometry.Pose2d(),
+            gyroAngle=self.get_drive_angle_rotation2d(),
+            modulePositions=[module.get_position() for module in self.modules]
         )
-        return pose_estimator
 
     def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
         """
@@ -66,8 +65,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         """
 
         # TODO: Is inches correct unit?
-        half_length = DriveConstants.WHEELBASE_HALF_LENGTH * 1/0.0254  # Convert to inches
-        half_width = DriveConstants.TRACK_HALF_WIDTH * 1/0.0254  # Convert to inches
+        half_length = metersToInches(DriveConstants.WHEELBASE_HALF_LENGTH)# Convert to inches
+        half_width = metersToInches(DriveConstants.TRACK_HALF_WIDTH) # Convert to inches
 
         # Create Translation2d objects for each module position
         # The coordinate system is:
@@ -88,29 +87,37 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # Note that the drive will continue at those values until told otherwise
     def drive(self, drive_speed:float, turn_speed:float) -> None:
         for module in self.modules:
-            module.set_drive_speed(drive_speed)
-            module.set_turn_speed(turn_speed)
+            module.set_drive_effort(drive_speed)
+            module.set_turn_effort(turn_speed)
 
-    def _get_can_coder(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
-        return self.can_coder.get_absolute_position().value   #Because it's a property and not a method, .value doesn't have () at the end
-    
-    def _get_wheel_degree(self) -> float:   #angle from -180 to 180 of the wheel
-        can_coder_angle_pct = self._get_can_coder()
-        angle_degrees = 180 * can_coder_angle_pct
-
-        # What about module[i].get_turn_angle()? Would that be better?
-
-        return angle_degrees
-
-    def set_drive_angle(self, desired_angle_degrees):
+    def set_drive_angle(self, desired_angle_degrees: float):
         # Hard-coded solely to BL module for now, since that's what we have running
         self.BackLeftModule.set_turn_angle(desired_angle_degrees)
-        # Probably:
-        #for module in self.modules:
-        #    module.set_turn_angle_degrees(desired_angle_degrees)
+        # Ultimately, this needs to involve all modules
+
+    def get_drive_angle_degrees(self) -> float:
+        # Probably from the gyro? Or kinematics? For now, just return the BL module's angle
+        return self.BackLeftModule.get_turn_angle_degrees()
+
+    def get_drive_angle_rotation2d(self) -> Rotation2d:
+        return Rotation2d.fromDegrees(self.get_drive_angle_degrees())
 
     # This periodic function is called every 20ms during the robotPeriodic phase
     # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
-        wpilib.SmartDashboard.putString('FR pos', 'rotations: {}'.format(self.FrontRightModule.get_position()))
-        wpilib.SmartDashboard.putString('FR pos can coder', 'rotations: {}'.format(self.FrontRightModule.can_coder.get_absolute_position()))
+        SmartDashboard.putString('FR pos', 'rotations: {}'.format(self.FrontRightModule.get_position()))
+        SmartDashboard.putString('FR pos can coder', 'rotations: {}'.format(self.FrontRightModule.can_coder.get_absolute_position()))
+
+        # Update the odometry
+        positions = [module.get_position() for module in self.modules]
+        self.odometry.update(self.get_drive_angle_rotation2d(), tuple(positions))
+
+        #Update the dashboard
+        pose = self.odometry.getPose()
+        SmartDashboard.putNumber("Robot X", pose.X())
+        SmartDashboard.putNumber("Robot Y", pose.Y())
+        SmartDashboard.putNumber("Robot Heading", pose.rotation().degrees())
+        for name, module in zip(["FrontLeft", "FrontRight", "BackLeft", "BackRight"],[self.FrontLeftModule, self.FrontRightModule, self.BackLeftModule, self.BackRightModule]):
+            state = module.get_state()
+            SmartDashboard.putNumber(f"{name} Speed", state.speed)
+            SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
