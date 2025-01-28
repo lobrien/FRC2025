@@ -1,6 +1,7 @@
 from typing import Union
 
-from networktables import NetworkTables
+from ntcore import NetworkTableInstance, Topic, GenericEntry
+import logging
 
 class NTLoggerUtility:
     def __init__(self, table_name):
@@ -10,8 +11,10 @@ class NTLoggerUtility:
         Parameters:
         - table_name: str - The name of the NetworkTable to log to.
         """
-        self.nt_table = NetworkTables.getTable(table_name)
+        nt = NetworkTableInstance.getDefault()
+        self.nt_table = nt.getTable(table_name)
         self.log_level = "INFO"
+        self.entries = {}
 
     def setLevel(self, level: str):
         """
@@ -26,7 +29,7 @@ class NTLoggerUtility:
         self.log_level = level
         self.nt_table.putString("LogLevel", self.log_level)  # Optionally log the level to the table
 
-    def log(self, level: str, key: str, value : Union[int, float, str, bool]):
+    def log(self, level: str, key: str, value : any):
         """
         Logs a key-value pair to the NetworkTable.
 
@@ -37,15 +40,23 @@ class NTLoggerUtility:
         if not self._shouldLog(level):
             return  # Skip logging if the level is lower than the current log level
 
-        if isinstance(value, (int, float)):
-            self.nt_table.putNumber(key, value)
+        # Lazy initialize the key in the table
+        if key not in self.entries:
+            topic = self.nt_table.getTopic(key)
+            self.entries[key] = topic.getGenericEntry()
+        entry = self.entries[key]
+
+        if isinstance(value, int):
+            entry.setInteger(value)
+        elif isinstance(value, float):
+            entry.setDouble(value)
         elif isinstance(value, str):
-            self.nt_table.putString(key, value)
+            entry.setString(value)
         elif isinstance(value, bool):
-            self.nt_table.putBoolean(key, value)
+            entry.setBoolean(value)
         else:
-            self.nt_table.putString(key, str(value))
-            #raise ValueError(f"Unsupported type for NetworkTables logging; {type(value)}")
+            entry.setString(str(value))
+            logging.warning(f"Unsupported type for NetworkTables logging; {type(value)}")
 
     def get(self, key: str, default=None):
         """
@@ -58,7 +69,19 @@ class NTLoggerUtility:
         Returns:
         - The value associated with the key or the default.
         """
-        return self.nt_table.getEntry(key).getValue(default)
+        if key in self.entries:
+            entry = self.entries[key]
+            # Generic entries have a typed get operations; a default must be provided
+            value = entry.get()
+            if value and value.isDouble():
+                return entry.getDouble(0.0)
+            if value and value.isBoolean():
+                return entry.getBoolean(False)
+            if value and value.isString():
+                return entry.getString("")
+            if value and value.isInteger():
+                return entry.getInteger(0)
+        return None
 
     def _shouldLog(self, level: str) -> bool:
         """
