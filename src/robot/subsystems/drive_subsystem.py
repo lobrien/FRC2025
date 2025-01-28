@@ -1,18 +1,14 @@
-import phoenix6
 import commands2
-import wpimath
+import phoenix6
 import wpilib
-import math
-
+import wpimath
+from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d
+from wpimath.kinematics import SwerveDrive4Kinematics
 
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
 
-from wpimath.estimator import SwerveDrive4PoseEstimator
-from wpimath.kinematics import SwerveDrive4Kinematics
-from wpimath import geometry
-from phoenix6.controls import NeutralOut, PositionVoltage
 
 # The `DriveSubsystem` class is a `Subsystem` that contains the robot's drive motors and sensors. It
 # is responsible for moving the robot around on the field. Public methods exposed by this class
@@ -69,7 +65,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             list[Translation2d]: List of module positions in meters
         """
 
-        # TODO: Check. Are these the right values? Is inches correct unit?
+        # TODO: Is inches correct unit?
         half_length = DriveConstants.WHEELBASE_HALF_LENGTH * 1/0.0254  # Convert to inches
         half_width = DriveConstants.TRACK_HALF_WIDTH * 1/0.0254  # Convert to inches
 

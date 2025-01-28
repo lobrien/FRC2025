@@ -22,8 +22,8 @@ class DriveConstants:
     TURN_BR = 1 # Back right
 
     # Drivetrain geometry, gearing, etc.
-    # TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)   #Double check these values 1/27/25
-    # WHEELBASE_HALF_LENGTH = 0.225 # meters (45 cm wheelbase)
+    TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)   #TODO: Double check these values 1/27/25
+    WHEELBASE_HALF_LENGTH = 0.225 # meters (45 cm wheelbase)
     TURN_GEAR_RATIO = 468.0/35.0     # Kraken 
     DRIVE_GEAR_RATIO = 9 #temp
     WHEEL_DIA = 4  # 4" diameter
