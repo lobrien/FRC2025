@@ -17,8 +17,7 @@ class TurnToAngleCommand(commands2.Command):
 
     def execute(self):  # What actions it does
         if self.set_fn:
-            self.drive_subsystem.set_drive_angle(45)
-            print(f"desired degree = {45}")
+            self.drive_subsystem.set_drive_angle(desired_angle_degrees=-45)
 
     def isFinished(self) -> bool:
         return True

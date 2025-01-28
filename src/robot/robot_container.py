@@ -32,12 +32,12 @@ class RobotContainer:
         self.controller = CommandXboxController(OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT)
         self.autonomous_command = DriveForwardCommand(self.drive_subsystem, duration=5)
 
-        self.teleop_command = TurnToAngleCommand(self.drive_subsystem, should_set_fn=self.set_45_degrees)
+        self.teleop_command = DriveWithJoystickCommand(self.drive_subsystem, drive_percent_fn=self.get_drive_value_from_joystick)
         
         # DriveWithJoystickCommand(self.drive_subsystem, driving_percent=self.get_drive_value_from_joystick) #The teleop command is the drive with joystick commmand which takes the drive subsystem and the getting drive value function
 
         self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
-        self.controller.b().onTrue(TurnToAngleCommand(self.drive_subsystem, lambda: True))
+        self.controller.b().onTrue(TurnToAngleCommand(self.drive_subsystem, lambda: True)) #for quick test 
 
         self.drive_subsystem.setDefaultCommand(self.teleop_command) #Set the teleop command as the default for drive subsystem
     
