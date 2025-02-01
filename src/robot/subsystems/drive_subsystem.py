@@ -23,10 +23,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         super().__init__()  # Allows the class to call parent class
 
         self.modules = [
-            SwerveModule(DriveConstants.DRIVE_FR, DriveConstants.TURN_FR, DriveConstants.CAN_FR, DriveConstants.FR_OFFSET),
-            SwerveModule(DriveConstants.DRIVE_FL, DriveConstants.TURN_FL, DriveConstants.CAN_FL, DriveConstants.FL_OFFSET),
-            SwerveModule(DriveConstants.DRIVE_BL, DriveConstants.TURN_BL, DriveConstants.CAN_BL, DriveConstants.BL_OFFSET),
-            SwerveModule(DriveConstants.DRIVE_BR, DriveConstants.TURN_BR, DriveConstants.CAN_BR, DriveConstants.BR_OFFSET),
+            SwerveModule("FrontRight",DriveConstants.DRIVE_FR, DriveConstants.TURN_FR, DriveConstants.CAN_FR, DriveConstants.FR_OFFSET),
+            SwerveModule("FrontLeft",DriveConstants.DRIVE_FL, DriveConstants.TURN_FL, DriveConstants.CAN_FL, DriveConstants.FL_OFFSET),
+            SwerveModule("BackLeft", DriveConstants.DRIVE_BL, DriveConstants.TURN_BL, DriveConstants.CAN_BL, DriveConstants.BL_OFFSET),
+            SwerveModule("BackRight", DriveConstants.DRIVE_BR, DriveConstants.TURN_BR, DriveConstants.CAN_BR, DriveConstants.BR_OFFSET),
         ]
         self.FrontRightModule = self.modules[0]
         self.FrontLeftModule = self.modules[1]
@@ -105,17 +105,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # This periodic function is called every 20ms during the robotPeriodic phase
     # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
-        wpilib.SmartDashboard.putString('BL Motor pos', 'rotations: {:5.1f}'.format(self.BackLeftModule.get_turn_angle()))
-        wpilib.SmartDashboard.putString('BL Can coder pos', 'rotations: {:5.1f}'.format(self.BackLeftModule._get_can_coder_pos()))
-
-        wpilib.SmartDashboard.putString('BR Motor pos', 'rotations: {:5.1f}'.format(self.BackRightModule.get_turn_angle()))
-        wpilib.SmartDashboard.putString('BR Can coder pos', 'rotations: {:5.1f}'.format(self.BackRightModule._get_can_coder_pos()))
-
-        wpilib.SmartDashboard.putString('FL Motor pos', 'rotations: {:5.1f}'.format(self.FrontLeftModule.get_turn_angle()))
-        wpilib.SmartDashboard.putString('FL Can coder pos', 'rotations: {:5.1f}'.format(self.FrontLeftModule._get_can_coder_pos()))
-
-        wpilib.SmartDashboard.putString('FR Motor pos', 'rotations: {:5.1f}'.format(self.FrontRightModule.get_turn_angle()))
-        wpilib.SmartDashboard.putString('FR Can coder pos', 'rotations: {:5.1f}'.format(self.FrontRightModule._get_can_coder_pos()))
+        for module in self.modules:
+            module.periodic()
 
         # Update the odometry
         positions = [module.get_position() for module in self.modules]

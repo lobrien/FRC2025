@@ -16,7 +16,9 @@ import wpilib
 from constants.driveconstants import DriveConstants
 
 class SwerveModule:
-    def __init__(self, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, offset:float):
+    def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, rotation_offset:float):
+        # Needed for outputting to NetworkTables in periodic() fn
+        self.name = name
         self.drive_motor = TalonFX(drive_motor_bus_id)
         self.turn_motor = TalonFX(turn_motor_bus_id)
         self.can_coder = CANcoder(cancoder_bus_id)  # ID number
@@ -30,6 +32,9 @@ class SwerveModule:
 
         # Position request starts at position 0, but can be modified later.
         self.position_request = PositionVoltage(0).with_slot(0)
+
+        #rotation_offset is CANcoder offset
+        self.rotation_offset_degrees = rotationsToDegrees(rotation_offset)
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
     def set_drive_effort(self, speed_pct):
@@ -74,7 +79,9 @@ class SwerveModule:
     # Returns the current angle of the module in degrees.
     def get_turn_angle_degrees(self) -> float:
         rotations = self.turn_motor.get_position().value
-        return rotationsToDegrees(rotations)
+        rotations_degrees = rotationsToDegrees(rotations)
+        turn_angle_corrected = rotations_degrees + self.rotation_offset_degrees
+        return turn_angle_corrected
 
     def get_state(self) -> SwerveModuleState:
         """
@@ -93,6 +100,12 @@ class SwerveModule:
         angle : Rotation2d = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
         # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
         return SwerveModulePosition(distance, angle)
+
+
+    def periodic(self):
+        module_name = f"Module @ Bus {self.name}"
+        wpilib.SmartDashboard.putString(f"{module_name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
+        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.1f}'.format(self._get_can_coder_pos_rotations()))
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159

@@ -10,6 +10,7 @@ class DriveConstants:
     CAN_BL = 5 # Back left           
     CAN_BR = 2 # Back right         
 
+    #offsets in rotations
     BR_OFFSET = -0.454102
     BL_OFFSET = 0.314209
     FR_OFFSET = 0.461670
