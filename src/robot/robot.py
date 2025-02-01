@@ -1,12 +1,7 @@
-import commands2
 import commands2.command
-import wpilib 
-import wpimath
 from commands2 import CommandScheduler
 
 import robot_container
-from subsystems import drive_subsystem
-from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 
 # The `Robot` class is the main robot class. It is responsible for
 # the robot lifecycle methods. Because this is a command-based robot,
@@ -21,11 +16,15 @@ from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 class Robot(commands2.TimedCommandRobot):
     def __init__(self):
         super().__init__()
+
+        # The container is the place where all of the robot's components and commands are created.w
         self.container = robot_container.RobotContainer()
         self.autonomous_command = None
-
-    def robotInit(self):
-        pass
+        if Robot.isReal():
+            print("Robot is real")
+        else:
+            print("Robot is not real")
+        #breakpoint()
 
     # Robot overall lifecycle methods
     def robotInit(self):

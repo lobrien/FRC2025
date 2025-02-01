@@ -170,3 +170,4 @@ simgui-window.json
 
 ctre_sim
 tests/ctre_sim/* 
+/src/robot/logs
