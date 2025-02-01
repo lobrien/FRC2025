@@ -78,10 +78,9 @@ class SwerveModule:
 
     # Returns the current angle of the module in degrees.
     def get_turn_angle_degrees(self) -> float:
-        rotations = self.turn_motor.get_position().value
+        rotations = self._get_can_coder_pos_rotations()
         rotations_degrees = rotationsToDegrees(rotations)
-        turn_angle_corrected = rotations_degrees + self.rotation_offset_degrees
-        return turn_angle_corrected
+        return rotations_degrees
 
     def get_state(self) -> SwerveModuleState:
         """
@@ -105,7 +104,7 @@ class SwerveModule:
     def periodic(self):
         module_name = f"Module @ Bus {self.name}"
         wpilib.SmartDashboard.putString(f"{module_name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
-        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.1f}'.format(self._get_can_coder_pos_rotations()))
+        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_rotations()))
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159
@@ -150,8 +149,9 @@ class SwerveModule:
 
     # Returns the CANCoder's current position as a percentage of full rotation (range [-1,1]).
     def _get_can_coder_pos_rotations(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
-        return self.can_coder.get_absolute_position().value   #the .value property doesn't seem to have () at the end
-
+        can_coder_abs_pos = self.can_coder.get_absolute_position().value
+        can_coder_offset = can_coder_abs_pos + degreesToRotations(self.rotation_offset_degrees)
+        return can_coder_offset  
     # Per
     def _max_velocity_inches_per_second(self) -> inches:
         free_speed_inches_per_second = metersToInches(DriveConstants.FREE_SPEED)

@@ -11,10 +11,10 @@ class DriveConstants:
     CAN_BR = 2 # Back right         
 
     #offsets in rotations
-    BR_OFFSET = -0.454102
-    BL_OFFSET = 0.314209
-    FR_OFFSET = 0.461670
-    FL_OFFSET = -0.441162 
+    BR_OFFSET = -0.454
+    BL_OFFSET = 0.306
+    FR_OFFSET = 0.450
+    FL_OFFSET = -0.441
 
     # Kraken IDs
     DRIVE_FR = 12 # Front right

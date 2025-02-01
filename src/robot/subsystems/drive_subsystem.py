@@ -46,6 +46,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
 
+        self.heartbeat = 0
+
     def _initialize_odometry(self, kinematics) -> SwerveDrive4Odometry:
         module_positions = [module.get_position() for module in self.modules]
         return SwerveDrive4Odometry(
@@ -121,3 +123,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             state = module.get_state()
             SmartDashboard.putNumber(f"{name} Speed", state.speed)
             SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
+
+        SmartDashboard.putNumber("Heartbeat", self.heartbeat)
+        self.heartbeat += 1
