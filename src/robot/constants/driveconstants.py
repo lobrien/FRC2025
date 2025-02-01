@@ -5,10 +5,15 @@ from dataclasses import dataclass, field
 class DriveConstants:
     """ Drivetrain related constants"""
     #CAN bus IDs
-    CAN_FR = 11 # Front right       Offset: -0.45166015625
-    CAN_FL = 8 # Front left         Offset: -0.373291015625
-    CAN_BL = 5 # Back left          Offset: 0.307861328125
-    CAN_BR = 2 # Back right         Offset: 0.447509765625
+    CAN_FR = 11 # Front right        
+    CAN_FL = 8 # Front left         
+    CAN_BL = 5 # Back left           
+    CAN_BR = 2 # Back right         
+
+    BR_OFFSET = -0.454102
+    BL_OFFSET = 0.314209
+    FR_OFFSET = 0.461670
+    FL_OFFSET = -0.441162 
 
     # Kraken IDs
     DRIVE_FR = 12 # Front right

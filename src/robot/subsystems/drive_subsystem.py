@@ -23,10 +23,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         super().__init__()  # Allows the class to call parent class
 
         self.modules = [
-            SwerveModule(DriveConstants.DRIVE_FR, DriveConstants.TURN_FR, DriveConstants.CAN_FR),
-            SwerveModule(DriveConstants.DRIVE_FL, DriveConstants.TURN_FL, DriveConstants.CAN_FL),
-            SwerveModule(DriveConstants.DRIVE_BL, DriveConstants.TURN_BL, DriveConstants.CAN_BL),
-            SwerveModule(DriveConstants.DRIVE_BR, DriveConstants.TURN_BR, DriveConstants.CAN_BR),
+            SwerveModule(DriveConstants.DRIVE_FR, DriveConstants.TURN_FR, DriveConstants.CAN_FR, DriveConstants.FR_OFFSET),
+            SwerveModule(DriveConstants.DRIVE_FL, DriveConstants.TURN_FL, DriveConstants.CAN_FL, DriveConstants.FL_OFFSET),
+            SwerveModule(DriveConstants.DRIVE_BL, DriveConstants.TURN_BL, DriveConstants.CAN_BL, DriveConstants.BL_OFFSET),
+            SwerveModule(DriveConstants.DRIVE_BR, DriveConstants.TURN_BR, DriveConstants.CAN_BR, DriveConstants.BR_OFFSET),
         ]
         self.FrontRightModule = self.modules[0]
         self.FrontLeftModule = self.modules[1]
@@ -90,10 +90,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             module.set_drive_effort(drive_speed)
             module.set_turn_effort(turn_speed)
 
-    def set_drive_angle(self, desired_angle_degrees: float):
-        # Hard-coded solely to BL module for now, since that's what we have running
-        self.BackLeftModule.set_turn_angle(desired_angle_degrees)
-        # Ultimately, this needs to involve all modules
+    def set_drive_angle(self, desired_angle_degrees):
+        # Probably:
+        for module in self.modules:
+           module.set_turn_angle(desired_angle_degrees)
 
     def get_drive_angle_degrees(self) -> float:
         # Probably from the gyro? Or kinematics? For now, just return the BL module's angle
@@ -105,8 +105,17 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # This periodic function is called every 20ms during the robotPeriodic phase
     # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
-        SmartDashboard.putString('FR pos', 'rotations: {}'.format(self.FrontRightModule.get_position()))
-        SmartDashboard.putString('FR pos can coder', 'rotations: {}'.format(self.FrontRightModule.can_coder.get_absolute_position()))
+        wpilib.SmartDashboard.putString('BL Motor pos', 'rotations: {:5.1f}'.format(self.BackLeftModule.get_turn_angle()))
+        wpilib.SmartDashboard.putString('BL Can coder pos', 'rotations: {:5.1f}'.format(self.BackLeftModule._get_can_coder_pos()))
+
+        wpilib.SmartDashboard.putString('BR Motor pos', 'rotations: {:5.1f}'.format(self.BackRightModule.get_turn_angle()))
+        wpilib.SmartDashboard.putString('BR Can coder pos', 'rotations: {:5.1f}'.format(self.BackRightModule._get_can_coder_pos()))
+
+        wpilib.SmartDashboard.putString('FL Motor pos', 'rotations: {:5.1f}'.format(self.FrontLeftModule.get_turn_angle()))
+        wpilib.SmartDashboard.putString('FL Can coder pos', 'rotations: {:5.1f}'.format(self.FrontLeftModule._get_can_coder_pos()))
+
+        wpilib.SmartDashboard.putString('FR Motor pos', 'rotations: {:5.1f}'.format(self.FrontRightModule.get_turn_angle()))
+        wpilib.SmartDashboard.putString('FR Can coder pos', 'rotations: {:5.1f}'.format(self.FrontRightModule._get_can_coder_pos()))
 
         # Update the odometry
         positions = [module.get_position() for module in self.modules]

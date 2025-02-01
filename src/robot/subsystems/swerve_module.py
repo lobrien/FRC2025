@@ -16,14 +16,14 @@ import wpilib
 from constants.driveconstants import DriveConstants
 
 class SwerveModule:
-    def __init__(self, drive_motor_bus_id, turn_motor_bus_id, cancoder_bus_id):
+    def __init__(self, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, offset:float):
         self.drive_motor = TalonFX(drive_motor_bus_id)
         self.turn_motor = TalonFX(turn_motor_bus_id)
         self.can_coder = CANcoder(cancoder_bus_id)  # ID number
 
         self.turn_motor.configurator.apply(self._configure_turn_motor())
         self.drive_motor.configurator.apply(self._configure_drive_motor())
-        self.can_coder.configurator.apply(self._configure_cancoder())
+        # self.can_coder.configurator.apply(self._configure_cancoder(offset=offset)) #give the offset values to the function to config
 
         # Either brake or coast, depending on motor configuration; we chose brake above.
         self.brake_request = NeutralOut()
@@ -128,8 +128,10 @@ class SwerveModule:
         # Ordinarily, we would not change the default value, which is 16V.
         return configuration
 
-    def _configure_cancoder(self):  #Motors configs can't go in here
+    def _configure_cancoder(self, offset:float):  #Mostly for configuring offsets
         configuration = CANcoderConfiguration()
+
+        # configuration.magnet_sensor(offset)
 
         return configuration
 
