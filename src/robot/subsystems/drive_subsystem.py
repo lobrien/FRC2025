@@ -47,43 +47,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
 
         self.heartbeat = 0
-
-    def _initialize_odometry(self, kinematics) -> SwerveDrive4Odometry:
-        module_positions = [module.get_position() for module in self.modules]
-        return SwerveDrive4Odometry(
-            kinematics=kinematics,
-            gyroAngle=self.get_drive_angle_rotation2d(),
-            modulePositions=[module.get_position() for module in self.modules]
-        )
-
-    def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
-        """
-        Returns the physical positions of each swerve module relative to the center of the robot.
-        The order should match the order of modules in self.modules:
-        [FrontRight, FrontLeft, BackLeft, BackRight]
-
-        Returns:
-            list[Translation2d]: List of module positions in meters
-        """
-
-        # TODO: Is inches correct unit?
-        half_length = metersToInches(DriveConstants.WHEELBASE_HALF_LENGTH)# Convert to inches
-        half_width = metersToInches(DriveConstants.TRACK_HALF_WIDTH) # Convert to inches
-
-        # Create Translation2d objects for each module position
-        # The coordinate system is:
-        # - Positive x is forward
-        # - Positive y is left
-        # - Origin (0,0) is at robot center
-        translations = [
-            wpimath.geometry.Translation2d(half_length, -half_width),  # Front Right
-            wpimath.geometry.Translation2d(half_length, half_width),  # Front Left
-            wpimath.geometry.Translation2d(-half_length, half_width),  # Back Left
-            wpimath.geometry.Translation2d(-half_length, -half_width),  # Back Right
-        ]
-
-        return translations
-
     # Sets the drive to the given speed and rotation, expressed as percentages
     # of full speed. The speed and rotation values range from -1 to 1.
     # Note that the drive will continue at those values until told otherwise
@@ -126,3 +89,40 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         SmartDashboard.putNumber("Heartbeat", self.heartbeat)
         self.heartbeat += 1
+
+    def _initialize_odometry(self, kinematics) -> SwerveDrive4Odometry:
+        module_positions = [module.get_position() for module in self.modules]
+        return SwerveDrive4Odometry(
+            kinematics=kinematics,
+            gyroAngle=self.get_drive_angle_rotation2d(),
+            modulePositions=[module.get_position() for module in self.modules]
+        )
+
+    def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
+        """
+        Returns the physical positions of each swerve module relative to the center of the robot.
+        The order should match the order of modules in self.modules:
+        [FrontRight, FrontLeft, BackLeft, BackRight]
+
+        Returns:
+            list[Translation2d]: List of module positions in meters
+        """
+
+        # TODO: Is inches correct unit?
+        half_length = metersToInches(DriveConstants.WHEELBASE_HALF_LENGTH)  # Convert to inches
+        half_width = metersToInches(DriveConstants.TRACK_HALF_WIDTH)  # Convert to inches
+
+        # Create Translation2d objects for each module position
+        # The coordinate system is:
+        # - Positive x is forward
+        # - Positive y is left
+        # - Origin (0,0) is at robot center
+        translations = [
+            wpimath.geometry.Translation2d(half_length, -half_width),  # Front Right
+            wpimath.geometry.Translation2d(half_length, half_width),  # Front Left
+            wpimath.geometry.Translation2d(-half_length, half_width),  # Back Left
+            wpimath.geometry.Translation2d(-half_length, -half_width),  # Back Right
+        ]
+
+        return translations
+
