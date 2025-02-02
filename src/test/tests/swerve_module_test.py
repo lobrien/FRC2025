@@ -1,4 +1,8 @@
 import unittest
+
+from wpimath.geometry import Rotation2d
+from wpimath.kinematics import SwerveModuleState
+
 from subsystems.swerve_module import SwerveModule
 
 class SwerveModuleTest(unittest.TestCase):
@@ -71,6 +75,65 @@ class SwerveModuleTest(unittest.TestCase):
                     f"expected={expected_angle}°, "
                     f"got={actual_angle}°"
             )
+
+class TestSwerveModuleOptimization(unittest.TestCase):
+    def setUp(self):
+        # Create instance of the class containing the optimize method
+        self.swerve = SwerveModule("TestModule", 1, 2, 3, 0)  # Replace with your actual class name
+
+    def test_small_angle_no_optimization(self):
+        """Test when angle difference is small, no optimization needed"""
+        current_rotation = 0.0  # 0 degrees
+        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(45.0))
+
+        result = self.swerve._optimize(desired_state, current_rotation)
+
+        self.assertAlmostEqual(result.speed, 1.0)
+        self.assertAlmostEqual(result.angle.degrees(), 45.0)
+
+    def test_large_positive_angle_optimization(self):
+        """Test when angle difference is > 90 degrees positive"""
+        current_rotation = 0.0  # 0 degrees
+        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(135.0))
+
+        result = self.swerve._optimize(desired_state, current_rotation)
+
+        # Should optimize to -45 degrees with negative speed
+        self.assertAlmostEqual(result.speed, -1.0)
+        self.assertAlmostEqual(result.angle.degrees(), -45.0)
+
+    def test_large_negative_angle_optimization(self):
+        """Test when angle difference is > 90 degrees negative"""
+        current_rotation = 0.5  # 180 degrees
+        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(0.0))
+
+        result = self.swerve._optimize(desired_state, current_rotation)
+
+        # Should optimize to 180 degrees with negative speed
+        self.assertAlmostEqual(result.speed, -1.0)
+        self.assertAlmostEqual(result.angle.degrees(), 180.0)
+
+    def test_edge_case_90_degrees(self):
+        """Test the edge case of exactly 90 degrees difference"""
+        current_rotation = 0.0  # 0 degrees
+        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(90.0))
+
+        result = self.swerve._optimize(desired_state, current_rotation)
+
+        # Should not optimize as it's exactly 90 degrees
+        self.assertAlmostEqual(result.speed, 1.0)
+        self.assertAlmostEqual(result.angle.degrees(), 90.0)
+
+    def test_zero_speed(self):
+        """Test optimization with zero speed"""
+        current_rotation = 0.0
+        desired_state = SwerveModuleState(0.0, Rotation2d.fromDegrees(180.0))
+
+        result = self.swerve._optimize(desired_state, current_rotation)
+
+        # Speed should remain zero, angle should optimize
+        self.assertAlmostEqual(result.speed, 0.0)
+        self.assertAlmostEqual(result.angle.degrees(), 0.0)
 
 if __name__ == '__main__':
     unittest.main()

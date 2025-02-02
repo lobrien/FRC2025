@@ -167,3 +167,21 @@ class SwerveModule:
     def _max_velocity_inches_per_second(self) -> inches:
         free_speed_inches_per_second = metersToInches(DriveConstants.FREE_SPEED)
 
+    def _optimize(self, desired_state: SwerveModuleState, current_rotation: float) -> SwerveModuleState:
+        target_angle = desired_state.angle.degrees()
+        target_speed = desired_state.speed
+        delta_degrees = target_angle - rotationsToDegrees(current_rotation)
+
+        if abs(delta_degrees) > 90:
+            optimized_target_speed = -target_speed
+            if delta_degrees > 90:
+                # Delta is positive
+                optimized_target_angle = target_angle - 180
+            else:
+                # Delta is negative
+                optimized_target_angle = target_angle + 180
+        else:
+            optimized_target_speed = target_speed
+            optimized_target_angle = target_angle
+
+        return SwerveModuleState(optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle))
