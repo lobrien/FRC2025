@@ -16,7 +16,16 @@ import wpilib
 from constants.driveconstants import DriveConstants
 
 class SwerveModule:
-    def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, rotation_offset:float):
+    def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, offset_rotations:float):
+        """
+
+        :param name:
+        :param drive_motor_bus_id:
+        :param turn_motor_bus_id:
+        :param cancoder_bus_id:
+        :param offset_rotations: Range is [-1,1] and is in rotations, not degrees
+        """
+
         # Needed for outputting to NetworkTables in periodic() fn
         self.name = name
         self.drive_motor = TalonFX(drive_motor_bus_id)
@@ -34,7 +43,7 @@ class SwerveModule:
         self.position_request = PositionVoltage(0).with_slot(0)
 
         #rotation_offset is CANcoder offset
-        self.rotation_offset_degrees = rotationsToDegrees(rotation_offset)
+        self.rotation_offset_degrees = rotationsToDegrees(offset_rotations)
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
     def set_drive_effort(self, speed_pct):
