@@ -50,7 +50,7 @@ class SwerveModule:
         self.drive_motor.set(speed_pct)
 
     # Returns percentage of full driving speed (range -1 to 1)
-    def get_drive_effort(self):
+    def get_drive_effort(self) -> float:
         return self.drive_motor.get()
 
     # Sets the turn to the given speed, expressed as a percentage of full speed (range -1 to 1).
@@ -58,10 +58,10 @@ class SwerveModule:
         self.turn_motor.set(speed_pct)
 
     # Returns percentage of full turning speed (range -1 to 1)
-    def get_turn_effort(self):
+    def get_turn_effort(self) -> float:
         return self.turn_motor.get()
 
-    def velocity_from_effort(self, effort_pct):
+    def velocity_from_effort(self, effort_pct: float) -> float:
         effort = max(min(effort_pct, 1.0), -1.0)
 
         # Conversion using feed forward
@@ -112,11 +112,9 @@ class SwerveModule:
         # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
         return SwerveModulePosition(distance, angle)
 
-
     def periodic(self):
-        module_name = f"Module @ Bus {self.name}"
-        wpilib.SmartDashboard.putString(f"{module_name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
-        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
+        wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
+        wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159
