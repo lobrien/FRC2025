@@ -185,3 +185,7 @@ class SwerveModule:
             optimized_target_angle = target_angle
 
         return SwerveModuleState(optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle))
+
+    def _degrees_to_turn_count(self, degrees: float) -> float:
+        rotations = degreesToRotations(degrees)
+        return rotations * DriveConstants.TURN_GEAR_RATIO

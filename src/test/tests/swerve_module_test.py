@@ -3,6 +3,7 @@ import unittest
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModuleState
 
+from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
 
 class SwerveModuleTest(unittest.TestCase):
@@ -79,14 +80,14 @@ class SwerveModuleTest(unittest.TestCase):
 class TestSwerveModuleOptimization(unittest.TestCase):
     def setUp(self):
         # Create instance of the class containing the optimize method
-        self.swerve = SwerveModule("TestModule", 1, 2, 3, 0)  # Replace with your actual class name
+        self.swerve_module = SwerveModule("TestModule", 1, 2, 3, 0)  # Replace with your actual class name
 
     def test_small_angle_no_optimization(self):
         """Test when angle difference is small, no optimization needed"""
         current_rotation = 0.0  # 0 degrees
         desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(45.0))
 
-        result = self.swerve._optimize(desired_state, current_rotation)
+        result = self.swerve_module._optimize(desired_state, current_rotation)
 
         self.assertAlmostEqual(result.speed, 1.0)
         self.assertAlmostEqual(result.angle.degrees(), 45.0)
@@ -96,7 +97,7 @@ class TestSwerveModuleOptimization(unittest.TestCase):
         current_rotation = 0.0  # 0 degrees
         desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(135.0))
 
-        result = self.swerve._optimize(desired_state, current_rotation)
+        result = self.swerve_module._optimize(desired_state, current_rotation)
 
         # Should optimize to -45 degrees with negative speed
         self.assertAlmostEqual(result.speed, -1.0)
@@ -107,7 +108,7 @@ class TestSwerveModuleOptimization(unittest.TestCase):
         current_rotation = 0.5  # 180 degrees
         desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(0.0))
 
-        result = self.swerve._optimize(desired_state, current_rotation)
+        result = self.swerve_module._optimize(desired_state, current_rotation)
 
         # Should optimize to 180 degrees with negative speed
         self.assertAlmostEqual(result.speed, -1.0)
@@ -118,7 +119,7 @@ class TestSwerveModuleOptimization(unittest.TestCase):
         current_rotation = 0.0  # 0 degrees
         desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(90.0))
 
-        result = self.swerve._optimize(desired_state, current_rotation)
+        result = self.swerve_module._optimize(desired_state, current_rotation)
 
         # Should not optimize as it's exactly 90 degrees
         self.assertAlmostEqual(result.speed, 1.0)
@@ -129,11 +130,59 @@ class TestSwerveModuleOptimization(unittest.TestCase):
         current_rotation = 0.0
         desired_state = SwerveModuleState(0.0, Rotation2d.fromDegrees(180.0))
 
-        result = self.swerve._optimize(desired_state, current_rotation)
+        result = self.swerve_module._optimize(desired_state, current_rotation)
 
         # Speed should remain zero, angle should optimize
         self.assertAlmostEqual(result.speed, 0.0)
         self.assertAlmostEqual(result.angle.degrees(), 0.0)
+
+
+class TestTurnConversion(unittest.TestCase):
+    def setUp(self):
+        # Create instance of the class containing the degrees_to_turn_count method
+        self.swerve_module = SwerveModule("TestSwerve", 1, 2, 3, 0)  # Replace with your actual class name
+
+    def test_zero_degrees(self):
+        """Test conversion of 0 degrees"""
+        result = self.swerve_module._degrees_to_turn_count(0.0)
+        self.assertAlmostEqual(result, 0.0)
+
+    def test_full_rotation(self):
+        """Test conversion of 360 degrees (full rotation)"""
+        result = self.swerve_module._degrees_to_turn_count(360.0)
+        # One full rotation * gear ratio
+        self.assertAlmostEqual(result, DriveConstants.TURN_GEAR_RATIO)
+
+    def test_half_rotation(self):
+        """Test conversion of 180 degrees (half rotation)"""
+        result = self.swerve_module._degrees_to_turn_count(180.0)
+        # Half rotation * gear ratio
+        self.assertAlmostEqual(result, DriveConstants.TURN_GEAR_RATIO / 2)
+
+    def test_quarter_rotation(self):
+        """Test conversion of 90 degrees (quarter rotation)"""
+        result = self.swerve_module._degrees_to_turn_count(90.0)
+        # Quarter rotation * gear ratio
+        self.assertAlmostEqual(result, DriveConstants.TURN_GEAR_RATIO / 4)
+
+    def test_negative_rotation(self):
+        """Test conversion of -360 degrees (negative full rotation)"""
+        result = self.swerve_module._degrees_to_turn_count(-360.0)
+        # Negative one full rotation * gear ratio
+        self.assertAlmostEqual(result, -DriveConstants.TURN_GEAR_RATIO)
+
+    def test_multiple_rotations(self):
+        """Test conversion of 720 degrees (two full rotations)"""
+        result = self.swerve_module._degrees_to_turn_count(720.0)
+        # Two full rotations * gear ratio
+        self.assertAlmostEqual(result, 2 * DriveConstants.TURN_GEAR_RATIO)
+
+    def test_arbitrary_angle(self):
+        """Test conversion of an arbitrary angle (45 degrees)"""
+        result = self.swerve_module._degrees_to_turn_count(45.0)
+        # 45/360 rotation * gear ratio
+        expected = (45.0 / 360.0) * DriveConstants.TURN_GEAR_RATIO
+        self.assertAlmostEqual(result, expected)
 
 if __name__ == '__main__':
     unittest.main()
