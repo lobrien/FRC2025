@@ -78,9 +78,9 @@ class SwerveModule:
 
     # Returns the current angle of the module in degrees.
     def get_turn_angle_degrees(self) -> float:
-        rotations = self._get_can_coder_pos_rotations()
-        rotations_degrees = rotationsToDegrees(rotations)
-        return rotations_degrees
+        normalized_rotations = self._get_can_coder_pos_normalized() # Range from 0 to 1
+        degrees = normalized_rotations * 360
+        return degrees
 
     def get_state(self) -> SwerveModuleState:
         """
@@ -94,7 +94,7 @@ class SwerveModule:
 
     # Returns the current position of the module. This is needed by the drive subsystem's kinematics.
     def get_position(self) -> SwerveModulePosition:
-        can_coder_rotations = self._get_can_coder_pos_rotations()
+        can_coder_rotations = self._get_can_coder_pos_normalized()
         distance : meters = inchesToMeters(can_coder_rotations * self._inches_per_rotation())
         angle : Rotation2d = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
         # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
@@ -104,7 +104,7 @@ class SwerveModule:
     def periodic(self):
         module_name = f"Module @ Bus {self.name}"
         wpilib.SmartDashboard.putString(f"{module_name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
-        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_rotations()))
+        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159
@@ -147,11 +147,12 @@ class SwerveModule:
 
         return configuration
 
-    # Returns the CANCoder's current position as a percentage of full rotation (range [-1,1]).
-    def _get_can_coder_pos_rotations(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
+    # Returns the CANCoder's current position as a percentage of full rotation (range [0,1]).
+    def _get_can_coder_pos_normalized(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
         can_coder_abs_pos = self.can_coder.get_absolute_position().value
-        can_coder_offset = can_coder_abs_pos + degreesToRotations(self.rotation_offset_degrees)
-        return can_coder_offset  
+        can_coder_offset = can_coder_abs_pos - degreesToRotations(self.rotation_offset_degrees)
+        normalized = can_coder_offset % 1.0
+        return normalized
     # Per
     def _max_velocity_inches_per_second(self) -> inches:
         free_speed_inches_per_second = metersToInches(DriveConstants.FREE_SPEED)
