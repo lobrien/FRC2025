@@ -76,10 +76,13 @@ class SwerveModule:
         # Position request starts at position 0, but can be modified later.
         self.turn_motor.set_control(self.position_request.with_position(motor_rotation)) # ???
 
-    # Returns the current angle of the module in degrees.
+    # Returns the current angle of the module in degrees. Range is [-180,180].
     def get_turn_angle_degrees(self) -> float:
         normalized_rotations = self._get_can_coder_pos_normalized() # Range from 0 to 1
         degrees = normalized_rotations * 360
+        # Convert to [-180,180] range
+        if degrees > 180:
+            degrees = degrees - 360
         return degrees
 
     def get_state(self) -> SwerveModuleState:
