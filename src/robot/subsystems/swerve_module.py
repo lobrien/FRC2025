@@ -8,6 +8,7 @@ from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
+from wpimath.controller import PIDController
 from wpimath.units import degrees, radians, meters, inches
 from wpimath.units import degreesToRadians, radiansToDegrees, metersToInches, inchesToMeters, degreesToRotations, rotationsToDegrees
 
@@ -44,6 +45,17 @@ class SwerveModule:
 
         #rotation_offset is CANcoder offset
         self.rotation_offset_degrees = rotationsToDegrees(offset_rotations)
+
+        self.PIDController = PIDController(
+            DriveConstants.SWERVE_MODULE_TURN_PID_KP,
+            DriveConstants.SWERVE_MODULE_TURN_PID_KI,
+            DriveConstants.SWERVE_MODULE_TURN_PID_KD
+        )
+        # TODO: Additional 2024 porting needed here:
+        # self.PIDController.setFF(0)
+        # self.PIDController.setPositionPIDWrappingEnabled(True)
+        # self.PIDController.setPositionPIDWrappingMinInput(0)
+        # self.PIDController.setPositionPIDWrappingMaxInput(self.TURNING_GEAR_RATIO)
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
     def set_drive_effort(self, speed_pct):
@@ -115,6 +127,24 @@ class SwerveModule:
     def periodic(self):
         wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
         wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
+
+    def set_desired_state(self, desired_state: SwerveModuleState, open_loop: bool):
+        # TODO: Check this code, lifted from 2024 code
+        current_degrees = self.get_turn_angle_degrees()
+        current_rotation = degreesToRotations(current_degrees)
+        optimized_state = self._optimize(desired_state, current_rotation)
+        if open_loop:
+            drive_effort = optimized_state.speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+            self.set_drive_effort(drive_effort)
+        else:
+            raise NotImplementedError("Closed loop control not yet implemented")
+
+        # TODO: Compare 2024's:
+        #turn_count = self._degrees_to_turn_count(optimized_state.angle.degrees())
+        #self.PIDController.setReference(angle, CANSparkLowLevel.ControlType.kPosition)
+        # to:
+        rotations = degreesToRotations(optimized_state.angle.degrees())
+        self.turn_motor.set_control(self.position_request.with_position(rotations))
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159

@@ -5,7 +5,7 @@ import wpimath
 from wpilib import SmartDashboard
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d
-from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds
 from wpimath.units import degrees, radians, meters, inches, metersToInches
 
 from constants.driveconstants import DriveConstants
@@ -90,12 +90,49 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         SmartDashboard.putNumber("Heartbeat", self.heartbeat)
         self.heartbeat += 1
 
+        # Update field sim
+        self.field_sim.setRobotPose(pose)
+        # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
+        self.field_sim.setModuleStates([module.get_state() for module in self.modules])
+
+
+    # TODO: What are the units for x_speed, y_speed, rot_speed? Are they inches/sec and degrees/sec? Do they need to be
+    def drive(self, x_speed : float, y_speed : float, rot_speed : float, field_relative : bool = False):
+        chassis_speeds = self._get_chassis_speeds(x_speed, y_speed, rot_speed, field_relative)
+        swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
+        # TODO: Do we need to convert from inches/sec?
+        desatured_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, DriveConstants.MAX_SPEED_INCHES_PER_SECOND)
+        for module, state in zip(self.modules, desatured_module_states):
+            module.set_desired_state(state, True)
+
+    def get_pose(self) -> wpimath.geometry.Pose2d:
+        return self.odometry.getPose()
+
+    # TODO: What are units for x_speed, y_speed, rot_speed? Are they inches/sec and degrees/sec? Do they need to be
+    #  converted for wpilib.kinematics.ChassisSpeeds?
+    def _get_chassis_speeds(self, x_speed: float, y_speed: float, rot_speed: float, field_relative: bool) -> ChassisSpeeds:
+        if field_relative:
+            cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed, y_speed, rot_speed, self.get_drive_angle_rotation2d())
+        else:
+            cs = ChassisSpeeds(x_speed, y_speed, rot_speed)
+        return cs
+
+    def _toggle_drive_motors_inverted(self):
+        for module in self.modules:
+            module.toggle_drive_inverted()
+
     def _initialize_odometry(self, kinematics) -> SwerveDrive4Odometry:
         module_positions = [module.get_position() for module in self.modules]
         return SwerveDrive4Odometry(
             kinematics=kinematics,
             gyroAngle=self.get_drive_angle_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules]
+        )
+
+    def _update_odometry(self):
+        self.odometry.update(
+            self.get_drive_angle_rotation2d(),
+            tuple([module.get_position() for module in self.modules])
         )
 
     def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:

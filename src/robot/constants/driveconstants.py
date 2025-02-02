@@ -39,6 +39,7 @@ class DriveConstants:
     # TODO: This needs to be changed to our measured velocity at max voltage (place holder value is phoenix6 @ 12V according to above link)
     FREE_SPEED = 4.69 # m/s
 
+    MAX_SPEED_INCHES_PER_SECOND = 120 # inches per second
 
     # # PID controller constants (gains)
     # # Proportional constant only at the moment, all others assumed zero.
@@ -56,3 +57,6 @@ class DriveConstants:
     # ROT_MAX_A = 0.1   # Rotational maximum acceleration
     # ROT_POS_TOL = 0.1 # Rotational position tolerance
     # ROT_VEL_TOL = 0.1 # Rotational velocity tolerance
+    SWERVE_MODULE_TURN_PID_KP = 0.3 # TODO: This is just what it was in 2024 CrescendoSwerveModule.py line 81
+    SWERVE_MODULE_TURN_PID_KI = 0.0
+    SWERVE_MODULE_TURN_PID_KD = 0.0
