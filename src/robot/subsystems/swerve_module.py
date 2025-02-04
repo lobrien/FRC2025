@@ -241,6 +241,14 @@ class SwerveModule:
 
         return SwerveModuleState(optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle))
 
+    def _calc_drive_effort(self, speed : inches_per_second, open_loop: bool = True) -> percentage:
+        if open_loop:
+            drive_effort = speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+            drive_effort_clamped = max(min(drive_effort, 1.0), -1.0)
+        else:
+            raise NotImplementedError("Closed loop control not yet implemented")
+        return drive_effort_clamped
+
     def _degrees_to_turn_count(self, degrees: degrees) -> float:
         rotations = degreesToRotations(degrees)
         return rotations * DriveConstants.TURN_GEAR_RATIO
@@ -258,12 +266,4 @@ class SwerveModule:
         # Convert by gear ratio TODO: Is this correct?
         ratioed_rotations = motor_abs_pct_rotated / DriveConstants.TURN_GEAR_RATIO
         return rotationsToDegrees(ratioed_rotations)
-
-    def _calc_drive_effort(self, speed : inches_per_second, open_loop: bool = True) -> percentage:
-        if open_loop:
-            drive_effort = speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
-            drive_effort_clamped = max(min(drive_effort, 1.0), -1.0)
-        else:
-            raise NotImplementedError("Closed loop control not yet implemented")
-        return drive_effort_clamped
 
