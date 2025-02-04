@@ -1,12 +1,9 @@
 import commands2
-import phoenix6
-import wpilib
 import wpimath
-from wpilib import SmartDashboard
-from wpimath.estimator import SwerveDrive4PoseEstimator
+from wpilib import SmartDashboard, Field2d
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds
-from wpimath.units import degrees, radians, meters, inches, metersToInches
+from wpimath.units import metersToInches
 
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
@@ -37,6 +34,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
 
         self.heartbeat = 0
+
+        # Simulation support
+        self.field_sim = Field2d()
+        SmartDashboard.putData('Field', self.field_sim)
+
     # Sets the drive to the given speed and rotation, expressed as percentages
     # of full speed. The speed and rotation values range from -1 to 1.
     # Note that the drive will continue at those values until told otherwise
@@ -106,6 +108,13 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         else:
             cs = ChassisSpeeds(x_speed, y_speed, rot_speed)
         return cs
+
+    def _initialize_odometry(self, kinematics: SwerveDrive4Kinematics) -> SwerveDrive4Odometry:
+        return SwerveDrive4Odometry(
+            kinematics=kinematics,
+            gyroAngle=self.get_drive_angle_rotation2d(),
+            modulePositions=[module.get_position() for module in self.modules]
+        )
 
     def _update_odometry(self):
         self.odometry.update(
