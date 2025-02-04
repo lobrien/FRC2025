@@ -33,17 +33,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.BackLeftModule = self.modules[2]
         self.BackRightModule = self.modules[3]
 
-        # Either brake or coast, depending on motor configuration; we chose brake above.
-        self.brake_request = phoenix6.controls.NeutralOut()
-
-        # Position request starts at position 0, but can be modified later.
-        self.position_request = phoenix6.controls.PositionVoltage(0).with_slot(0)
-
-        # A motion magic (MM) position request. MM smooths the acceleration.
-        self.mm_pos_request = phoenix6.controls.MotionMagicVoltage(0).with_slot(1)
-
         self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
-
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
 
         self.heartbeat = 0
@@ -117,18 +107,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             cs = ChassisSpeeds(x_speed, y_speed, rot_speed)
         return cs
 
-    def _toggle_drive_motors_inverted(self):
-        for module in self.modules:
-            module.toggle_drive_inverted()
-
-    def _initialize_odometry(self, kinematics) -> SwerveDrive4Odometry:
-        module_positions = [module.get_position() for module in self.modules]
-        return SwerveDrive4Odometry(
-            kinematics=kinematics,
-            gyroAngle=self.get_drive_angle_rotation2d(),
-            modulePositions=[module.get_position() for module in self.modules]
-        )
-
     def _update_odometry(self):
         self.odometry.update(
             self.get_drive_angle_rotation2d(),
@@ -142,10 +120,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         [FrontRight, FrontLeft, BackLeft, BackRight]
 
         Returns:
-            list[Translation2d]: List of module positions in meters
+            list[Translation2d]: List of module positions in inches
         """
 
-        # TODO: Is inches correct unit?
+        # Using inches for the module positions
         half_length = metersToInches(DriveConstants.WHEELBASE_HALF_LENGTH)  # Convert to inches
         half_width = metersToInches(DriveConstants.TRACK_HALF_WIDTH)  # Convert to inches
 
