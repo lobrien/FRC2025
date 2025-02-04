@@ -5,15 +5,12 @@ import wpimath
 from wpilib import SmartDashboard, Field2d
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds
-from wpimath.units import metersToInches, inchesToMeters, degreesToRadians
+from wpimath.units import metersToInches, inchesToMeters, degreesToRadians, degrees
 
 # This is for type hinting. You can use these types to make your code more readable and maintainable.
 # There will be a warning (but not an error!) if you try to assign a value of the wrong type to a variable
-inches = NewType("inches", float)
-degrees = NewType("degrees", float)
 inches_per_second = NewType("inches_per_second", float)
 degrees_per_second = NewType("degrees_per_second", float)
-
 
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
@@ -63,7 +60,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
            module.set_turn_angle(desired_angle_degrees)
 
     def get_drive_angle_degrees(self) -> degrees:
-        # Probably from the gyro? Or kinematics? For now, just return the BL module's angle
+        # TODO: Probably from the gyro? Or kinematics? For now, just return the BL module's angle
         return self.BackLeftModule.get_turn_angle_degrees()
 
     def get_drive_angle_rotation2d(self) -> Rotation2d:
@@ -98,8 +95,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
 
-    def drive(self, x_speed : inches_per_second, y_speed : inches_per_second, rot_speed : degrees_per_second) -> None:
-        desatured_module_states = self._speeds_to_states(x_speed, y_speed, rot_speed)
+    def drive(self, x_speed_inches_per_second : inches_per_second, y_speed_inches_per_second : inches_per_second, rot_speed_rotations_per_second: degrees_per_second) -> None:
+        desatured_module_states = self._speeds_to_states(x_speed_inches_per_second, y_speed_inches_per_second, rot_speed_rotations_per_second)
         for module, state in zip(self.modules, desatured_module_states):
             module.set_desired_state(state, True)
 

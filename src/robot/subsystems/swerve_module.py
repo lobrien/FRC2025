@@ -1,4 +1,5 @@
 import math
+from typing import NewType
 
 import wpimath
 from phoenix6.controls import PositionVoltage, NeutralOut
@@ -9,12 +10,15 @@ from phoenix6.signals import InvertedValue, NeutralModeValue
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from wpimath.controller import PIDController
-from wpimath.units import degrees, radians, meters, inches
+from wpimath.units import degrees, radians, meters, inches, meters_per_second
 from wpimath.units import degreesToRadians, radiansToDegrees, metersToInches, inchesToMeters, degreesToRotations, rotationsToDegrees
 
 import wpilib
 
 from constants.driveconstants import DriveConstants
+
+percentage = NewType("percentage", float) # In range -1 to 1
+inches_per_second = NewType("inches_per_second", float) # Used in velocity functions
 
 class SwerveModule:
     def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, offset_rotations:float):
@@ -58,22 +62,22 @@ class SwerveModule:
         # self.PIDController.setPositionPIDWrappingMaxInput(self.TURNING_GEAR_RATIO)
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
-    def set_drive_effort(self, speed_pct):
+    def set_drive_effort(self, speed_pct : percentage):
         self.drive_motor.set(speed_pct)
 
     # Returns percentage of full driving speed (range -1 to 1)
-    def get_drive_effort(self) -> float:
+    def get_drive_effort(self) -> percentage:
         return self.drive_motor.get()
 
     # Sets the turn to the given speed, expressed as a percentage of full speed (range -1 to 1).
-    def set_turn_effort(self, speed_pct):
+    def set_turn_effort(self, speed_pct : percentage):
         self.turn_motor.set(speed_pct)
 
     # Returns percentage of full turning speed (range -1 to 1)
-    def get_turn_effort(self) -> float:
+    def get_turn_effort(self) -> percentage:
         return self.turn_motor.get()
 
-    def velocity_from_effort(self, effort_pct: float) -> float:
+    def velocity_from_effort(self, effort_pct: percentage) -> inches_per_second:
         effort = max(min(effort_pct, 1.0), -1.0)
 
         # Conversion using feed forward
@@ -91,14 +95,14 @@ class SwerveModule:
         return 0.0
 
     # TODO: Is this correct?
-    def set_turn_angle(self, angle_degrees : float):
+    def set_turn_angle(self, angle_degrees : degrees):
         motor_rotation = degreesToRotations(angle_degrees) #translate from degree to rotation for motor
 
         # Position request starts at position 0, but can be modified later.
         self.turn_motor.set_control(self.position_request.with_position(motor_rotation)) # ???
 
     # Returns the current angle of the module in degrees. Range is [-180,180].
-    def get_turn_angle_degrees(self) -> float:
+    def get_turn_angle_degrees(self) -> degrees:
         normalized_rotations = self._get_can_coder_pos_normalized() # Range from 0 to 1
         degrees = normalized_rotations * 360
         # Convert to [-180,180] range
@@ -112,9 +116,11 @@ class SwerveModule:
         Returns:
             Current state (speed and angle)
         """
-        speed : meters = self.get_drive_effort()  # Replace with actual drive velocity in m/s
+        effort : percentage = self.get_drive_effort()  # Replace with actual drive velocity in m/s
+        speed : inches_per_second = self.velocity_from_effort(effort)
+        speed_mps : meters_per_second = inchesToMeters(speed)
         angle = wpimath.geometry.Rotation2d()  # Replace with actual module angle
-        return wpimath.kinematics.SwerveModuleState(speed, angle)
+        return wpimath.kinematics.SwerveModuleState(speed_mps, angle)
 
     # Returns the current position of the module. This is needed by the drive subsystem's kinematics.
     def get_position(self) -> SwerveModulePosition:
@@ -128,28 +134,22 @@ class SwerveModule:
         wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
         wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
 
-    def set_desired_state(self, desired_state: SwerveModuleState, open_loop: bool):
-        # TODO: Check this code, lifted from 2024 code
+    def set_desired_state(self, desired_state: SwerveModuleState, open_loop: bool) -> None:
         current_degrees = self.get_turn_angle_degrees()
-        current_rotation = degreesToRotations(current_degrees)
+        current_rotation = Rotation2d.fromDegrees(current_degrees)
         optimized_state = self._optimize(desired_state, current_rotation)
-        if open_loop:
-            drive_effort = optimized_state.speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
-            self.set_drive_effort(drive_effort)
-        else:
-            raise NotImplementedError("Closed loop control not yet implemented")
 
-        # TODO: Compare 2024's:
-        #turn_count = self._degrees_to_turn_count(optimized_state.angle.degrees())
-        #self.PIDController.setReference(angle, CANSparkLowLevel.ControlType.kPosition)
-        # to:
-        rotations = degreesToRotations(optimized_state.angle.degrees())
-        self.turn_motor.set_control(self.position_request.with_position(rotations))
+        drive_effort = self._calc_drive_effort(optimized_state.speed, open_loop)
+        geared_rotations = self._degrees_to_turn_count(optimized_state.angle.degrees())
+        request = self.position_request.with_position(geared_rotations)
+
+        self.set_drive_effort(drive_effort)
+        self.turn_motor.set_control(request)
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159
 
-    def _configure_turn_motor(self):
+    def _configure_turn_motor(self) -> TalonFXConfiguration:
         configuration = TalonFXConfiguration()
 
         configuration.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
@@ -162,10 +162,12 @@ class SwerveModule:
         # Voltage control mode peak outputs.  I'm only using a reduced voltage
         # for this test because it is an unloaded and barely secured motor.
         # Ordinarily, we would not change the default value, which is 16V.
+        configuration.voltage.peak_forward_voltage = 6  # Peak output voltage of 6V.
+        configuration.voltage.peak_reverse_voltage = -6  # And likewise for reverse.
 
         return configuration
 
-    def _configure_drive_motor(self):
+    def _configure_drive_motor(self) -> TalonFXConfiguration:
         configuration = TalonFXConfiguration()
 
         configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
@@ -180,7 +182,7 @@ class SwerveModule:
         # Ordinarily, we would not change the default value, which is 16V.
         return configuration
 
-    def _configure_cancoder(self, offset:float):  #Mostly for configuring offsets
+    def _configure_cancoder(self, offset:float) -> CANcoderConfiguration:  #Mostly for configuring offsets
         configuration = CANcoderConfiguration()
 
         # configuration.magnet_sensor(offset)
@@ -188,7 +190,7 @@ class SwerveModule:
         return configuration
 
     # Returns the CANCoder's current position as a percentage of full rotation (range [0,1]).
-    def _get_can_coder_pos_normalized(self) -> float: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
+    def _get_can_coder_pos_normalized(self) -> percentage: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
         can_coder_abs_pos = self.can_coder.get_absolute_position().value
         can_coder_offset = can_coder_abs_pos - degreesToRotations(self.rotation_offset_degrees)
         normalized = can_coder_offset % 1.0
@@ -196,11 +198,34 @@ class SwerveModule:
     # Per
     def _max_velocity_inches_per_second(self) -> inches:
         free_speed_inches_per_second = metersToInches(DriveConstants.FREE_SPEED)
+        return free_speed_inches_per_second
 
-    def _optimize(self, desired_state: SwerveModuleState, current_rotation: float) -> SwerveModuleState:
-        target_angle = desired_state.angle.degrees()
+    def _place_in_appropriate0_to360_scope(self, scope_reference_degrees: degrees, new_angle_degrees: degrees) -> degrees:
+        '''Place the new_angle_degrees in the range that is a multiple of [0,360] that is closest
+           to the scope_reference.
+        '''
+        lower_offset = scope_reference_degrees % 360  # Modulo (remainder) is always positive when divisor (360) is positive.
+        lower_bound = scope_reference_degrees - lower_offset
+        upper_bound = lower_bound + 360
+
+        # Adjust the new_angle_degrees to fit between the bounds.
+        while new_angle_degrees < lower_bound:
+            new_angle_degrees += 360
+        while new_angle_degrees > upper_bound:
+            new_angle_degrees -= 360
+
+        # Adjust new_angle_degrees more to make sure it is within 180 degrees of the reference.
+        if new_angle_degrees - scope_reference_degrees > 180:
+            new_angle_degrees -= 360
+        elif new_angle_degrees - scope_reference_degrees < -180:
+            new_angle_degrees += 360
+
+        return new_angle_degrees
+
+    def _optimize(self, desired_state: SwerveModuleState, current_rotation: Rotation2d) -> SwerveModuleState:
+        target_angle = self._place_in_appropriate0_to360_scope(current_rotation.degrees(), desired_state.angle.degrees())
         target_speed = desired_state.speed
-        delta_degrees = target_angle - rotationsToDegrees(current_rotation)
+        delta_degrees = target_angle - current_rotation.degrees()
 
         if abs(delta_degrees) > 90:
             optimized_target_speed = -target_speed
@@ -216,6 +241,29 @@ class SwerveModule:
 
         return SwerveModuleState(optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle))
 
-    def _degrees_to_turn_count(self, degrees: float) -> float:
+    def _degrees_to_turn_count(self, degrees: degrees) -> float:
         rotations = degreesToRotations(degrees)
         return rotations * DriveConstants.TURN_GEAR_RATIO
+
+    def _get_turn_angle_from_cancoder(self) -> degrees:
+        cancoder_abs_pos = self.can_coder.get_absolute_position().value
+        cancoder_offset_pos = cancoder_abs_pos - degreesToRotations(self.rotation_offset_degrees)
+        return rotationsToDegrees(cancoder_offset_pos)
+
+    def _get_turn_angle_from_motor(self) -> degrees:
+        # PositionVoltage.get_position() returns a value in full rotations
+        motor_abs_rotations = self.turn_motor.get_position().value
+        # We're only interested in the fractional part
+        motor_abs_pct_rotated = motor_abs_rotations % 1.0
+        # Convert by gear ratio TODO: Is this correct?
+        ratioed_rotations = motor_abs_pct_rotated / DriveConstants.TURN_GEAR_RATIO
+        return rotationsToDegrees(ratioed_rotations)
+
+    def _calc_drive_effort(self, speed : inches_per_second, open_loop: bool = True) -> percentage:
+        if open_loop:
+            drive_effort = speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+            drive_effort_clamped = max(min(drive_effort, 1.0), -1.0)
+        else:
+            raise NotImplementedError("Closed loop control not yet implemented")
+        return drive_effort_clamped
+

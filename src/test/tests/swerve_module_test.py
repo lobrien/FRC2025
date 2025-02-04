@@ -6,183 +6,227 @@ from wpimath.kinematics import SwerveModuleState
 from constants.driveconstants import DriveConstants
 from subsystems.swerve_module import SwerveModule
 
-class SwerveModuleTest(unittest.TestCase):
-    def test_get_turn_angle_degrees(self):
-        test_module = SwerveModule("TestModule", 1, 2, 3, offset_rotations=0)
-        self.assertIsNotNone(test_module)\
 
+class SwerveModuleTests(unittest.TestCase):
+    def setUp(self):
+        """Set up test fixtures before each test method."""
+        self.test_module = SwerveModule("TestModule", 1, 2, 3, offset_rotations=0)
+
+    def _normalize_angle(self, rotation):
+        """Convert rotation [0,1] to degrees in range (-180,180]"""
+        degrees = rotation * 360.0
+        # Normalize to (-180,180]
+        degrees = (degrees + 180) % 360 - 180
+        return degrees
+
+    def test_basic_turn_angles(self):
+        """Test basic turn angle calculations without offset."""
         angles_for_positions = {
-            0 : 0,
-            0.25 : 90,
-            0.49999 : 179.9964,
-            0.5 : 180,
-            0.50001 : -179.9964,
-            0.75 : -90,
+            0: 0,  # 0 degrees
+            0.25: 90,  # 0.25 rotations = 90 degrees
+            0.5: 180,  # 0.5 rotations = 180 degrees
+            0.75: -90,  # 0.75 rotations = 270 -> -90 degrees
+            0.125: 45,  # 0.125 rotations = 45 degrees
+            0.375: 135,  # 0.375 rotations = 135 degrees
+            0.625: -135,  # 0.625 rotations = 225 -> -135 degrees
+            0.875: -45,  # 0.875 rotations = 315 -> -45 degrees
         }
-        for rotation, angle in angles_for_positions.items():
-            # Mock the can_coder
-            test_module._get_can_coder_pos_normalized = lambda: rotation
-            angle_in_degrees = test_module.get_turn_angle_degrees()
-            self.assertAlmostEqual(angle, angle_in_degrees)
+        for rotation, expected_angle in angles_for_positions.items():
+            with self.subTest(rotation=rotation, expected_angle=expected_angle):
+                self.test_module._get_can_coder_pos_normalized = lambda: rotation
+                actual_angle = self.test_module.get_turn_angle_degrees()
+                self.assertAlmostEqual(
+                    expected_angle,
+                    actual_angle,
+                    places=3,
+                    msg=f"Failed at rotation={rotation}, expected={expected_angle}°, got={actual_angle}°"
+                )
 
-    def test_get_turn_angle_degrees_with_rotational_offset(self):
-        # Test with different rotational offsets
+    def test_turn_angles_with_offset(self):
+        """Test turn angle calculations with various rotational offsets."""
         test_cases = [
-            # format: (offset_rotations, cancoder_reading, expected_angle)
-            (0, 0.0, 0),  # No offset case
-            (0, 0.25, 90),  # No offset, quarter turn
-            (0, 0.5, 180),  # No offset, half turn
-            (0, 0.75, -90),  # No offset, three-quarter turn
+            # (offset_rotations, cancoder_reading, expected_angle)
+            # For each test case:
+            # true_angle = cancoder_reading * 360
+            # normalized_angle = normalize(true_angle) to (-180,180]
 
-            (0.25, 0.25, 0),  # 90° offset (0.25), reading at offset position
-            (0.25, 0.5, 90),  # 90° offset, quarter turn from offset
-            (0.25, 0.75, 180),  # 90° offset, half turn from offset
-            (0.25, 0.0, -90),  # 90° offset, three-quarter turn from offset
+            # No offset (offset = 0.0)
+            (0.0, 0.0, 0),  # 0.0 * 360 = 0°
+            (0.0, 0.25, 90),  # 0.25 * 360 = 90°
+            (0.0, 0.5, 180),  # 0.5 * 360 = 180°
+            (0.0, 0.75, -90),  # 0.75 * 360 = 270° -> -90°
 
-            (0.5, 0.5, 0),  # 180° offset (0.5), reading at offset position
-            (0.5, 0.75, 90),  # 180° offset, quarter turn from offset
-            (0.5, 0.0, 180),  # 180° offset, half turn from offset
-            (0.5, 0.25, -90),  # 180° offset, three-quarter turn from offset
+            # 90° offset (offset = 0.25)
+            (0.25, 0.0, 0),  # 0.0 * 360 = 0°
+            (0.25, 0.25, 90),  # 0.25 * 360 = 90°
+            (0.25, 0.5, 180),  # 0.5 * 360 = 180°
+            (0.25, 0.75, -90),  # 0.75 * 360 = 270° -> -90°
 
-            (0.75, 0.75, 0),  # -90° offset (0.75), reading at offset position
-            (0.75, 0.0, 90),  # -90° offset, quarter turn from offset
-            (0.75, 0.25, 180),  # -90° offset, half turn from offset
-            (0.75, 0.5, -90),  # -90° offset, three-quarter turn from offset
+            # 180° offset (offset = 0.5)
+            (0.5, 0.0, 0),  # 0.0 * 360 = 0°
+            (0.5, 0.25, 90),  # 0.25 * 360 = 90°
+            (0.5, 0.5, 180),  # 0.5 * 360 = 180°
+            (0.5, 0.75, -90),  # 0.75 * 360 = 270° -> -90°
+
+            # 270° offset (offset = 0.75)
+            (0.75, 0.0, 0),  # 0.0 * 360 = 0°
+            (0.75, 0.25, 90),  # 0.25 * 360 = 90°
+            (0.75, 0.5, 180),  # 0.5 * 360 = 180°
+            (0.75, 0.75, -90),  # 0.75 * 360 = 270° -> -90°
         ]
 
-        for offset_degrees, cancoder_reading, expected_angle in test_cases:
-            # Create module with the test offset
-            test_module = SwerveModule("TestModule", 1, 2, 3, offset_rotations=offset_degrees)
+        for offset, reading, expected in test_cases:
+            with self.subTest(offset=offset, reading=reading, expected=expected):
+                # Create new module with test offset
+                test_module = SwerveModule("TestModule", 1, 2, 3, offset_rotations=offset)
+                test_module._get_can_coder_pos_normalized = lambda: reading
+                actual = test_module.get_turn_angle_degrees()
 
-            # Mock the cancoder reading
-            def get_pos(r=cancoder_reading):
-                class Position:
-                    value = r
+                self.assertAlmostEqual(
+                    expected,
+                    actual,
+                    places=2,
+                    msg=f"Failed with offset={offset}, reading={reading}, expected={expected}°, got={actual}°"
+                )
 
-                return Position()
+    def test_optimization_cases(self):
+        """Test various cases for swerve module state optimization."""
+        test_cases = [
+            # (current_rotation, desired_speed, desired_angle, expected_speed, expected_angle)
+            # Small angle case
+            (0.0, 1.0, 45.0, 1.0, 45.0),
+            # Minimal angle difference
+            (0.0, 1.0, 1.0, 1.0, 1.0),
+            # Large positive angle case
+            (0.0, 1.0, 135.0, -1.0, -45.0),
+            # Large negative angle case
+            (0.5, 1.0, 0.0, -1.0, 180.0),
+            # Edge case at 90 degrees
+            (0.0, 1.0, 90.0, 1.0, 90.0),
+            # Edge case at -90 degrees
+            (0.0, 1.0, -90.0, 1.0, -90.0),
+            # Zero speed case
+            (0.0, 0.0, 180.0, 0.0, 0.0),
+            # Near 180 boundary case
+            (0.0, 1.0, 179.0, -1.0, -1.0)
+        ]
 
-            test_module.can_coder.get_absolute_position = get_pos
+        for current_rot, des_speed, des_angle, exp_speed, exp_angle in test_cases:
+            with self.subTest(current_rotation=current_rot, desired_angle=des_angle):
+                desired_state = SwerveModuleState(des_speed, Rotation2d.fromDegrees(des_angle))
+                result = self.test_module._optimize(desired_state, Rotation2d.fromRotations(current_rot))
 
-            # Get the actual angle
-            actual_angle = test_module.get_turn_angle_degrees()
+                self.assertAlmostEqual(
+                    result.speed,
+                    exp_speed,
+                    msg=f"Speed mismatch: expected {exp_speed}, got {result.speed}"
+                )
+                self.assertAlmostEqual(
+                    result.angle.degrees(),
+                    exp_angle,
+                    msg=f"Angle mismatch: expected {exp_angle}, got {result.angle.degrees()}"
+                )
 
-            # Assert they match, with helpful error message
-            self.assertAlmostEqual(
-                expected_angle,
-                actual_angle,
-                places=2,
-                msg=f"Failed with offset={offset_degrees}°, "
-                    f"cancoder={cancoder_reading}, "
-                    f"expected={expected_angle}°, "
-                    f"got={actual_angle}°"
-            )
+    def test_turn_count_conversion(self):
+        """Test conversion between degrees and turn counts."""
+        test_cases = [
+            (0.0, 0.0),  # Zero degrees
+            (360.0, DriveConstants.TURN_GEAR_RATIO),  # Full rotation
+            (180.0, DriveConstants.TURN_GEAR_RATIO / 2),  # Half rotation
+            (90.0, DriveConstants.TURN_GEAR_RATIO / 4),  # Quarter rotation
+            (-360.0, -DriveConstants.TURN_GEAR_RATIO),  # Negative full rotation
+            (720.0, 2 * DriveConstants.TURN_GEAR_RATIO),  # Multiple rotations
+            (45.0, (45.0 / 360.0) * DriveConstants.TURN_GEAR_RATIO),  # Arbitrary angle
+            (-45.0, (-45.0 / 360.0) * DriveConstants.TURN_GEAR_RATIO),  # Negative arbitrary angle
+            (0.5, (0.5 / 360.0) * DriveConstants.TURN_GEAR_RATIO),  # Small angle
+        ]
 
-class TestSwerveModuleOptimization(unittest.TestCase):
-    def setUp(self):
-        # Create instance of the class containing the optimize method
-        self.swerve_module = SwerveModule("TestModule", 1, 2, 3, 0)  # Replace with your actual class name
+        for degrees, expected_count in test_cases:
+            with self.subTest(degrees=degrees):
+                result = self.test_module._degrees_to_turn_count(degrees)
+                self.assertAlmostEqual(
+                    result,
+                    expected_count,
+                    msg=f"Failed converting {degrees}° to turn count. Expected {expected_count}, got {result}"
+                )
 
-    def test_small_angle_no_optimization(self):
-        """Test when angle difference is small, no optimization needed"""
-        current_rotation = 0.0  # 0 degrees
-        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(45.0))
+    def test_place_in_appropriate_scope_basic(self):
+     """Test basic cases for placing angles in appropriate scope."""
+     test_cases = [
+         # (reference, angle, expected)
+         (0, 0, 0),        # Same angle
+         (0, 90, 90),      # Basic positive
+         (0, -90, -90),    # Basic negative
+         (0, 180, 180),    # Edge case
+         (0, -180, 180),  # Negative edge case
 
-        result = self.swerve_module._optimize(desired_state, current_rotation)
+         # Reference at 90
+         (90, 0, 0),
+         (90, 180, 180),
+         (90, 270, 270),
 
-        self.assertAlmostEqual(result.speed, 1.0)
-        self.assertAlmostEqual(result.angle.degrees(), 45.0)
+         # Reference at 180
+         (180, 0, 0),
+         (180, 90, 90),
+         (180, 270, 270),
+     ]
+     for ref, angle, expected in test_cases:
+         with self.subTest(reference=ref, angle=angle):
+             result = self.test_module._place_in_appropriate0_to360_scope(ref, angle)
+             self.assertAlmostEqual(expected, result)
 
-    def test_large_positive_angle_optimization(self):
-        """Test when angle difference is > 90 degrees positive"""
-        current_rotation = 0.0  # 0 degrees
-        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(135.0))
+    def test_place_in_appropriate_scope_wrapping(self):
+     """Test wrapping behavior for placing angles in scope."""
+     test_cases = [
+         # (reference, angle, expected)
+         # Wrapping with reference at 0
+         (0, 361, 1),       # Just over one rotation
+         (0, 721, 1),       # Just over two rotations
+         (0, -361, -1),     # Just over negative one rotation
+         (0, -721, -1),     # Just over negative two rotations
 
-        result = self.swerve_module._optimize(desired_state, current_rotation)
+         # Wrapping with reference at 180
+         (180, 540, 180),   # 540 = 180   360
+         (180, -180, 180),  # Staying at 180 is ok
+         (180, 900, 180),   # Multiple rotations
 
-        # Should optimize to -45 degrees with negative speed
-        self.assertAlmostEqual(result.speed, -1.0)
-        self.assertAlmostEqual(result.angle.degrees(), -45.0)
+         # Reference at arbitrary angle (45)
+         (45, 405, 45),     # One rotation   reference
+         (45, -315, 45),    # Negative wrap to reference
+     ]
+     for ref, angle, expected in test_cases:
+         with self.subTest(reference=ref, angle=angle):
+             result = self.test_module._place_in_appropriate0_to360_scope(ref, angle)
+             self.assertAlmostEqual(expected, result)
 
-    def test_large_negative_angle_optimization(self):
-        """Test when angle difference is > 90 degrees negative"""
-        current_rotation = 0.5  # 180 degrees
-        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(0.0))
+    def test_place_in_appropriate_scope_180_boundary(self):
+     """Test behavior near the 180-degree boundary."""
+     test_cases = [
+         # (reference, angle, expected)
+         # Reference at 0
+         (0, 179, 179),      # Just under 180
+         (0, -179, -179),    # Just under -180
+         (0, -181, 179),     # Just under -180, should wrap
+         (0, 180, 180),      # Exactly 180 should stay positive
 
-        result = self.swerve_module._optimize(desired_state, current_rotation)
+         # Reference at 90
+         (90, 269, 269),     # 179 degrees from reference
+         (90, 271, -89),     # 181 degrees from reference, should wrap
+         (90, 270, 270),     # Exactly 180 from reference
 
-        # Should optimize to 180 degrees with negative speed
-        self.assertAlmostEqual(result.speed, -1.0)
-        self.assertAlmostEqual(result.angle.degrees(), 180.0)
-
-    def test_edge_case_90_degrees(self):
-        """Test the edge case of exactly 90 degrees difference"""
-        current_rotation = 0.0  # 0 degrees
-        desired_state = SwerveModuleState(1.0, Rotation2d.fromDegrees(90.0))
-
-        result = self.swerve_module._optimize(desired_state, current_rotation)
-
-        # Should not optimize as it's exactly 90 degrees
-        self.assertAlmostEqual(result.speed, 1.0)
-        self.assertAlmostEqual(result.angle.degrees(), 90.0)
-
-    def test_zero_speed(self):
-        """Test optimization with zero speed"""
-        current_rotation = 0.0
-        desired_state = SwerveModuleState(0.0, Rotation2d.fromDegrees(180.0))
-
-        result = self.swerve_module._optimize(desired_state, current_rotation)
-
-        # Speed should remain zero, angle should optimize
-        self.assertAlmostEqual(result.speed, 0.0)
-        self.assertAlmostEqual(result.angle.degrees(), 0.0)
-
-
-class TestTurnConversion(unittest.TestCase):
-    def setUp(self):
-        # Create instance of the class containing the degrees_to_turn_count method
-        self.swerve_module = SwerveModule("TestSwerve", 1, 2, 3, 0)  # Replace with your actual class name
-
-    def test_zero_degrees(self):
-        """Test conversion of 0 degrees"""
-        result = self.swerve_module._degrees_to_turn_count(0.0)
-        self.assertAlmostEqual(result, 0.0)
-
-    def test_full_rotation(self):
-        """Test conversion of 360 degrees (full rotation)"""
-        result = self.swerve_module._degrees_to_turn_count(360.0)
-        # One full rotation * gear ratio
-        self.assertAlmostEqual(result, DriveConstants.TURN_GEAR_RATIO)
-
-    def test_half_rotation(self):
-        """Test conversion of 180 degrees (half rotation)"""
-        result = self.swerve_module._degrees_to_turn_count(180.0)
-        # Half rotation * gear ratio
-        self.assertAlmostEqual(result, DriveConstants.TURN_GEAR_RATIO / 2)
-
-    def test_quarter_rotation(self):
-        """Test conversion of 90 degrees (quarter rotation)"""
-        result = self.swerve_module._degrees_to_turn_count(90.0)
-        # Quarter rotation * gear ratio
-        self.assertAlmostEqual(result, DriveConstants.TURN_GEAR_RATIO / 4)
-
-    def test_negative_rotation(self):
-        """Test conversion of -360 degrees (negative full rotation)"""
-        result = self.swerve_module._degrees_to_turn_count(-360.0)
-        # Negative one full rotation * gear ratio
-        self.assertAlmostEqual(result, -DriveConstants.TURN_GEAR_RATIO)
-
-    def test_multiple_rotations(self):
-        """Test conversion of 720 degrees (two full rotations)"""
-        result = self.swerve_module._degrees_to_turn_count(720.0)
-        # Two full rotations * gear ratio
-        self.assertAlmostEqual(result, 2 * DriveConstants.TURN_GEAR_RATIO)
-
-    def test_arbitrary_angle(self):
-        """Test conversion of an arbitrary angle (45 degrees)"""
-        result = self.swerve_module._degrees_to_turn_count(45.0)
-        # 45/360 rotation * gear ratio
-        expected = (45.0 / 360.0) * DriveConstants.TURN_GEAR_RATIO
-        self.assertAlmostEqual(result, expected)
+         # Reference at 180
+         (180, 359, 359),    # 179 degrees from reference
+         (180, 361, 1),      # 181 degrees from reference, should wrap
+         (180, 0, 0)
+     ]
+     for ref, angle, expected in test_cases:
+         with self.subTest(reference=ref, angle=angle):
+             result = self.test_module._place_in_appropriate0_to360_scope(ref, angle)
+             self.assertAlmostEqual(
+                 expected,
+                 result,
+                 msg=f"Failed with reference={ref}°, angle={angle}°. Expected {expected}°, got {result}°"
+             )
 
 if __name__ == '__main__':
     unittest.main()
