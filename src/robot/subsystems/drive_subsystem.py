@@ -4,8 +4,9 @@ import commands2
 import wpimath
 from wpilib import SmartDashboard, Field2d
 from wpimath.geometry import Rotation2d
-from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds
+from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds, SwerveModuleState
 from wpimath.units import metersToInches, inchesToMeters, degreesToRadians, degrees
+from phoenix6.hardware.pigeon2 import Pigeon2
 
 # This is for type hinting. You can use these types to make your code more readable and maintainable.
 # There will be a warning (but not an error!) if you try to assign a value of the wrong type to a variable
@@ -26,6 +27,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def __init__(self):
         super().__init__()  # Allows the class to call parent class
 
+        # Create a swerve module for each corner.
         self.modules = [
             SwerveModule("FrontRight",DriveConstants.DRIVE_FR, DriveConstants.TURN_FR, DriveConstants.CAN_FR, DriveConstants.FR_OFFSET),
             SwerveModule("FrontLeft",DriveConstants.DRIVE_FL, DriveConstants.TURN_FL, DriveConstants.CAN_FL, DriveConstants.FL_OFFSET),
@@ -37,14 +39,24 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.BackLeftModule = self.modules[2]
         self.BackRightModule = self.modules[3]
 
+        # Initialize kinematics (equations of motion) and odometry (where are we on the field?)
         self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
+
+        # Gyro to determine robot heading (the direction it is pointed).
+        # TODO: uncomment when pigeon ID is known, here and in get_heading_degrees().
+        # self.gyro = Pigeon2(DriveConstants.PIGEON_ID)
+        # self.gyro.set_yaw(0.0) # Assumes that the robot is facing in the same direction as the driver at the start.
 
         self.heartbeat = 0
 
         # Simulation support
         self.field_sim = Field2d()
         SmartDashboard.putData('Field', self.field_sim)
+
+    #--------------------------------------
+    # Public methods for debugging, but not production
+    #--------------------------------------
 
     # Sets the drive to the given speed and rotation, expressed as percentages
     # of full speed. The speed and rotation values range from -1 to 1.
@@ -59,12 +71,25 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
            module.set_turn_angle(desired_angle_degrees)
 
-    def get_drive_angle_degrees(self) -> degrees:
-        # TODO: Probably from the gyro? Or kinematics? For now, just return the BL module's angle
+    def get_heading_degrees(self) -> degrees:
+        """
+        Gets the heading of the robot (direction it is pointing) in degrees.
+        CCW is positive.
+        """
+        # TODO: From the gyro. For now, just return the BL module's angle
+        # return self.gyro.get_yaw().value
         return self.BackLeftModule.get_turn_angle_degrees()
 
-    def get_drive_angle_rotation2d(self) -> Rotation2d:
-        return Rotation2d.fromDegrees(self.get_drive_angle_degrees())
+    def get_heading_rotation2d(self) -> Rotation2d:
+        """
+        Gets the heading of the robot (direction it is pointing) as a Rotation2D.
+        CCW is positive.
+        """
+        return Rotation2d.fromDegrees(self.get_heading_degrees())
+
+    #--------------------------------------
+    # Public methods
+    #--------------------------------------
 
     # This periodic function is called every 20ms during the robotPeriodic phase
     # *in all modes*. It is called automatically by the Commands2 framework.
@@ -74,7 +99,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         # Update the odometry
         positions = [module.get_position() for module in self.modules]
-        self.odometry.update(self.get_drive_angle_rotation2d(), tuple(positions))
+        self.odometry.update(self.get_heading_rotation2d(), tuple(positions))
 
         #Update the dashboard
         pose = self.odometry.getPose()
@@ -98,10 +123,20 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def drive(self, x_speed_inches_per_second : inches_per_second, y_speed_inches_per_second : inches_per_second, rot_speed_rotations_per_second: degrees_per_second) -> None:
         desatured_module_states = self._speeds_to_states(x_speed_inches_per_second, y_speed_inches_per_second, rot_speed_rotations_per_second)
         for module, state in zip(self.modules, desatured_module_states):
-            module.set_desired_state(state, True)
+            module.set_desired_state(state)
 
     def get_pose(self) -> wpimath.geometry.Pose2d:
         return self.odometry.getPose()
+
+    #--------------------------------------
+    # Private methods to compute module states
+    #--------------------------------------
+
+    def _speeds_to_states(self, x_speed : inches_per_second, y_speed : inches_per_second, rot_speed : degrees_per_second) -> list[SwerveModuleState]:
+        chassis_speeds = self._get_chassis_speeds(x_speed_inches_per_second=x_speed, y_speed_inches_per_second=y_speed, rot_speed=rot_speed, field_relative=True)
+        swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
+        desatured_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, inchesToMeters(DriveConstants.MAX_SPEED_INCHES_PER_SECOND))
+        return desatured_module_states
 
     def _get_chassis_speeds(self, x_speed_inches_per_second: inches_per_second, y_speed_inches_per_second:  inches_per_second, rot_speed_degrees_per_second: degrees_per_second, field_relative: bool = True) -> ChassisSpeeds:
         # ChassisSpeeds expects meters and radians
@@ -109,23 +144,27 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
         if field_relative:
-            cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians, self.get_drive_angle_rotation2d())
+            cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians, self.get_heading_rotation2d())
         else:
             cs = ChassisSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians)
         return cs
 
+    #--------------------------------------
+    # Private methods for initialization
+    #--------------------------------------
+
     def _initialize_odometry(self, kinematics: SwerveDrive4Kinematics) -> SwerveDrive4Odometry:
         return SwerveDrive4Odometry(
             kinematics=kinematics,
-            gyroAngle=self.get_drive_angle_rotation2d(),
+            gyroAngle=self.get_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules]
         )
 
-    def _update_odometry(self):
-        self.odometry.update(
-            self.get_drive_angle_rotation2d(),
-            tuple([module.get_position() for module in self.modules])
-        )
+    # def _update_odometry(self):
+    #     self.odometry.update(
+    #         self.get_heading_rotation2d(),
+    #         tuple([module.get_position() for module in self.modules])
+    #     )
 
     def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
         """
@@ -154,10 +193,4 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         ]
 
         return translations
-
-    def _speeds_to_states(self, x_speed : inches_per_second, y_speed : inches_per_second, rot_speed : degrees_per_second) -> list[SwerveModule.State]:
-        chassis_speeds = self._get_chassis_speeds(x_speed_inches_per_second=x_speed, y_speed_inches_per_second=y_speed, rot_speed=rot_speed, field_relative=True)
-        swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
-        desatured_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, DriveConstants.MAX_SPEED_INCHES_PER_SECOND)
-        return desatured_module_states
 

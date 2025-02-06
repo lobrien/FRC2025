@@ -4,13 +4,13 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class DriveConstants:
     """ Drivetrain related constants"""
-    #CAN bus IDs
+    # CANCoder CAN bus IDs
     CAN_FR = 11 # Front right        
     CAN_FL = 8 # Front left         
     CAN_BL = 5 # Back left           
     CAN_BR = 2 # Back right         
 
-    #offsets in rotations
+    # CANCoder (magnet) offsets in rotations
     BR_OFFSET = 0.454
     BL_OFFSET = -0.306
     FR_OFFSET = -0.450
@@ -26,6 +26,10 @@ class DriveConstants:
     TURN_FL = 7 # Front left 
     TURN_BL = 4 # Back left
     TURN_BR = 1 # Back right
+
+    # Pigeon2 gyro CAN bus ID
+    # TODO: replace with correct ID.
+    PIGEON_ID = 0
 
     # Drivetrain geometry, gearing, etc.
     TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)   #TODO: Double check these values 1/27/25
@@ -57,6 +61,6 @@ class DriveConstants:
     # ROT_MAX_A = 0.1   # Rotational maximum acceleration
     # ROT_POS_TOL = 0.1 # Rotational position tolerance
     # ROT_VEL_TOL = 0.1 # Rotational velocity tolerance
-    SWERVE_MODULE_TURN_PID_KP = 0.3 # TODO: This is just what it was in 2024 CrescendoSwerveModule.py line 81
-    SWERVE_MODULE_TURN_PID_KI = 0.0
-    SWERVE_MODULE_TURN_PID_KD = 0.0
+    # SWERVE_MODULE_TURN_PID_KP = 0.3 # TODO: This is just what it was in 2024 CrescendoSwerveModule.py line 81
+    # SWERVE_MODULE_TURN_PID_KI = 0.0
+    # SWERVE_MODULE_TURN_PID_KD = 0.0
