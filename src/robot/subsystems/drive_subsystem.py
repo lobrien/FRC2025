@@ -71,6 +71,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
            module.set_turn_angle(desired_angle_degrees)
 
+    #--------------------------------------
+    # Public methods to get status
+    #--------------------------------------
+
     def get_heading_degrees(self) -> degrees:
         """
         Gets the heading of the robot (direction it is pointing) in degrees.
@@ -87,8 +91,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         """
         return Rotation2d.fromDegrees(self.get_heading_degrees())
 
+    def get_pose(self) -> wpimath.geometry.Pose2d:
+        return self.odometry.getPose()
+
     #--------------------------------------
-    # Public methods
+    # Public methods for core functionality
     #--------------------------------------
 
     # This periodic function is called every 20ms during the robotPeriodic phase
@@ -120,20 +127,25 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
 
-    def drive(self, x_speed_inches_per_second : inches_per_second, y_speed_inches_per_second : inches_per_second, rot_speed_rotations_per_second: degrees_per_second) -> None:
-        desatured_module_states = self._speeds_to_states(x_speed_inches_per_second, y_speed_inches_per_second, rot_speed_rotations_per_second)
+    def drive(self, x_speed_inches_per_second : inches_per_second, y_speed_inches_per_second : inches_per_second, rot_speed_degrees_per_second: degrees_per_second) -> None:
+        """
+        The main method to use to command the drive system.  Uses field-relative
+        directions from the human operator's perspective, assuming the robot 
+        was initialized while facing the same direction as the driver/operator.
+        :param x_speed_inches_per_second:    Speed forward (away from the driver)
+        :param x_speed_inches_per_second:    Speed to the left (from the driver's perspective)
+        :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
+        """
+        desatured_module_states = self._speeds_to_states(x_speed_inches_per_second, y_speed_inches_per_second, rot_speed_degrees_per_second)
         for module, state in zip(self.modules, desatured_module_states):
             module.set_desired_state(state)
-
-    def get_pose(self) -> wpimath.geometry.Pose2d:
-        return self.odometry.getPose()
 
     #--------------------------------------
     # Private methods to compute module states
     #--------------------------------------
 
     def _speeds_to_states(self, x_speed : inches_per_second, y_speed : inches_per_second, rot_speed : degrees_per_second) -> list[SwerveModuleState]:
-        chassis_speeds = self._get_chassis_speeds(x_speed_inches_per_second=x_speed, y_speed_inches_per_second=y_speed, rot_speed=rot_speed, field_relative=True)
+        chassis_speeds = self._get_chassis_speeds(x_speed_inches_per_second=x_speed, y_speed_inches_per_second=y_speed, rot_speed_degrees_per_second=rot_speed, field_relative=True)
         swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
         desatured_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, inchesToMeters(DriveConstants.MAX_SPEED_INCHES_PER_SECOND))
         return desatured_module_states
