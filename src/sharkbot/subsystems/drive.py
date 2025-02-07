@@ -94,8 +94,7 @@ class DriveSubsystem(commands2.Subsystem):
         self.front_right_encoder.setPosition(0.0)
         self.back_left_encoder.setPosition(0.0)
         self.back_right_encoder.setPosition(0.0)
->>>>>>> 0cc33288cbd44d49f96bd9e910daf77f714e134e
-
+        
         # ---------------------------------------------------------------------
         # Set up odometry, that is figuring out how far we have driven. Example:
         # https://github.com/robotpy/examples/blob/main/MecanumBot/drivetrain.py
