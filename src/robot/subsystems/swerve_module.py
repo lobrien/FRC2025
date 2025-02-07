@@ -16,7 +16,16 @@ import wpilib
 from constants.driveconstants import DriveConstants
 
 class SwerveModule:
-    def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, rotation_offset:float):
+    def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, offset_rotations:float):
+        """
+
+        :param name:
+        :param drive_motor_bus_id:
+        :param turn_motor_bus_id:
+        :param cancoder_bus_id:
+        :param offset_rotations: Range is [-1,1] and is in rotations, not degrees
+        """
+
         # Needed for outputting to NetworkTables in periodic() fn
         self.name = name
         self.drive_motor = TalonFX(drive_motor_bus_id)
@@ -34,14 +43,14 @@ class SwerveModule:
         self.position_request = PositionVoltage(0).with_slot(0)
 
         #rotation_offset is CANcoder offset
-        self.rotation_offset_degrees = rotationsToDegrees(rotation_offset)
+        self.rotation_offset_degrees = rotationsToDegrees(offset_rotations)
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
     def set_drive_effort(self, speed_pct):
         self.drive_motor.set(speed_pct)
 
     # Returns percentage of full driving speed (range -1 to 1)
-    def get_drive_effort(self):
+    def get_drive_effort(self) -> float:
         return self.drive_motor.get()
 
     # Sets the turn to the given speed, expressed as a percentage of full speed (range -1 to 1).
@@ -49,10 +58,10 @@ class SwerveModule:
         self.turn_motor.set(speed_pct)
 
     # Returns percentage of full turning speed (range -1 to 1)
-    def get_turn_effort(self):
+    def get_turn_effort(self) -> float:
         return self.turn_motor.get()
 
-    def velocity_from_effort(self, effort_pct):
+    def velocity_from_effort(self, effort_pct: float) -> float:
         effort = max(min(effort_pct, 1.0), -1.0)
 
         # Conversion using feed forward
@@ -76,10 +85,13 @@ class SwerveModule:
         # Position request starts at position 0, but can be modified later.
         self.turn_motor.set_control(self.position_request.with_position(motor_rotation)) # ???
 
-    # Returns the current angle of the module in degrees.
+    # Returns the current angle of the module in degrees. Range is [-180,180].
     def get_turn_angle_degrees(self) -> float:
         normalized_rotations = self._get_can_coder_pos_normalized() # Range from 0 to 1
         degrees = normalized_rotations * 360
+        # Convert to [-180,180] range
+        if degrees > 180:
+            degrees = degrees - 360
         return degrees
 
     def get_state(self) -> SwerveModuleState:
@@ -100,11 +112,9 @@ class SwerveModule:
         # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
         return SwerveModulePosition(distance, angle)
 
-
     def periodic(self):
-        module_name = f"Module @ Bus {self.name}"
-        wpilib.SmartDashboard.putString(f"{module_name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
-        wpilib.SmartDashboard.putString(f"{module_name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
+        wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
+        wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159

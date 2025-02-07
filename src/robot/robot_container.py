@@ -34,32 +34,16 @@ class RobotContainer:
 
         self.teleop_command = TurnToAngleCommand(self.drive_subsystem, lambda: True)
 
-        #DriveWithJoystickCommand(self.drive_subsystem, drive_percent_fn=self.get_drive_value_from_joystick)
-        
-        # DriveWithJoystickCommand(self.drive_subsystem, driving_percent=self.get_drive_value_from_joystick) #The teleop command is the drive with joystick commmand which takes the drive subsystem and the getting drive value function
-
         self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
         self.controller.b().onTrue(TurnToAngleCommand(self.drive_subsystem, lambda: True)) #for quick test 
 
         self.drive_subsystem.setDefaultCommand(self.teleop_command) #Set the teleop command as the default for drive subsystem
     
-    def get_auto_command(self):
+    def get_auto_command(self) -> commands2.Command:
         return self.autonomous_command
-
-    def set_45_degrees(self):
-        right_joystick_x = self.controller.getRightX() > abs(0.1)
-
-        right_joystick_x = applyDeadband(value=self.controller.getRightX(), deadband=0.1)
-
-        print(right_joystick_x)
-
-        return right_joystick_x
     
-    def get_drive_value_from_joystick(self):
-        turn_percent = self.controller.getLeftX()  #Get the joystick values 
-        drive_percent = self.controller.getLeftY()
-
-        turn_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1) #Apply deadband to the values above            
+    def get_drive_value_from_joystick(self) -> tuple[float, float]:
+        turn_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1) #Apply deadband to the values above
         drive_percent = applyDeadband(value=self.controller.getLeftX(), deadband=0.1)
 
         return turn_percent, drive_percent  #Gives us these variables when we call this function
