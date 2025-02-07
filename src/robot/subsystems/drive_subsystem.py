@@ -172,12 +172,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             modulePositions=[module.get_position() for module in self.modules]
         )
 
-    # def _update_odometry(self):
-    #     self.odometry.update(
-    #         self.get_heading_rotation2d(),
-    #         tuple([module.get_position() for module in self.modules])
-    #     )
-
     def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
         """
         Returns the physical positions of each swerve module relative to the center of the robot.

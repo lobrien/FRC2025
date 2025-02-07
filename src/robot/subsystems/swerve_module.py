@@ -9,7 +9,6 @@ from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
-# from wpimath.controller import PIDController
 from wpimath.units import degrees, radians, meters, inches, meters_per_second
 from wpimath.units import degreesToRadians, radiansToDegrees, metersToInches, inchesToMeters, degreesToRotations, rotationsToDegrees
 
@@ -65,19 +64,6 @@ class SwerveModule:
         self.turn_motor.set_position(steering_position_rotations * DriveConstants.TURN_GEAR_RATIO)
 
 
-        # We should not need a software PID as the TalonFX controller inside Krakens has one.
-        # Delete all this.
-        # self.PIDController = PIDController(
-        #     DriveConstants.SWERVE_MODULE_TURN_PID_KP,
-        #     DriveConstants.SWERVE_MODULE_TURN_PID_KI,
-        #     DriveConstants.SWERVE_MODULE_TURN_PID_KD
-        # )
-        # # TODO: Additional 2024 porting needed here:
-        # # self.PIDController.setFF(0)
-        # # self.PIDController.setPositionPIDWrappingEnabled(True)
-        # # self.PIDController.setPositionPIDWrappingMinInput(0)
-        # # self.PIDController.setPositionPIDWrappingMaxInput(self.TURNING_GEAR_RATIO)
-
     #--------------------------------------
     # Public methods
     #--------------------------------------
@@ -86,54 +72,30 @@ class SwerveModule:
     def set_drive_effort(self, speed_pct : percentage):
         self.drive_motor.set(speed_pct)
 
-    # I think we can delete this method.
-    # Returns percentage of full driving speed (range -1 to 1)
-    # def get_drive_effort(self) -> percentage:
-    #     return self.drive_motor.get()
-
     # Good for verifying that we can talk to the motor, but won't be used in 
     # production code because we'll be using position control.
     # Sets the turn to the given speed, expressed as a percentage of full speed (range -1 to 1).
     def set_turn_effort(self, speed_pct : percentage):
         self.turn_motor.set(speed_pct)
 
-    # I think we can delete this method
-    # Returns percentage of full turning speed (range -1 to 1)
-    # def get_turn_effort(self) -> percentage:
-    #     return self.turn_motor.get()
-
-    # Not sure we need this one, either.
-    def velocity_from_effort(self, effort_pct: percentage) -> inches_per_second:
-        effort = max(min(effort_pct, 1.0), -1.0)
-
-        # Conversion using feed forward
-        kS = 0.0  # Static friction compensation
-        kV = 1.0  # Velocity feed forward
-
-        # Convert effort to desired velocity
-        desired_velocity = effort * self._max_velocity_inches_per_second()
-
-        # Apply feed forward
-        if abs(desired_velocity) > 0:
-            voltage_forward = math.copysign(kS, desired_velocity) + kV * desired_velocity
-            # Convert back to velocity
-            return (voltage_forward / kV) if kV != 0 else desired_velocity
-        return 0.0
-
-    # TODO: Is this correct?
-    # TODO: We need to also adjust for the gear ratio between steering and motor shafts,
-    # and it isn't optimized: if the motor is at 680 degrees and we command 0 degrees, it
-    # will rotate backward 650 degrees instead of going forward 40 degrees.
-    # This method is good for testing, but I think set_desired_state() is the method to use
-    # in production code.
+    # This method is good for testing, but I think set_desired_state() is the 
+    # method to use in production code. We would also need tooptimize: if the 
+    # motor is at 680 degrees and we command 0 degrees, it will rotate backward 
+    # 650 degrees instead of going forward 40 degrees.  In order to optimize,
+    # it is better to send both desired angle and speed simultaneously, which
+    # set_desired_state() does.
     def set_turn_angle(self, angle_degrees : degrees):
         steering_rotation = degreesToRotations(angle_degrees) #translate from degree to rotation for motor
 
         # Position request starts at position 0, but can be modified later.
         self.turn_motor.set_control(self.position_request.with_position(steering_rotation * DriveConstants.TURN_GEAR_RATIO)) # ???
 
-    # Returns the current angle of the module in degrees. Range is [-180,180].
     def get_turn_angle_degrees(self) -> degrees:
+        """
+        Returns the current turn angle of the module in degrees.
+        Returns:
+            Turn angle normalized to the range [-180,180].
+        """
         normalized_rotations = self._get_can_coder_pos_normalized() # Range from 0 to 1
         degrees = normalized_rotations * 360
         # Convert to [-180,180] range
@@ -175,6 +137,9 @@ class SwerveModule:
         return SwerveModulePosition(wheel_distance, angle)
 
     def periodic(self):
+        """
+        Reports module data to dashboards.
+        """
         wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
         wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
 
@@ -220,13 +185,6 @@ class SwerveModule:
         # configuration.feedback.sensor_to_mechanism_ratio = DriveConstants.TURN_GEAR_RATIO
         # configuration.closed_loop_general.continuous_wrap = True
 
-        # This section was only for testing a loose motor connected to MAKO.  Can delete.
-        # Voltage control mode peak outputs.  I'm only using a reduced voltage
-        # for this test because it is an unloaded and barely secured motor.
-        # Ordinarily, we would not change the default value, which is 16V.
-        # configuration.voltage.peak_forward_voltage = 6  # Peak output voltage of 6V.
-        # configuration.voltage.peak_reverse_voltage = -6  # And likewise for reverse.
-
         return configuration
 
     def _configure_drive_motor(self) -> TalonFXConfiguration:
@@ -235,13 +193,6 @@ class SwerveModule:
         configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
         configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
 
-        # We are not intending to use either position or velocity control on the drive motor
-        # to start with.  Maybe if we get time, but many teams don't and we haven't for the
-        # past two years.  Delete these for now, and we can add back if needed.
-        # Set control loop parameters for "slot 0", the profile we'll use for position control.
-        # configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
-        # configuration.slot0.k_i = 0.0  # No integral control
-        # configuration.slot0.k_d = 0.0  # No differential component
         return configuration
 
     def _configure_cancoder(self, offset:float) -> CANcoderConfiguration:  #Mostly for configuring offsets
@@ -325,12 +276,6 @@ class SwerveModule:
         rotations = degreesToRotations(degrees)
         return rotations * DriveConstants.TURN_GEAR_RATIO
 
-    # Not used, can delete.
-    def _get_turn_angle_from_cancoder(self) -> degrees:
-        cancoder_abs_pos = self.can_coder.get_absolute_position().value
-        cancoder_offset_pos = cancoder_abs_pos - degreesToRotations(self.rotation_offset_degrees)
-        return rotationsToDegrees(cancoder_offset_pos)
-
     # Returns the CANCoder's current position as a percentage of full rotation (range [0,1]).
     def _get_can_coder_pos_normalized(self) -> percentage: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
         can_coder_abs_pos = self.can_coder.get_absolute_position().value
@@ -343,15 +288,15 @@ class SwerveModule:
         Get the turn angle from the motor's encoder, normalized to the
         range [0.0, 360.0).  CCW looking from above is positive.
         Returns:
-            Steering shaft angle in degrees.
+            Steering shaft angle in normalized degrees.
         """
         # TalonFX.get_position() returns a value in full rotations.
         motor_abs_rotations = self.turn_motor.get_position().value
-        # We're only interested in the fractional part
-        motor_abs_pct_rotated = motor_abs_rotations % 1.0
         # Convert by gear ratio
-        ratioed_rotations = motor_abs_pct_rotated / DriveConstants.TURN_GEAR_RATIO
-        return rotationsToDegrees(ratioed_rotations)
+        ratioed_rotations = motor_abs_rotations / DriveConstants.TURN_GEAR_RATIO
+        # We're only interested in the fractional part
+        steering_pct_rotated = ratioed_rotations % 1.0
+        return rotationsToDegrees(steering_pct_rotated)
 
     def _get_full_turn_angle_from_motor(self) -> degrees:
         """
