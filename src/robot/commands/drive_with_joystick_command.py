@@ -2,6 +2,7 @@ import wpilib
 import commands2
 
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
+from constants.driveconstants import DriveConstants
 from subsystems.drive_subsystem import DriveSubsystem
 
 class DriveWithJoystickCommand(commands2.Command): #Class type command from the libary command2
@@ -17,11 +18,14 @@ class DriveWithJoystickCommand(commands2.Command): #Class type command from the 
         # At this point, the values are ±1, and dimensionless/unitless.
         # TODO: drive_subsystem.drive() expects speeds in inches/sec and rotation in degrees/second,
         # but the most we can provide at the moment is 1 inch/second and 1 degree/second.
-
+        x_speed = x_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+        y_speed = y_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+        rot_speed = rot_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND
         # Joystick y axis is back/forward, but robot +x is forward, so swap x and y.
         # TODO: Rod thinks there needs to be negation in here, double check by 
         # hard-coding each parameter with known values.  We want to get this correct,
         # so we can also call drive() from position control loops.
+
         self.drive_subsystem.drive(x_speed_inches_per_second=y_speed, y_speed_inches_per_second=x_speed, rot_speed_degrees_per_second=rot_speed) #Give these values to drive function
 
     def isFinished(self): #When something else happends then this is done, cause this is a default command

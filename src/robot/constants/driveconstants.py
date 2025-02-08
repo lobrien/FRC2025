@@ -32,8 +32,8 @@ class DriveConstants:
     PIGEON_ID = 0
 
     # Drivetrain geometry, gearing, etc.
-    TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)   #TODO: Track and wheelbase dimensions are from MAKO.  Update.
-    WHEELBASE_HALF_LENGTH = 0.225 # meters (45 cm wheelbase)
+    TRACK_HALF_WIDTH = 0.27       # meters (21.25 in track width)   
+    WHEELBASE_HALF_LENGTH = 0.27 # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0/35.0     # Kraken 
     DRIVE_GEAR_RATIO = 9 #temp
     WHEEL_DIA = 4  # 4" diameter
@@ -41,10 +41,10 @@ class DriveConstants:
 
     # Free speed from https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/java/SwerveWithPathPlanner/src/main/java/frc/robot/generated/TunerConstants.java
     # TODO: This needs to be changed to our measured velocity at max voltage (place holder value is phoenix6 @ 12V according to above link)
-    FREE_SPEED = 4.69 # m/s
+    FREE_SPEED = 3.76 # m/s
 
     # TODO: Base this on the free speed.
-    MAX_SPEED_INCHES_PER_SECOND = 120 # inches per second
+    MAX_SPEED_INCHES_PER_SECOND = 145.7 # inches per second
 
     # TODO: add a maximum rotational speed in degrees/second
 
