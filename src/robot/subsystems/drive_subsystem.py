@@ -82,7 +82,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         """
         # TODO: From the gyro. For now, just return the BL module's angle
         # return self.gyro.get_yaw().value
-        return self.BackLeftModule.get_turn_angle_degrees()
+        return 0.0
 
     def get_heading_rotation2d(self) -> Rotation2d:
         """
@@ -124,7 +124,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # Update field sim
         self.field_sim.setRobotPose(pose)
         # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
-        self.field_sim.setModuleStates([module.get_state() for module in self.modules])
+        # self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
 
     def drive(self, x_speed_inches_per_second : inches_per_second, y_speed_inches_per_second : inches_per_second, rot_speed_degrees_per_second: degrees_per_second) -> None:

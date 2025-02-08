@@ -113,7 +113,7 @@ class SwerveModule:
         # effort : percentage = self.get_drive_effort()  # Replace with actual drive velocity in m/s
         # speed : inches_per_second = self.velocity_from_effort(effort)
         wheel_rps = self.drive_motor.get_velocity().value / DriveConstants.DRIVE_GEAR_RATIO # wheel rotations per second.
-        speed_mps : meters_per_second = inchesToMeters(self._inches_per_rotation(wheel_rps))
+        speed_mps : meters_per_second = inchesToMeters(self._inches_per_rotation() * wheel_rps)
 
         # I might be inclined to get this from the turn motor encoder rather than CANCoder, but either will work.
         angle = wpimath.geometry.Rotation2d().fromDegrees(self.get_turn_angle_degrees())
@@ -140,7 +140,7 @@ class SwerveModule:
         """
         Reports module data to dashboards.
         """
-        wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self.get_turn_angle_degrees()))
+        wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self._get_full_turn_angle_from_motor()))
         wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
 
     def set_desired_state(self, desired_state: SwerveModuleState) -> None:
@@ -172,7 +172,7 @@ class SwerveModule:
     def _configure_turn_motor(self) -> TalonFXConfiguration:
         configuration = TalonFXConfiguration()
 
-        configuration.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+        configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
         configuration.motor_output.neutral_mode = NeutralModeValue.COAST
 
         # Set control loop parameters for "slot 0", the profile we'll use for position control.
@@ -190,7 +190,7 @@ class SwerveModule:
     def _configure_drive_motor(self) -> TalonFXConfiguration:
         configuration = TalonFXConfiguration()
 
-        configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
+        configuration.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
 
         return configuration

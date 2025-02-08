@@ -13,8 +13,8 @@ class DriveWithJoystickCommand(commands2.Command): #Class type command from the 
         self.addRequirements(drive) #Requires this subsystem
 
     def execute(self):  # What actions it does        
-        turn_speed, drive_speed = self.drive_percent_fn() #Set turn and drive speed to values got from function
-        self.drive_subsystem.drive(turn_speed, drive_speed) #Give these values to drive function
+        turn_speed, drive_speed, rot_speed = self.drive_percent_fn() #Set turn and drive speed to values got from function
+        self.drive_subsystem.drive(x_speed_inches_per_second=turn_speed, y_speed_inches_per_second=drive_speed, rot_speed_degrees_per_second=rot_speed) #Give these values to drive function
 
     def isFinished(self): #When something else happends then this is done, cause this is a default command
         return True
