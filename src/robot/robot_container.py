@@ -43,10 +43,10 @@ class RobotContainer:
         return self.autonomous_command
     
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
-        turn_percent = applyDeadband(value=self.controller.getLeftX(), deadband=0.1) #Apply deadband to the values above
-        drive_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1)
+        x_percent = applyDeadband(value=self.controller.getLeftX(), deadband=0.1) #Apply deadband to the values above
+        y_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1)
         rot_percent = applyDeadband(value=self.controller.getRightX(), deadband=0.1)
 
-        return turn_percent, drive_percent, rot_percent  #Gives us these variables when we call this function
+        return x_percent, y_percent, rot_percent  #Gives us these variables when we call this function
     
 

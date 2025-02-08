@@ -156,6 +156,7 @@ class SwerveModule:
         optimized_state = self._optimize(desired_state, current_rotation)
 
         drive_effort = self._calc_drive_effort(metersToInches(optimized_state.speed)) # SwerveModuleStates use meters/second
+        wpilib.SmartDashboard.putString(f"{self.name}_drive_effort", '{:5.2f}'.format(drive_effort))
         geared_rotations = self._degrees_to_turn_count(optimized_state.angle.degrees())
         request = self.position_request.with_position(geared_rotations)
 
