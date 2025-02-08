@@ -11,7 +11,7 @@ class DriveConstants:
     CAN_BR = 2 # Back right         
 
     # CANCoder (magnet) offsets in rotations
-    BR_OFFSET = 0.454
+    BR_OFFSET = -0.206
     BL_OFFSET = -0.306
     FR_OFFSET = -0.450
     FL_OFFSET = 0.441
@@ -44,7 +44,7 @@ class DriveConstants:
     FREE_SPEED = 3.76 # m/s
 
     # TODO: Base this on the free speed.
-    MAX_SPEED_INCHES_PER_SECOND = 145.7 # inches per second
+    MAX_SPEED_INCHES_PER_SECOND = 145.7 / 4 # inches per second
 
     # TODO: add a maximum rotational speed in degrees/second
 
