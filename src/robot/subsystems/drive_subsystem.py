@@ -136,7 +136,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         :param x_speed_inches_per_second:    Speed to the left (from the driver's perspective)
         :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
         """
+        # TODO: at the moment, we are sending in up to 1 in/sec, 1 deg/sec.
         desatured_module_states = self._speeds_to_states(x_speed_inches_per_second, y_speed_inches_per_second, rot_speed_degrees_per_second)
+        # TODO: at this point, the module states will contain speeds for a translation without rotation of ~ 0.0254 m/sec.
         for module, state in zip(self.modules, desatured_module_states):
             module.set_desired_state(state)
 
@@ -145,16 +147,22 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     #--------------------------------------
 
     def _speeds_to_states(self, x_speed : inches_per_second, y_speed : inches_per_second, rot_speed : degrees_per_second) -> list[SwerveModuleState]:
+        # TODO: at the moment, we are sending in up to 1 in/sec, 1 deg/sec.
         chassis_speeds = self._get_chassis_speeds(x_speed_inches_per_second=x_speed, y_speed_inches_per_second=y_speed, rot_speed_degrees_per_second=rot_speed, field_relative=True)
+        # TODO: at this point, the values are at most 0.0245 m/sec and 0.017 radians/sec
         swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
+        # TODO: At this point, the wheel speeds might be a little more than 0.0245 m/sec if we are trying to rotate fast, but they won't be much greater.
         desatured_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(swerve_module_states, inchesToMeters(DriveConstants.MAX_SPEED_INCHES_PER_SECOND))
+        # TODO: The wheel speeds may have been reduced to 3.05 m/sec by desaturate, but in reality, they won't have come that far.
         return desatured_module_states
 
     def _get_chassis_speeds(self, x_speed_inches_per_second: inches_per_second, y_speed_inches_per_second:  inches_per_second, rot_speed_degrees_per_second: degrees_per_second, field_relative: bool = True) -> ChassisSpeeds:
+        # TODO: at the moment, we are sending in up to 1 in/sec, 1 deg/sec.
         # ChassisSpeeds expects meters and radians
         x_speed_meters_per_second = inchesToMeters(x_speed_inches_per_second)
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
+        # TODO: at this point, the values are at most 0.0245 m/sec and 0.017 radians/sec
         if field_relative:
             cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians, self.get_heading_rotation2d())
         else:

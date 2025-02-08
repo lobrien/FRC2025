@@ -32,7 +32,7 @@ class DriveConstants:
     PIGEON_ID = 0
 
     # Drivetrain geometry, gearing, etc.
-    TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)   #TODO: Double check these values 1/27/25
+    TRACK_HALF_WIDTH = 0.18       # meters (36 cm track width)   #TODO: Track and wheelbase dimensions are from MAKO.  Update.
     WHEELBASE_HALF_LENGTH = 0.225 # meters (45 cm wheelbase)
     TURN_GEAR_RATIO = 468.0/35.0     # Kraken 
     DRIVE_GEAR_RATIO = 9 #temp
@@ -43,7 +43,10 @@ class DriveConstants:
     # TODO: This needs to be changed to our measured velocity at max voltage (place holder value is phoenix6 @ 12V according to above link)
     FREE_SPEED = 4.69 # m/s
 
+    # TODO: Base this on the free speed.
     MAX_SPEED_INCHES_PER_SECOND = 120 # inches per second
+
+    # TODO: add a maximum rotational speed in degrees/second
 
     # # PID controller constants (gains)
     # # Proportional constant only at the moment, all others assumed zero.
