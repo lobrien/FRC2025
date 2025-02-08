@@ -18,9 +18,9 @@ class DriveWithJoystickCommand(commands2.Command): #Class type command from the 
         # At this point, the values are ±1, and dimensionless/unitless.
         # TODO: drive_subsystem.drive() expects speeds in inches/sec and rotation in degrees/second,
         # but the most we can provide at the moment is 1 inch/second and 1 degree/second.
-        x_speed = x_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND
-        y_speed = y_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND
-        rot_speed = rot_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+        x_speed = x_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
+        y_speed = y_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
+        rot_speed = rot_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
         # Joystick y axis is back/forward, but robot +x is forward, so swap x and y.
         # TODO: Rod thinks there needs to be negation in here, double check by 
         # hard-coding each parameter with known values.  We want to get this correct,
