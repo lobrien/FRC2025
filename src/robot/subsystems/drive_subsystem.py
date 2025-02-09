@@ -39,14 +39,14 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.BackLeftModule = self.modules[2]
         self.BackRightModule = self.modules[3]
 
+        # Gyro to determine robot heading (the direction it is pointed).
+        # TODO: uncomment when pigeon ID is known, here and in get_heading_degrees().
+        self.gyro = Pigeon2(DriveConstants.PIGEON_ID)
+        self.gyro.set_yaw(0.0) # Assumes that the robot is facing in the same direction as the driver at the start.
+
         # Initialize kinematics (equations of motion) and odometry (where are we on the field?)
         self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
-
-        # Gyro to determine robot heading (the direction it is pointed).
-        # TODO: uncomment when pigeon ID is known, here and in get_heading_degrees().
-        # self.gyro = Pigeon2(DriveConstants.PIGEON_ID)
-        # self.gyro.set_yaw(0.0) # Assumes that the robot is facing in the same direction as the driver at the start.
 
         self.heartbeat = 0
 
@@ -81,8 +81,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         CCW is positive.
         """
         # TODO: From the gyro. For now, just return the BL module's angle
-        # return self.gyro.get_yaw().value
-        return 0.0
+        heading = self.gyro.get_yaw().value
+
+        return heading
 
     def get_heading_rotation2d(self) -> Rotation2d:
         """
@@ -112,6 +113,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         pose = self.odometry.getPose()
         SmartDashboard.putNumber("Robot X", pose.X())
         SmartDashboard.putNumber("Robot Y", pose.Y())
+        SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
         SmartDashboard.putNumber("Robot Heading", pose.rotation().degrees())
         for name, module in zip(["FrontLeft", "FrontRight", "BackLeft", "BackRight"],[self.FrontLeftModule, self.FrontRightModule, self.BackLeftModule, self.BackRightModule]):
             state = module.get_state()
@@ -163,10 +165,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
         # TODO: at this point, the values are at most 0.0245 m/sec and 0.017 radians/sec
-        if field_relative:
-            cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians, self.get_heading_rotation2d())
-        else:
-            cs = ChassisSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians)
+        # When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negetive it works
+        cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians, -self.get_heading_rotation2d())
         return cs
 
     #--------------------------------------

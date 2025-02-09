@@ -20,7 +20,7 @@ class DriveWithJoystickCommand(commands2.Command): #Class type command from the 
         # but the most we can provide at the moment is 1 inch/second and 1 degree/second.
         x_speed = x_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
         y_speed = y_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
-        rot_speed = rot_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
+        rot_speed = rot_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1 /2
         # Joystick y axis is back/forward, but robot +x is forward, so swap x and y.
         # TODO: Rod thinks there needs to be negation in here, double check by 
         # hard-coding each parameter with known values.  We want to get this correct,

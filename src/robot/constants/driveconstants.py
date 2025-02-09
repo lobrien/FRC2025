@@ -29,7 +29,7 @@ class DriveConstants:
 
     # Pigeon2 gyro CAN bus ID
     # TODO: replace with correct ID.
-    PIGEON_ID = 0
+    PIGEON_ID = 13
 
     # Drivetrain geometry, gearing, etc.
     TRACK_HALF_WIDTH = 0.27       # meters (21.25 in track width)   
