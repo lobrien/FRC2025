@@ -37,6 +37,11 @@ class RobotContainer:
         self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
         self.controller.b().whileTrue(TurnToAngleCommand(self.drive_subsystem, lambda: True)) #for quick test 
 
+        # if self.controller.leftBumper() and self.controller.rightBumper():
+        #     print("reseting Gyro")
+        #     DriveWithJoystickCommand.resetGyro(self.drive_subsystem) 
+        #     print("Gyro reseted")
+
         self.drive_subsystem.setDefaultCommand(self.teleop_command) #Set the teleop command as the default for drive subsystem
     
     def get_auto_command(self) -> commands2.Command:
@@ -52,6 +57,16 @@ class RobotContainer:
         y_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1)
         rot_percent = applyDeadband(value=self.controller.getRightX(), deadband=0.1)
 
+        x_percent = self.joystickscaling(x_percent)
+        y_percent = self.joystickscaling(y_percent)
+        rot_percent = self.joystickscaling(rot_percent)
+
         return x_percent, y_percent, rot_percent  #Gives us these variables when we call this function
     
+    def joystickscaling(self, input): #this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
+        a = 1
+        output = a * input * input * input + (1 - a) * input
+        return output
+    
 
+ 

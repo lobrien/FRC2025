@@ -52,6 +52,7 @@ class Robot(commands2.TimedCommandRobot):
     def teleopInit(self):
         if self.autonomous_command is not None:
             self.autonomous_command.cancel()
+            
 
     def teleopPeriodic(self):
         pass

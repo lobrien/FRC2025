@@ -8,6 +8,9 @@ class OperatorInterfaceConstants:
     BUTTON_X: int = XboxController.Button.kX
     BUTTON_Y: int = XboxController.Button.kY
 
+    BUMPER_RIGHT: int = XboxController.Button.kRightBumper
+    BUMPER_LEFT: int = XboxController.Button.kLeftBumper
+
     DRIVER_CONTROLLER_PORT: int = 0 # USB port number for the Xbox controller on Rod's computer.
     OPERATOR_CONTROLLER_PORT: int = 1
 

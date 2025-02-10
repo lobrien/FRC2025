@@ -30,4 +30,9 @@ class DriveWithJoystickCommand(commands2.Command): #Class type command from the 
 
     def isFinished(self): #When something else happends then this is done, cause this is a default command
         return True
+    
+    def resetGyro(self, drive_subsystem:DriveSubsystem):
+        self.drive_subsystem = drive_subsystem
+        
+        self.drive_subsystem.gyro.set_yaw(0.0)
 
