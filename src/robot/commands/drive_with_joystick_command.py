@@ -7,7 +7,7 @@ from subsystems.drive_subsystem import DriveSubsystem
 
 class DriveWithJoystickCommand(commands2.Command): #Class type command from the libary command2
     def __init__(self, drive: DriveSubsystem, drive_percent_fn:callable): #What value this needs to run
-        super().__init__()
+        
         self.drive_subsystem = drive #Varible drive_subsystem is drive from __init__()
         self.drive_percent_fn = drive_percent_fn #Same concept as above
 
@@ -30,9 +30,5 @@ class DriveWithJoystickCommand(commands2.Command): #Class type command from the 
 
     def isFinished(self): #When something else happends then this is done, cause this is a default command
         return True
-    
-    def resetGyro(self, drive_subsystem:DriveSubsystem):
-        self.drive_subsystem = drive_subsystem
-        
-        self.drive_subsystem.gyro.set_yaw(0.0)
+
 

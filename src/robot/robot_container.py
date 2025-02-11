@@ -3,6 +3,9 @@ import wpilib
 from commands2.button import CommandXboxController
 from wpimath import applyDeadband
 from commands2 import RepeatCommand
+from constants.autoconsts import AutoConsts
+from wpilib import SmartDashboard, SendableChooser
+from wpilib.shuffleboard import Shuffleboard
 
 
 from commands.print_something_command import PrintSomethingCommand
@@ -11,6 +14,7 @@ from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_forward_command import DriveForwardCommand
 from commands.drive_with_joystick_command import DriveWithJoystickCommand
 from commands.turn_to_angle_command import TurnToAngleCommand
+from commands.reset_gyro_command import ResetGyroCommand
 
 # The `RobotContainer` class is where the robot's structure and behavior are defined.
 # It is the glue that holds the robot together.
@@ -30,23 +34,41 @@ class RobotContainer:
     def __init__(self):
         self.drive_subsystem = DriveSubsystem() #Update the array when ready
         self.controller = CommandXboxController(OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT)
-        self.autonomous_command = DriveForwardCommand(self.drive_subsystem, duration=5)
 
         self.teleop_command = DriveWithJoystickCommand(self.drive_subsystem, self.get_drive_value_from_joystick)
 
         self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
         self.controller.b().whileTrue(TurnToAngleCommand(self.drive_subsystem, lambda: True)) #for quick test 
-
-        # if self.controller.leftBumper() and self.controller.rightBumper():
-        #     print("reseting Gyro")
-        #     DriveWithJoystickCommand.resetGyro(self.drive_subsystem) 
-        #     print("Gyro reseted")
-
+        
         self.drive_subsystem.setDefaultCommand(self.teleop_command) #Set the teleop command as the default for drive subsystem
     
+        self.controller.leftBumper().and_(self.controller.rightBumper()).whileTrue(ResetGyroCommand(self.drive_subsystem))
+
+
     def get_auto_command(self) -> commands2.Command:
-        return self.autonomous_command
+        """
+        We moved the code that makes the auto chooser and making the default option for it from init to the get auto command function because
+        when we did it normally it gave us an error saying there is no auto chooser so we just made one here. is there a way to fix this?
+        """
+
+         #Auto chooser
+        self.auto_chooser = SendableChooser()
+
+        self.auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)  #Autos.side_step(self.drive)
+        
+        #Add options
+
+        #Add chooser to tab
+        SmartDashboard.putData("Auto Commmand Selector", self.auto_chooser)
+
+        auto_reader = self.auto_chooser.getSelected()
+
+        if auto_reader == AutoConsts.FORWARD:
+           return DriveForwardCommand(self.drive_subsystem, duration=5)
+
     
+
+
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
         """
         Gets joystick values and scales them for improved operator control.
@@ -67,6 +89,8 @@ class RobotContainer:
         a = 1
         output = a * input * input * input + (1 - a) * input
         return output
-    
+
+
+
 
  

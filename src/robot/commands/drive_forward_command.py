@@ -16,7 +16,7 @@ class DriveForwardCommand(commands2.Command):
         self.timer.start()
 
     def execute(self):  # What actions it does
-        self.drive_subsystem.drive(x_speed_inches_per_second=self.speed, y_speed_inches_per_second=self.speed, rot_speed_degrees_per_second=0)
+        self.drive_subsystem.drive(x_speed_inches_per_second=self.speed, y_speed_inches_per_second=self.speed, rot_speed_degrees_per_second=0.0)
 
     def isFinished(self) -> bool:
         if self.timer.hasElapsed(period=self.duration):
@@ -25,6 +25,6 @@ class DriveForwardCommand(commands2.Command):
             return False
 
     def end(self, was_interrupted:bool):  # Stop driving
-        self.drive_subsystem.drive(x_speed_inches_per_second=0, y_speed_inches_per_second=0, rot_speed_degrees_per_second=0)
+        self.drive_subsystem.drive(x_speed_inches_per_second=0.0, y_speed_inches_per_second=0.0, rot_speed_degrees_per_second=0.0)
 
     

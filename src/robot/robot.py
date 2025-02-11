@@ -48,6 +48,9 @@ class Robot(commands2.TimedCommandRobot):
     def autonomousEnd(self):
         pass
 
+    def disabledPeriodic(self):
+        self.autonomousCommand = self.container.get_auto_command()
+
     # Teleop lifecycle methods
     def teleopInit(self):
         if self.autonomous_command is not None:
