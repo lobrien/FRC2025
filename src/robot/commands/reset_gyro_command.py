@@ -8,5 +8,5 @@ class ResetGyroCommand(commands2.Command): #Class type command from the libary c
         self.drive_subsystem = drive_subsystem
     
     def execute(self):
-        print("reseted gyro")
+        print("reset gyro")
         self.drive_subsystem.gyro.set_yaw(0.0)

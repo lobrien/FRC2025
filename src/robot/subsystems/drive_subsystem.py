@@ -40,7 +40,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.BackRightModule = self.modules[3]
 
         # Gyro to determine robot heading (the direction it is pointed).
-        # TODO: uncomment when pigeon ID is known, here and in get_heading_degrees().
         self.gyro = Pigeon2(DriveConstants.PIGEON_ID)
         self.gyro.set_yaw(0.0) # Assumes that the robot is facing in the same direction as the driver at the start.
 
@@ -80,7 +79,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         Gets the heading of the robot (direction it is pointing) in degrees.
         CCW is positive.
         """
-        # TODO: From the gyro. For now, just return the BL module's angle
+        # TODO: From the gyro. For now, just return the BL module's angle <-- IMPORTANT! DON'T LEAVE OBSOLETE COMMENTS!
         heading = self.gyro.get_yaw().value
 
         return heading
@@ -165,7 +164,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
         # TODO: at this point, the values are at most 0.0245 m/sec and 0.017 radians/sec
-        # When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negetive it works
+        # TODO: When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negetive it works <-- IS THIS COMMENT HELPFUL?
+        # TODO: Does the previous comment describe a bug?
         cs = ChassisSpeeds.fromRobotRelativeSpeeds(x_speed_meters_per_second, y_speed_meters_per_second, rot_speed_radians, -self.get_heading_rotation2d())
         return cs
 

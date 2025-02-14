@@ -10,6 +10,8 @@ class DriveConstants:
     CAN_BL = 5 # Back left           
     CAN_BR = 2 # Back right         
 
+    # TODO: Consistent units! We agreed inches and degrees! OR write clear comment explaining why this should be
+    # in rotations
     # CANCoder (magnet) offsets in rotations
     BR_OFFSET = -0.206
     BL_OFFSET = -0.306
@@ -32,7 +34,9 @@ class DriveConstants:
     PIGEON_ID = 13
 
     # Drivetrain geometry, gearing, etc.
+    # TODO: Consistent units! We agreed inches and degrees!
     TRACK_HALF_WIDTH = 0.27       # meters (21.25 in track width)   
+    # TODO: Consistent units! We agreed inches and degrees!
     WHEELBASE_HALF_LENGTH = 0.27 # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0/35.0     # Kraken 
     DRIVE_GEAR_RATIO = 9 #temp
@@ -41,6 +45,7 @@ class DriveConstants:
 
     # Free speed from https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/java/SwerveWithPathPlanner/src/main/java/frc/robot/generated/TunerConstants.java
     # TODO: This needs to be changed to our measured velocity at max voltage (place holder value is phoenix6 @ 12V according to above link)
+    # TODO: Consistent units! We agreed inches and degrees!
     FREE_SPEED = 3.76 # m/s
 
     # TODO: Base this on the free speed.
@@ -48,6 +53,7 @@ class DriveConstants:
 
     # TODO: add a maximum rotational speed in degrees/second
 
+    # TODO: Delete this code? Do not leave commented out code in the codebase.
     # # PID controller constants (gains)
     # # Proportional constant only at the moment, all others assumed zero.
     # PIDX_KP = 1       # X dimension PID controller's proportional constant

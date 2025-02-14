@@ -49,6 +49,8 @@ class RobotContainer:
         """
         We moved the code that makes the auto chooser and making the default option for it from init to the get auto command function because
         when we did it normally it gave us an error saying there is no auto chooser so we just made one here. is there a way to fix this?
+
+        TODO: In the future, use TODO: to mark a task or question like ^. We can search for all TODO:s in the codebase to find them.
         """
 
          #Auto chooser
