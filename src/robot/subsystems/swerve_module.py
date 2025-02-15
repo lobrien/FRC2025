@@ -149,7 +149,6 @@ class SwerveModule:
         :param desired_state: the state command to the module. 
         """
         # Get the full angle the steering shaft has rotated.
-        # TODO: Wrapping: might be able to get the normalized angle if we implement wrapping in the motor controller.
         current_degrees = self._get_full_turn_angle_from_motor()
         current_rotation = Rotation2d.fromDegrees(current_degrees)
         # Optimize the state to minimize the amount the steering needs to turn.
@@ -180,11 +179,6 @@ class SwerveModule:
         configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
         configuration.slot0.k_i = 0.0  # No integral control
         configuration.slot0.k_d = 0.0  # No differential component
-
-        # TODO: Wrapping: This might let us get remove _place_in_appropriate0_to360_scope()
-        # in future.  See other Wrapping TODOs.
-        # configuration.feedback.sensor_to_mechanism_ratio = DriveConstants.TURN_GEAR_RATIO
-        # configuration.closed_loop_general.continuous_wrap = True
 
         return configuration
 
