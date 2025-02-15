@@ -30,7 +30,6 @@ class DriveConstants:
     TURN_BR = 1 # Back right
 
     # Pigeon2 gyro CAN bus ID
-    # TODO: replace with correct ID.
     PIGEON_ID = 13
 
     # Drivetrain geometry, gearing, etc.
@@ -48,28 +47,14 @@ class DriveConstants:
     # TODO: Consistent units! We agreed inches and degrees!
     FREE_SPEED = 3.76 # m/s
 
-    # TODO: Base this on the free speed.
+    # TODO: Change FREE_SPEED above to the measured motor RPM, and then use that in
+    # an explicit calculation of MAX_SPEED_INCHES_PER_SECOND that uses the gear ratio and wheel diameter.
+    # Then if either of those constants change, the max speed will change appropriately.
+    # It also makes the value's origin clearer.
+
+    # Based on measurement of motor RPM with the robot up on blocks, adjusted
+    # for gear ratio and wheel diameter.
+    # The "/ 4" is to slow things down for testing.
     MAX_SPEED_INCHES_PER_SECOND = 145.7 / 4 # inches per second
 
     # TODO: add a maximum rotational speed in degrees/second
-
-    # TODO: Delete this code? Do not leave commented out code in the codebase.
-    # # PID controller constants (gains)
-    # # Proportional constant only at the moment, all others assumed zero.
-    # PIDX_KP = 1       # X dimension PID controller's proportional constant
-    # PIDY_KP = 1       # Y dimension PID controller's proportional constant
-    # PID_ROT_KP = 1    # Rotation controller's proportional constant.
-    # # Horizontal (x or y) maxima and tolerances
-    # HORIZ_MAX_V = 1   # Maximum velocity in meters/second
-    # HORIZ_MAX_A = 2  # Maximum acceleration in meters/second/second
-    # HORIZ_POS_TOL = 0.1 # Position tolerance in meters (within this distance is "close enough")
-    # HORIZ_VEL_TOL = 0.01 # Velocity tolerance in meters/second
-    # # Rotational maxima and tolerances
-    # # TODO: Confirm these are radians, radians/sec, radians/sec^2?
-    # ROT_MAX_V = 0.1   # Rotational maximum velocity
-    # ROT_MAX_A = 0.1   # Rotational maximum acceleration
-    # ROT_POS_TOL = 0.1 # Rotational position tolerance
-    # ROT_VEL_TOL = 0.1 # Rotational velocity tolerance
-    # SWERVE_MODULE_TURN_PID_KP = 0.3 # TODO: This is just what it was in 2024 CrescendoSwerveModule.py line 81
-    # SWERVE_MODULE_TURN_PID_KI = 0.0
-    # SWERVE_MODULE_TURN_PID_KD = 0.0

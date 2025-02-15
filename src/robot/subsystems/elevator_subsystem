@@ -17,11 +17,6 @@ def _configure_elevator_motor(self) -> TalonFXConfiguration:
         configuration.slot0.k_i = 0.0  # No integral control
         configuration.slot0.k_d = 0.0  # No differential component
 
-        # TODO: Wrapping: This might let us get remove _place_in_appropriate0_to360_scope()
-        # in future.  See other Wrapping TODOs.
-        # configuration.feedback.sensor_to_mechanism_ratio = DriveConstants.TURN_GEAR_RATIO
-        # configuration.closed_loop_general.continuous_wrap = True
-
         return configuration
 
 # TODO: Shouldn't these be in `constants/elevatorconstants.py`?
@@ -78,7 +73,6 @@ class ElevatorSubsystem(commands2.Subsystem):
         This method runs once every 20 msec in all modes (including simulation).  
         """
         # Send data to the dashboard
-        # TODO: implement shuffleboard <-- Is this still relevant? Is this just the DB/String 4 call below?
         height = _motor_rot_to_inches(self.encoder.getPosition())
         wpilib.SmartDashboard.putString('DB/String 4', 'elev: {:5.2f}"'.format(height))
 

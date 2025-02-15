@@ -69,7 +69,6 @@ class SwerveModule:
     #--------------------------------------
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
-    # TODO: drive_effort will be at most 1/120 for a translation.
     def set_drive_effort(self, speed_pct : percentage):
         self.drive_motor.set(speed_pct)
 
@@ -156,14 +155,12 @@ class SwerveModule:
         # Optimize the state to minimize the amount the steering needs to turn.
         optimized_state = self._optimize(desired_state, current_rotation)
 
-        # TODO: optimized_state.speed might be 0.0254 m/sec for translation and ?? for rotation.
         drive_effort = self._calc_drive_effort(metersToInches(optimized_state.speed)) # SwerveModuleStates use meters/second
         wpilib.SmartDashboard.putString(f"{self.name}_drive_effort", '{:5.2f}'.format(drive_effort))
         geared_rotations = self._degrees_to_turn_count(optimized_state.angle.degrees())
         request = self.position_request.with_position(geared_rotations)
 
-        # TODO: drive_effort will be at most 1/120 for a translation.
-        self.set_drive_effort(drive_effort) # Rod's comment: Unclear to me what the advantage of calling a 1-line function is. I'd just put the motor.set() statement here.
+        self.set_drive_effort(drive_effort)
         self.turn_motor.set_control(request)
 
     #--------------------------------------
@@ -207,11 +204,6 @@ class SwerveModule:
     #--------------------------------------
     # Private methods to help calculate desired state
     #--------------------------------------
-
-    # Perhaps delete.
-    def _max_velocity_inches_per_second(self) -> inches:
-        free_speed_inches_per_second = metersToInches(DriveConstants.FREE_SPEED)
-        return free_speed_inches_per_second
 
     def _place_in_appropriate_0to360_scope(self, scope_reference_degrees: degrees, new_angle_degrees: degrees) -> degrees:
         """
@@ -262,9 +254,7 @@ class SwerveModule:
         return SwerveModuleState(optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle))
 
     def _calc_drive_effort(self, speed : inches_per_second) -> percentage:
-        # TODO: the value passed in will be ~1 in/sec max.
         drive_effort = speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
-        # TODO: drive_effort will be at most 1/120.
         drive_effort_clamped = max(min(drive_effort, 1.0), -1.0)
         return drive_effort_clamped
 
