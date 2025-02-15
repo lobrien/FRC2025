@@ -9,17 +9,30 @@ from phoenix6.signals import InvertedValue, NeutralModeValue
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
 from wpimath.units import degrees, meters, inches, meters_per_second
-from wpimath.units import metersToInches, inchesToMeters, degreesToRotations, rotationsToDegrees
+from wpimath.units import (
+    metersToInches,
+    inchesToMeters,
+    degreesToRotations,
+    rotationsToDegrees,
+)
 
 import wpilib
 
 from constants.driveconstants import DriveConstants
 
-percentage = NewType("percentage", float) # In range -1 to 1
-inches_per_second = NewType("inches_per_second", float) # Used in velocity functions
+percentage = NewType("percentage", float)  # In range -1 to 1
+inches_per_second = NewType("inches_per_second", float)  # Used in velocity functions
+
 
 class SwerveModule:
-    def __init__(self, name : str, drive_motor_bus_id:int, turn_motor_bus_id:int, cancoder_bus_id:int, offset_rotations:float):
+    def __init__(
+        self,
+        name: str,
+        drive_motor_bus_id: int,
+        turn_motor_bus_id: int,
+        cancoder_bus_id: int,
+        offset_rotations: float,
+    ):
         """
 
         :param name:
@@ -58,36 +71,43 @@ class SwerveModule:
         # The turn motor also has an encoder, and we use the firmware PID
         # to set the turn position.  The problem is, when it wakes up, it doesn't know
         # where the position is.  So we tell it, based on the CANCoder's position.
-        # There is a gear ratio in between the steering shaft and motor shaft.  
+        # There is a gear ratio in between the steering shaft and motor shaft.
         steering_position_rotations = self._get_can_coder_pos_normalized()
-        self.turn_motor.set_position(steering_position_rotations * DriveConstants.TURN_GEAR_RATIO)
+        self.turn_motor.set_position(
+            steering_position_rotations * DriveConstants.TURN_GEAR_RATIO
+        )
 
-
-    #--------------------------------------
+    # --------------------------------------
     # Public methods
-    #--------------------------------------
+    # --------------------------------------
 
     # Sets the drive to the given speed, expressed as a percentage of full speed (range -1 to 1).
-    def set_drive_effort(self, speed_pct : percentage):
+    def set_drive_effort(self, speed_pct: percentage):
         self.drive_motor.set(speed_pct)
 
-    # Good for verifying that we can talk to the motor, but won't be used in 
+    # Good for verifying that we can talk to the motor, but won't be used in
     # production code because we'll be using position control.
     # Sets the turn to the given speed, expressed as a percentage of full speed (range -1 to 1).
-    def set_turn_effort(self, speed_pct : percentage):
+    def set_turn_effort(self, speed_pct: percentage):
         self.turn_motor.set(speed_pct)
 
-    # This method is good for testing, but I think set_desired_state() is the 
-    # method to use in production code. We would also need tooptimize: if the 
-    # motor is at 680 degrees and we command 0 degrees, it will rotate backward 
+    # This method is good for testing, but I think set_desired_state() is the
+    # method to use in production code. We would also need tooptimize: if the
+    # motor is at 680 degrees and we command 0 degrees, it will rotate backward
     # 650 degrees instead of going forward 40 degrees.  In order to optimize,
     # it is better to send both desired angle and speed simultaneously, which
     # set_desired_state() does.
-    def set_turn_angle(self, angle_degrees : degrees):
-        steering_rotation = degreesToRotations(angle_degrees) #translate from degree to rotation for motor
+    def set_turn_angle(self, angle_degrees: degrees):
+        steering_rotation = degreesToRotations(
+            angle_degrees
+        )  # translate from degree to rotation for motor
 
         # Position request starts at position 0, but can be modified later.
-        self.turn_motor.set_control(self.position_request.with_position(steering_rotation * DriveConstants.TURN_GEAR_RATIO)) # ???
+        self.turn_motor.set_control(
+            self.position_request.with_position(
+                steering_rotation * DriveConstants.TURN_GEAR_RATIO
+            )
+        )  # ???
 
     def get_turn_angle_degrees(self) -> degrees:
         """
@@ -95,7 +115,7 @@ class SwerveModule:
         Returns:
             Turn angle normalized to the range [-180,180].
         """
-        normalized_rotations = self._get_can_coder_pos_normalized() # Range from 0 to 1
+        normalized_rotations = self._get_can_coder_pos_normalized()  # Range from 0 to 1
         degrees = normalized_rotations * 360
         # Convert to [-180,180] range
         if degrees > 180:
@@ -111,8 +131,12 @@ class SwerveModule:
         # I think we want the measured wheel speed, not motor effort.
         # effort : percentage = self.get_drive_effort()  # Replace with actual drive velocity in m/s
         # speed : inches_per_second = self.velocity_from_effort(effort)
-        wheel_rps = self.drive_motor.get_velocity().value / DriveConstants.DRIVE_GEAR_RATIO # wheel rotations per second.
-        speed_mps : meters_per_second = inchesToMeters(self._inches_per_rotation() * wheel_rps)
+        wheel_rps = (
+            self.drive_motor.get_velocity().value / DriveConstants.DRIVE_GEAR_RATIO
+        )  # wheel rotations per second.
+        speed_mps: meters_per_second = inchesToMeters(
+            self._inches_per_rotation() * wheel_rps
+        )
 
         # I might be inclined to get this from the turn motor encoder rather than CANCoder, but either will work.
         angle = wpimath.geometry.Rotation2d().fromDegrees(self.get_turn_angle_degrees())
@@ -129,9 +153,13 @@ class SwerveModule:
         # can_coder_rotations = self._get_can_coder_pos_normalized()
         # distance : meters = inchesToMeters(can_coder_rotations * self._inches_per_rotation())
 
-        wheel_rotations = self.drive_motor.get_position().value / DriveConstants.DRIVE_GEAR_RATIO
-        wheel_distance: meters = inchesToMeters(self._inches_per_rotation() * wheel_rotations)
-        angle : Rotation2d = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
+        wheel_rotations = (
+            self.drive_motor.get_position().value / DriveConstants.DRIVE_GEAR_RATIO
+        )
+        wheel_distance: meters = inchesToMeters(
+            self._inches_per_rotation() * wheel_rotations
+        )
+        angle: Rotation2d = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
         # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
         return SwerveModulePosition(wheel_distance, angle)
 
@@ -139,13 +167,19 @@ class SwerveModule:
         """
         Reports module data to dashboards.
         """
-        wpilib.SmartDashboard.putString(f"{self.name}_turn_degrees", 'degrees: {:5.1f}'.format(self._get_full_turn_angle_from_motor()))
-        wpilib.SmartDashboard.putString(f"{self.name}_can_coder_pos_rotations", 'rotations: {:5.3f}'.format(self._get_can_coder_pos_normalized()))
+        wpilib.SmartDashboard.putString(
+            f"{self.name}_turn_degrees",
+            "degrees: {:5.1f}".format(self._get_full_turn_angle_from_motor()),
+        )
+        wpilib.SmartDashboard.putString(
+            f"{self.name}_can_coder_pos_rotations",
+            "rotations: {:5.3f}".format(self._get_can_coder_pos_normalized()),
+        )
 
     def set_desired_state(self, desired_state: SwerveModuleState) -> None:
         """
         Sets the module's desired "state" (wheel rim speed and turning/steering angle).
-        :param desired_state: the state command to the module. 
+        :param desired_state: the state command to the module.
         """
         # Get the full angle the steering shaft has rotated.
         current_degrees = self._get_full_turn_angle_from_motor()
@@ -153,17 +187,21 @@ class SwerveModule:
         # Optimize the state to minimize the amount the steering needs to turn.
         optimized_state = self._optimize(desired_state, current_rotation)
 
-        drive_effort = self._calc_drive_effort(metersToInches(optimized_state.speed)) # SwerveModuleStates use meters/second
-        wpilib.SmartDashboard.putString(f"{self.name}_drive_effort", '{:5.2f}'.format(drive_effort))
+        drive_effort = self._calc_drive_effort(
+            metersToInches(optimized_state.speed)
+        )  # SwerveModuleStates use meters/second
+        wpilib.SmartDashboard.putString(
+            f"{self.name}_drive_effort", "{:5.2f}".format(drive_effort)
+        )
         geared_rotations = self._degrees_to_turn_count(optimized_state.angle.degrees())
         request = self.position_request.with_position(geared_rotations)
 
         self.set_drive_effort(drive_effort)
         self.turn_motor.set_control(request)
 
-    #--------------------------------------
+    # --------------------------------------
     # Private methods for configuration
-    #--------------------------------------
+    # --------------------------------------
 
     def _inches_per_rotation(self) -> inches:
         return DriveConstants.WHEEL_RADIUS * 2 * 3.14159
@@ -175,7 +213,9 @@ class SwerveModule:
         configuration.motor_output.neutral_mode = NeutralModeValue.COAST
 
         # Set control loop parameters for "slot 0", the profile we'll use for position control.
-        configuration.slot0.k_p = 1.0  # An error of one rotation results in 1.0V to the motor.
+        configuration.slot0.k_p = (
+            1.0  # An error of one rotation results in 1.0V to the motor.
+        )
         configuration.slot0.k_i = 0.0  # No integral control
         configuration.slot0.k_d = 0.0  # No differential component
 
@@ -189,21 +229,27 @@ class SwerveModule:
 
         return configuration
 
-    def _configure_cancoder(self, offset:float) -> CANcoderConfiguration:  #Mostly for configuring offsets
+    def _configure_cancoder(
+        self, offset: float
+    ) -> CANcoderConfiguration:  # Mostly for configuring offsets
         configuration = CANcoderConfiguration()
         # configuration.magnet_sensor(offset)
         return configuration
 
-    #--------------------------------------
+    # --------------------------------------
     # Private methods to help calculate desired state
-    #--------------------------------------
+    # --------------------------------------
 
-    def _place_in_appropriate_0to360_scope(self, scope_reference_degrees: degrees, new_angle_degrees: degrees) -> degrees:
+    def _place_in_appropriate_0to360_scope(
+        self, scope_reference_degrees: degrees, new_angle_degrees: degrees
+    ) -> degrees:
         """
         Place the new_angle_degrees in the range that is a multiple of [0,360] that is closest
         to the scope_reference.
         """
-        lower_offset = scope_reference_degrees % 360  # Modulo (remainder) is always positive when divisor (360) is positive.
+        lower_offset = (
+            scope_reference_degrees % 360
+        )  # Modulo (remainder) is always positive when divisor (360) is positive.
         lower_bound = scope_reference_degrees - lower_offset
         upper_bound = lower_bound + 360
 
@@ -221,14 +267,18 @@ class SwerveModule:
 
         return new_angle_degrees
 
-    def _optimize(self, desired_state: SwerveModuleState, current_rotation: Rotation2d) -> SwerveModuleState:
+    def _optimize(
+        self, desired_state: SwerveModuleState, current_rotation: Rotation2d
+    ) -> SwerveModuleState:
         """
         There are two ways for a swerve module to reach its goal:
         1) Rotate to its intended steering angle and drive at its intended speed.
         2) Rotate to the mirrored steering angle (subtract 180) and drive at the opposite of its intended speed.
         Optimizing finds the option that requires the smallest rotation.
         """
-        target_angle = self._place_in_appropriate_0to360_scope(current_rotation.degrees(), desired_state.angle.degrees())
+        target_angle = self._place_in_appropriate_0to360_scope(
+            current_rotation.degrees(), desired_state.angle.degrees()
+        )
         target_speed = desired_state.speed
         delta_degrees = target_angle - current_rotation.degrees()
 
@@ -244,16 +294,18 @@ class SwerveModule:
             optimized_target_speed = target_speed
             optimized_target_angle = target_angle
 
-        return SwerveModuleState(optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle))
+        return SwerveModuleState(
+            optimized_target_speed, Rotation2d.fromDegrees(optimized_target_angle)
+        )
 
-    def _calc_drive_effort(self, speed : inches_per_second) -> percentage:
+    def _calc_drive_effort(self, speed: inches_per_second) -> percentage:
         drive_effort = speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
         drive_effort_clamped = max(min(drive_effort, 1.0), -1.0)
         return drive_effort_clamped
 
-    #--------------------------------------
+    # --------------------------------------
     # Private methods for turn (steering) angle
-    #--------------------------------------
+    # --------------------------------------
 
     def _degrees_to_turn_count(self, degrees: degrees) -> float:
         """
@@ -266,9 +318,15 @@ class SwerveModule:
         return rotations * DriveConstants.TURN_GEAR_RATIO
 
     # Returns the CANCoder's current position as a percentage of full rotation (range [0,1]).
-    def _get_can_coder_pos_normalized(self) -> percentage: # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
+    def _get_can_coder_pos_normalized(
+        self,
+    ) -> (
+        percentage
+    ):  # the _ in front of a function is indicating that this is only should be used in this class NOT ANYWHERE ELSE
         can_coder_abs_pos = self.can_coder.get_absolute_position().value
-        can_coder_offset = can_coder_abs_pos - degreesToRotations(self.rotation_offset_degrees)
+        can_coder_offset = can_coder_abs_pos - degreesToRotations(
+            self.rotation_offset_degrees
+        )
         normalized = can_coder_offset % 1.0
         return normalized
 
@@ -291,7 +349,7 @@ class SwerveModule:
         """
         Get the turn angle from the motor's encoder, without wrapping.
         In other words, if the steering has made two complete rotations
-        CCW, the returned value will be 720.0 degrees.   
+        CCW, the returned value will be 720.0 degrees.
         CCW looking from above is positive.
         Returns:
             Steering shaft angle in degrees.
@@ -301,3 +359,7 @@ class SwerveModule:
         # Convert by gear ratio
         ratioed_rotations = motor_abs_rotations / DriveConstants.TURN_GEAR_RATIO
         return rotationsToDegrees(ratioed_rotations)
+
+    def stop(self):
+        self.drive_motor.stopMotor()
+        self.turn_motor.stopMotor()
