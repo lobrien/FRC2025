@@ -1,6 +1,8 @@
 import commands2
 from commands2.button import CommandXboxController
 from wpimath import applyDeadband
+
+from commands.autonomous_commands import Autos
 from constants.autoconsts import AutoConsts
 from wpilib import SmartDashboard, SendableChooser
 from wpilib.shuffleboard import Shuffleboard
@@ -62,7 +64,7 @@ class RobotContainer:
         auto_reader = self.auto_chooser.getSelected()
 
         if auto_reader == AutoConsts.FORWARD:
-           return DriveForwardCommand(self.drive_subsystem, duration=5)
+           return Autos.forward(self.drive_subsystem)
         
     
 
