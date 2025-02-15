@@ -5,20 +5,26 @@ from wpimath.geometry import Pose2d
 from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_to_goal import DriveToGoal
 
+
 class Autos:
     """Class to hold autonomous command factories"""
 
     def __init__(self):
         raise Exception("This is a utility class, don't make instances of it.")
 
-    # @staticmethod
-    # def side_step(drive: DriveSubsystem):
-    #     """Autonomous routine that drives forward, waits, then moves left."""
-    #     return commands2.cmd.sequence(
-    #         DriveCommands.drive_goal(Positions.AWAY, drive),
-    #         DriveCommands.drive_idle_wait(5.0, drive),
-    #         DriveCommands.drive_goal(Positions.SIDE, drive),
-    #     )
+    @staticmethod
+    def side_step(drive: DriveSubsystem):
+        """Autonomous routine that drives forward, waits, then moves left."""
+        return commands2.cmd.sequence(
+            DriveToGoal(drive, Pose2d(36, 0, 10)),
+            commands2.cmd.wait(1),
+            DriveToGoal(drive, Pose2d(0, 48, 0)),
+        )
+
+    @staticmethod
+    def goal_sequence(drive: DriveSubsystem, poses: list[Pose2d]):
+        """Autonomous routine that drives to a list of poses"""
+        return commands2.cmd.sequence(*[DriveToGoal(drive, pose) for pose in poses])
 
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
