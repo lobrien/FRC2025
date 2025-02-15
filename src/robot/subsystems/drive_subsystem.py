@@ -5,7 +5,7 @@ import wpimath
 from wpilib import SmartDashboard, Field2d
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveDrive4Kinematics, SwerveDrive4Odometry, ChassisSpeeds, SwerveModuleState
-from wpimath.units import metersToInches, inchesToMeters, degreesToRadians, degrees
+from wpimath.units import inchesToMeters, degreesToRadians, degrees
 from phoenix6.hardware.pigeon2 import Pigeon2
 
 # This is for type hinting. You can use these types to make your code more readable and maintainable.
@@ -180,11 +180,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         Returns:
             list[Translation2d]: List of module positions in inches
-        """
-
-        # Using inches for the module positions
-        half_length = metersToInches(DriveConstants.WHEELBASE_HALF_LENGTH)  # Convert to inches
-        half_width = metersToInches(DriveConstants.TRACK_HALF_WIDTH)  # Convert to inches
+        """  
 
         # Create Translation2d objects for each module position
         # The coordinate system is:
@@ -192,10 +188,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # - Positive y is left
         # - Origin (0,0) is at robot center
         translations = [
-            wpimath.geometry.Translation2d(half_length, -half_width),  # Front Right
-            wpimath.geometry.Translation2d(half_length, half_width),  # Front Left
-            wpimath.geometry.Translation2d(-half_length, half_width),  # Back Left
-            wpimath.geometry.Translation2d(-half_length, -half_width),  # Back Right
+            wpimath.geometry.Translation2d(DriveConstants.WHEELBASE_HALF_LENGTH, -DriveConstants.TRACK_HALF_WIDTH),  # Front Right
+            wpimath.geometry.Translation2d(DriveConstants.WHEELBASE_HALF_LENGTH, DriveConstants.TRACK_HALF_WIDTH),  # Front Left
+            wpimath.geometry.Translation2d(-DriveConstants.WHEELBASE_HALF_LENGTH, DriveConstants.TRACK_HALF_WIDTH),  # Back Left
+            wpimath.geometry.Translation2d(-DriveConstants.WHEELBASE_HALF_LENGTH, -DriveConstants.TRACK_HALF_WIDTH),  # Back Right
         ]
 
         return translations

@@ -1,5 +1,5 @@
-from wpimath.geometry import Translation2d
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from wpimath.units import metersToInches
 
 @dataclass(frozen=True)
 class DriveConstants:
@@ -12,7 +12,7 @@ class DriveConstants:
 
     # TODO: Consistent units! We agreed inches and degrees! OR write clear comment explaining why this should be
     # in rotations
-    # CANCoder (magnet) offsets in rotations
+    # CANCoder (magnet) offsets in rotations that we got from the CANCoder using Phoenix Tuner X
     BR_OFFSET = -0.206
     BL_OFFSET = -0.306
     FR_OFFSET = -0.450
@@ -32,20 +32,19 @@ class DriveConstants:
     # Pigeon2 gyro CAN bus ID
     PIGEON_ID = 13
 
-    # Drivetrain geometry, gearing, etc.
-    # TODO: Consistent units! We agreed inches and degrees!
-    TRACK_HALF_WIDTH = 0.27       # meters (21.25 in track width)   
-    # TODO: Consistent units! We agreed inches and degrees!
-    WHEELBASE_HALF_LENGTH = 0.27 # meters (21.25 in wheelbase)
+    # Drivetrain geometry, gearing, etc.  
+    TRACK_HALF_WIDTH = metersToInches(0.27)       # meters (21.25 in track width)   
+    WHEELBASE_HALF_LENGTH = metersToInches(0.27)  # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0/35.0     # Kraken 
     DRIVE_GEAR_RATIO = 9 #temp
     WHEEL_DIA = 4  # 4" diameter
     WHEEL_RADIUS = WHEEL_DIA / 2
 
-    # Free speed from https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/java/SwerveWithPathPlanner/src/main/java/frc/robot/generated/TunerConstants.java
-    # TODO: This needs to be changed to our measured velocity at max voltage (place holder value is phoenix6 @ 12V according to above link)
-    # TODO: Consistent units! We agreed inches and degrees!
-    FREE_SPEED = 3.76 # m/s
+    # TODO: Consistent units! We agreed inches and degrees! 
+    # 
+    FREE_SPEED = 3.76 # max veloctity colected from giving the motors max input. Not currently used any where
+
+    SLOWED_FACTOR = 4
 
     # TODO: Change FREE_SPEED above to the measured motor RPM, and then use that in
     # an explicit calculation of MAX_SPEED_INCHES_PER_SECOND that uses the gear ratio and wheel diameter.
@@ -54,7 +53,6 @@ class DriveConstants:
 
     # Based on measurement of motor RPM with the robot up on blocks, adjusted
     # for gear ratio and wheel diameter.
-    # The "/ 4" is to slow things down for testing.
-    MAX_SPEED_INCHES_PER_SECOND = 145.7 / 4 # inches per second
-
-    # TODO: add a maximum rotational speed in degrees/second
+    # The "/ SLOWED_FACTOR" is to slow things down for testing.
+    MAX_SPEED_INCHES_PER_SECOND = 145.7 / SLOWED_FACTOR # inches per second
+    MAX_DEGREES_PER_SECOND = 72.85 / SLOWED_FACTOR # degrees per second

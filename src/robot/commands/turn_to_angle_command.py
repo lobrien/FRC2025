@@ -1,4 +1,3 @@
-import wpilib
 import commands2
 
 from subsystems.drive_subsystem import DriveSubsystem

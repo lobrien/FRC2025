@@ -49,7 +49,9 @@ class Robot(commands2.TimedCommandRobot):
         pass
 
     def disabledPeriodic(self):
-        # TODO: Why is this necessary? Isn't `autonomousInit` the most logical place to make this call? (It's already there)
+        # Calling this here so when testing or changing the auto plan last minute would be updated
+        # For example while testing if we change the auto plan after selecting the auto state in driver station, 
+        # the new auto plan wouldn't replace the one before changing to auto.
         self.autonomousCommand = self.container.get_auto_command()
 
     # Teleop lifecycle methods

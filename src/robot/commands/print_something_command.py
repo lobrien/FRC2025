@@ -1,4 +1,3 @@
-import wpilib
 import commands2
 
 class PrintSomethingCommand(commands2.Command):

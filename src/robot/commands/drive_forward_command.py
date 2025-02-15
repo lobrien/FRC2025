@@ -12,12 +12,14 @@ class DriveForwardCommand(commands2.Command):
         self.speed = speed_inches_per_second  # Default speed is 12 inches per second
         self.timer = wpilib.Timer()
 
+        self.addRequirements(drive_subsystem) #Requires this subsystem
+
     def initialize(self):  # Setting function
         self.timer.start()
 
     def execute(self):  # What actions it does
         self.drive_subsystem.drive(x_speed_inches_per_second=self.speed, y_speed_inches_per_second=self.speed, rot_speed_degrees_per_second=0.0)
-
+        
     def isFinished(self) -> bool:
         if self.timer.hasElapsed(period=self.duration):
             return True

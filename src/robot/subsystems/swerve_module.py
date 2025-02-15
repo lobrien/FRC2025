@@ -1,4 +1,3 @@
-import math
 from typing import NewType
 
 import wpimath
@@ -9,8 +8,8 @@ from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
-from wpimath.units import degrees, radians, meters, inches, meters_per_second
-from wpimath.units import degreesToRadians, radiansToDegrees, metersToInches, inchesToMeters, degreesToRotations, rotationsToDegrees
+from wpimath.units import degrees, meters, inches, meters_per_second
+from wpimath.units import metersToInches, inchesToMeters, degreesToRotations, rotationsToDegrees
 
 import wpilib
 

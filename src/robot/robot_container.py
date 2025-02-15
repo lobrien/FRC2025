@@ -1,8 +1,6 @@
 import commands2
-import wpilib
 from commands2.button import CommandXboxController
 from wpimath import applyDeadband
-from commands2 import RepeatCommand
 from constants.autoconsts import AutoConsts
 from wpilib import SmartDashboard, SendableChooser
 from wpilib.shuffleboard import Shuffleboard
@@ -44,30 +42,28 @@ class RobotContainer:
     
         self.controller.leftBumper().and_(self.controller.rightBumper()).whileTrue(ResetGyroCommand(self.drive_subsystem))
 
+        #Make a tab in shuffle board
+        self.tab = Shuffleboard.getTab("Datas")
 
-    def get_auto_command(self) -> commands2.Command:
-        """
-        We moved the code that makes the auto chooser and making the default option for it from init to the get auto command function because
-        when we did it normally it gave us an error saying there is no auto chooser so we just made one here. is there a way to fix this?
-
-        TODO: In the future, use TODO: to mark a task or question like ^. We can search for all TODO:s in the codebase to find them.
-        """
-
-         #Auto chooser
+        #Auto chooser
         self.auto_chooser = SendableChooser()
 
-        self.auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)  #Autos.side_step(self.drive)
+        self.auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)
         
         #Add options
+        self.auto_chooser.setDefaultOption("Side Step", AutoConsts.SIDE_STEP)
 
         #Add chooser to tab
         SmartDashboard.putData("Auto Commmand Selector", self.auto_chooser)
+
+
+    def get_auto_command(self) -> commands2.Command:
 
         auto_reader = self.auto_chooser.getSelected()
 
         if auto_reader == AutoConsts.FORWARD:
            return DriveForwardCommand(self.drive_subsystem, duration=5)
-
+        
     
 
 
