@@ -5,10 +5,6 @@ from wpimath.geometry import Pose2d
 
 from subsystems.drive_subsystem import DriveSubsystem
 
-
-
-
-
 class DriveToGoal(Command):
     def __init__(self, drive_subsystem: DriveSubsystem, goal_pose: Pose2d): 
         super().__init__() # Allows "drive_to_goal" to be Initilized, executed, and end by itself
