@@ -16,6 +16,7 @@ from commands.drive_forward_command import DriveForwardCommand
 from commands.drive_with_joystick_command import DriveWithJoystickCommand
 from commands.turn_to_angle_command import TurnToAngleCommand
 from commands.reset_gyro_command import ResetGyroCommand
+from subsystems.elevator_subsystem import ElevatorSubsystem
 
 
 # The `RobotContainer` class is where the robot's structure and behavior are defined.
@@ -34,48 +35,34 @@ from commands.reset_gyro_command import ResetGyroCommand
 # * The `RobotContainer` maps between the input devices and the Commands that operate on the Subsystems.
 class RobotContainer:
     def __init__(self):
-        self.drive_subsystem = DriveSubsystem()  # Update the array when ready
-        self.controller = CommandXboxController(
-            OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
-        )
+        self.drive_subsystem = DriveSubsystem()
+        self.elevator_subsystem = ElevatorSubsystem()
+
+        self.controller = self._initializeController()
 
         self.teleop_command = DriveWithJoystickCommand(
             self.drive_subsystem, self.get_drive_value_from_joystick
         )
 
-        self.controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
-        self.controller.b().whileTrue(
-            TurnToAngleCommand(self.drive_subsystem, lambda: True)
-        )  # for quick test
-
         self.drive_subsystem.setDefaultCommand(
             self.teleop_command
         )  # Set the teleop command as the default for drive subsystem
 
-        self.controller.leftBumper().and_(self.controller.rightBumper()).whileTrue(
-            ResetGyroCommand(self.drive_subsystem)
-        )
+        self.auto_chooser = self._initialize_shuffleboard()
+        # Add chooser to SmartDashboard
+        SmartDashboard.putData("Auto Commmand Selector", auto_chooser)
 
-        # Make a tab in shuffle board
-        self.tab = Shuffleboard.getTab("Datas")
-
+    def _initialize_shuffleboard(self):
         # Auto chooser
-        self.auto_chooser = SendableChooser()
-
-        self.auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)
-
+        auto_chooser = SendableChooser()
+        auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)
         # Add options
-        self.auto_chooser.setDefaultOption("Side Step", AutoConsts.SIDE_STEP)
-
-        self.auto_chooser.setDefaultOption("Sequence", AutoConsts.SEQUENCE)
-
-        # Add chooser to tab
-        SmartDashboard.putData("Auto Commmand Selector", self.auto_chooser)
+        auto_chooser.setDefaultOption("Side Step", AutoConsts.SIDE_STEP)
+        auto_chooser.setDefaultOption("Sequence", AutoConsts.SEQUENCE)
+        return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
-
         auto_reader = self.auto_chooser.getSelected()
-
 
         if auto_reader == AutoConsts.FORWARD: # checks which Autonomous command is being used
             return Autos.forward(self.drive_subsystem)
@@ -114,3 +101,22 @@ class RobotContainer:
         a = 1
         output = a * input * input * input + (1 - a) * input
         return output
+
+    def _initializeController(self):
+        """Initialize the controller"""
+        controller = CommandXboxController(
+            OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
+        )
+
+        controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
+        controller.b().whileTrue(
+            TurnToAngleCommand(self.drive_subsystem, lambda: True)
+        )  # for quick test
+
+        controller.leftBumper().and_(self.controller.rightBumper()).whileTrue(
+            ResetGyroCommand(self.drive_subsystem)
+        )
+
+        return controller
+
+
