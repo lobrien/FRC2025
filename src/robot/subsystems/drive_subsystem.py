@@ -130,7 +130,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         Gets the heading of the robot (direction it is pointing) in degrees.
         CCW is positive.
         """
-        # TODO: From the gyro. For now, just return the BL module's angle <-- IMPORTANT! DON'T LEAVE OBSOLETE COMMENTS!
         heading = self.gyro.get_yaw().value
 
         return heading
