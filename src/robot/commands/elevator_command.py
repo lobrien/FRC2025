@@ -1,33 +1,29 @@
 import commands2
 from subsystems.elevator_subsystem import ElevatorSubsystem
 
-class ElevatorCommands:
-    """Container for elevator command factories."""
+class ElevatorMoveToGoalHeight(commands2.CommandBase):
+    """
+    A command that moves the elevator toward a goal height in inches.
+    :param: goal  The height to move toward.
+    :param: elev  The elevator subsystem to operate on.
+    """
+    def __init__(self, goal_height: float, elev: ElevatorSubsystem):
+        super().__init__()
+        self.elev = elev
+        self.goal = goal_height
+        self.addRequirements(elev)
 
-    def __init__(self):
-        raise Exception("This is a utility class, don't make instances of it.")
-                        
-    @staticmethod
-    def move_goal(goal: float, elev: ElevatorSubsystem):
-        """
-        A command that moves the elevator toward a goal height in inches.
-        :param: goal  The height to move toward.
-        :param: elev  The elevator subsystem to operate on.
-        """
-        return commands2.cmd.FunctionalCommand(
-            # Initialize by setting the goal.
-            lambda: elev.set_goal_height_inches(goal),
+    def initialize(self):
+        # Set the goal height in inches.
+        self.elev.set_goal_height_inches(self.goal)
 
-            # Move while command is executing.
-            elev.move_to_goal,
+    def execute(self):
+        # Move the elevator toward the goal height.
+        self.elev.move_to_goal()
 
-            # What to do when ending, the parameter "interrupt" will be true if
-            #  the command was interrupted, but we ignore it.  Don't do anything.
-            lambda interrupt: None,
-
-            # Call this to know when to end the command.
-            elev.is_at_goal,
-
-            # Require the elevator subsystem that is passed in.
-            elev
-        )
+    def isFinished(self, interrupted: bool = False) -> bool:
+        # Check if the elevator has reached the goal height.
+        if interrupted:
+            return True
+        else:
+            return self.elev.is_at_goal()

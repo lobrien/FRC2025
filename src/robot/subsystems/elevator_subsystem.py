@@ -62,6 +62,10 @@ class ElevatorSubsystem(commands2.Subsystem):
         # Convert because internally, we use rotations.
         self.goal_pos = self._inches_to_motor_rot(height)
 
+    def get_current_height_inches(self) -> float:
+        """Get the current height of the elevator in inches"""
+        return self._motor_rot_to_inches(self.encoder.getPosition())
+
     def move_to_goal(self):
         """Move toward the goal position"""
         if self.initialized:
@@ -75,7 +79,7 @@ class ElevatorSubsystem(commands2.Subsystem):
                 self.initialized = True
 
     def is_at_goal(self) -> bool:
-        False # Never end unless interrupted.
+        False # Never end unless interrupted. LOB: ???
 
     def initialization(self):
         self.initialized: bool = False
@@ -89,7 +93,6 @@ class ElevatorSubsystem(commands2.Subsystem):
 
     def _motor_rot_to_inches(rot: float) -> float:
         """Convert motor shaft rotations to height in inches."""
-        #TODO: change this equation to the one that fits with the elevator
         return rot * ElevatorConstants.SPROCKET_CIRC * ElevatorConstants.RIG / ElevatorConstants.GEAR_RATIO + ElevatorConstants.HEIGHT_OFFSET
 
     def _inches_to_motor_rot(height: float) -> float:
