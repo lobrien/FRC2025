@@ -78,7 +78,7 @@ class ElevatorSubsystem(commands2.Subsystem):
         else:
             # If not initialized, move downward slowly to find the bottom.
             self.elevator_motor.set(-0.1)
-            if self.bottom_limit.value():
+            if self.bottom_limit.value == ReverseLimitValue.CLOSED_TO_GROUND:
                 self.elevator_motor.set(0.0)
                 rotations = self._inches_to_motor_rot(ElevatorConstants.HOME)
                 self.elevator_motor.set_position(rotations, timeout_seconds=10.0)
