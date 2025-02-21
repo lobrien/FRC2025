@@ -90,7 +90,10 @@ class ElevatorSubsystem(commands2.Subsystem):
     def initialize_bottom_limit(self):
         initialized: bool = False
         # Initialize if the bottom limit exists (?)
-        if self.elevator_motor.get_reverse_limit().value == ReverseLimitValue.CLOSED_TO_GROUND:
+        if (
+            self.elevator_motor.get_reverse_limit().value
+            == ReverseLimitValue.CLOSED_TO_GROUND
+        ):
             rotations = self._inches_to_motor_rot(ElevatorConstants.HOME)
             self.elevator_motor.set_position(rotations)
             initialized = True
