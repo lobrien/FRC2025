@@ -43,8 +43,6 @@ class DriveConstants:
     WHEEL_DIA : inches = 4  # 4" diameter
     WHEEL_RADIUS : inches = WHEEL_DIA / 2
 
-    # TODO: Consistent units! We agreed inches and degrees!
-    #
     FREE_SPEED = 3.76  # max velocity collected from giving the motors max input. Not currently used anywhere
 
     SLOWED_FACTOR = 4
