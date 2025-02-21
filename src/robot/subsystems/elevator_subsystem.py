@@ -84,9 +84,6 @@ class ElevatorSubsystem(commands2.Subsystem):
                 self.elevator_motor.set_position(rotations, timeout_seconds=10.0)
                 self.initialized = True
 
-    def is_at_goal(self) -> bool:
-        return False  # Never end unless interrupted. LOB: ???
-
     # LOB: Speculative! TODO: Check this code
     def initialize_bottom_limit(self):
         initialized: bool = False
