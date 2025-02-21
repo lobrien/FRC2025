@@ -106,8 +106,7 @@ class ElevatorSubsystem(commands2.Subsystem):
         """Convert motor shaft rotations to height in inches."""
         return (
             rot
-            * ElevatorConstants.SPROCKET_CIRC
-            * ElevatorConstants.RIG
+            * ElevatorConstants.SCREW_INCHES_PER_ROT
             / ElevatorConstants.GEAR_RATIO
             + ElevatorConstants.HEIGHT_OFFSET
         )
@@ -117,8 +116,7 @@ class ElevatorSubsystem(commands2.Subsystem):
         """Convert height to motor shaft position in rotations."""
         return (
             (height - ElevatorConstants.HEIGHT_OFFSET)
-            * ElevatorConstants.GEAR_RATIO
-            / ElevatorConstants.SPROCKET_CIRC
+            / ElevatorConstants.SCREW_INCHES_PER_ROT
             / ElevatorConstants.RIG
         )
 
