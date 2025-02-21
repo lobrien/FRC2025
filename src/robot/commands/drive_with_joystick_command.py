@@ -31,7 +31,6 @@ class DriveWithJoystickCommand(
             rot_speed_degrees_per_second=rot_speed,
         )  # Give these values to drive function
 
-    def isFinished(
-        self,
-    ):  # When something else happens then this is done, cause this is a default command
-        return True
+    
+    def isFinished(self):
+        return False

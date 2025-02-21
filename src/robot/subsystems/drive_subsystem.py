@@ -200,12 +200,12 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         :param y_speed_inches_per_second:    Speed to the left (from the driver's perspective)
         :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
         """
-        desaturated_module_speeds = self._speeds_to_states(
+        desaturated_module_states = self._speeds_to_states(
             x_speed_inches_per_second,
             y_speed_inches_per_second,
             rot_speed_degrees_per_second,
         )
-        for module, state in zip(self.modules, desaturated_module_speeds):
+        for module, state in zip(self.modules, desaturated_module_states):
             module.set_desired_state(state)
 
     # --------------------------------------
@@ -224,11 +224,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             rot_speed_degrees_per_second=rot_speed,
         )
         swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
-        desaturated_module_speeds = SwerveDrive4Kinematics.desaturateWheelSpeeds(
+        desaturated_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(
             swerve_module_states,
             inchesToMeters(DriveConstants.MAX_SPEED_INCHES_PER_SECOND),
         )
-        return desaturated_module_speeds
+        return desaturated_module_states
 
     def _get_chassis_speeds(
         self,
