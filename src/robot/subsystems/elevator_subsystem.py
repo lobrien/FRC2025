@@ -5,6 +5,7 @@ from phoenix6.controls import PositionVoltage
 from phoenix6.configs import TalonFXConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue, ReverseLimitValue
 from constants.elevatorconstants import ElevatorConstants
+from constants.new_types import inches
 
 
 class ElevatorSubsystem(commands2.Subsystem):
@@ -59,12 +60,12 @@ class ElevatorSubsystem(commands2.Subsystem):
     # Methods to use in commands, either created in this class or elsewhere   #
     ###########################################################################
 
-    def set_goal_height_inches(self, height: float):
+    def set_goal_height_inches(self, height: inches):
         """Set the goal in inches that the elevator drives toward"""
         # Convert because internally, we use rotations.
         self.goal_pos = self._inches_to_motor_rot(height)
 
-    def get_current_height_inches(self) -> float:
+    def get_current_height_inches(self) -> inches:
         """Get the current height of the elevator in inches"""
         return self._motor_rot_to_inches(self.elevator_motor.get_position().value)
 
@@ -77,7 +78,7 @@ class ElevatorSubsystem(commands2.Subsystem):
         else:
             # If not initialized, move downward slowly to find the bottom.
             self.elevator_motor.set(-0.1)
-            if self.bottom_limit.get():
+            if self.bottom_limit.value():
                 self.elevator_motor.set(0.0)
                 rotations = self._inches_to_motor_rot(ElevatorConstants.HOME)
                 self.elevator_motor.set_position(rotations, timeout_seconds=10.0)
@@ -104,7 +105,7 @@ class ElevatorSubsystem(commands2.Subsystem):
     ###########################################################################
 
     @staticmethod
-    def _motor_rot_to_inches(rot: float) -> float:
+    def _motor_rot_to_inches(rot: float) -> inches:
         """Convert motor shaft rotations to height in inches."""
         return (
             rot
@@ -115,7 +116,7 @@ class ElevatorSubsystem(commands2.Subsystem):
         )
 
     @staticmethod
-    def _inches_to_motor_rot(height: float) -> float:
+    def _inches_to_motor_rot(height: inches) -> float:
         """Convert height to motor shaft position in rotations."""
         return (
             (height - ElevatorConstants.HEIGHT_OFFSET)

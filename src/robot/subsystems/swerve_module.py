@@ -23,7 +23,7 @@ from constants.new_types import percentage, inches_per_second
 def _calc_drive_effort(speed: inches_per_second) -> percentage:
     drive_effort = speed / DriveConstants.MAX_SPEED_INCHES_PER_SECOND
     drive_effort_clamped = max(min(drive_effort, 1.0), -1.0)
-    return drive_effort_clamped
+    return percentage(drive_effort_clamped)
 
 
 class SwerveModule:

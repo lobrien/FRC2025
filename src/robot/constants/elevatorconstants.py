@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from constants.new_types import inches
+
 
 @dataclass(frozen=True)
 class ElevatorConstants:
@@ -15,8 +17,8 @@ class ElevatorConstants:
     SCREW_INCHES_PER_ROT = 0.25
 
     # Heights in inches (lowest is 10.5, highest is ~55.5)  #Change names of the different heights when writing the official code
-    HOME: float = 10.5  # Elevator at its lowest position.
-    MID: float = 34.5
+    HOME: inches = 10.5  # Elevator at its lowest position.
+    MID: inches = 34.5
 
     # TODO: These need to be measured and updated.
     SPROCKET_CIRC = 42 * 5 / 25.4  # From Mako TODO: Measure this

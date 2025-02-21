@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from wpimath.units import metersToInches
 
+from constants.new_types import inches_per_second, inches, degrees_per_second, degrees, inches_per_second_squared, \
+    degrees_per_second_squared
+
 
 @dataclass(frozen=True)
 class DriveConstants:
@@ -12,8 +15,6 @@ class DriveConstants:
     CAN_BL = 5  # Back left
     CAN_BR = 2  # Back right
 
-    # TODO: Consistent units! We agreed inches and degrees! OR write clear comment explaining why this should be
-    # in rotations
     # CANCoder (magnet) offsets in rotations that we got from the CANCoder using Phoenix Tuner X
     BR_OFFSET = -0.206
     BL_OFFSET = -0.306
@@ -35,12 +36,12 @@ class DriveConstants:
     PIGEON_ID = 13
 
     # Drivetrain geometry, gearing, etc.
-    TRACK_HALF_WIDTH = metersToInches(0.27)  # meters (21.25 in track width)
-    WHEELBASE_HALF_LENGTH = metersToInches(0.27)  # meters (21.25 in wheelbase)
+    TRACK_HALF_WIDTH : inches = metersToInches(0.27)  # meters (21.25 in track width)
+    WHEELBASE_HALF_LENGTH : inches = metersToInches(0.27)  # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0 / 35.0  # Kraken
     DRIVE_GEAR_RATIO = 9  # temp
-    WHEEL_DIA = 4  # 4" diameter
-    WHEEL_RADIUS = WHEEL_DIA / 2
+    WHEEL_DIA : inches = 4  # 4" diameter
+    WHEEL_RADIUS : inches = WHEEL_DIA / 2
 
     # TODO: Consistent units! We agreed inches and degrees!
     #
@@ -56,8 +57,8 @@ class DriveConstants:
     # Based on measurement of motor RPM with the robot up on blocks, adjusted
     # for gear ratio and wheel diameter.
     # The "/ SLOWED_FACTOR" is to slow things down for testing.
-    MAX_SPEED_INCHES_PER_SECOND = 145.7 / SLOWED_FACTOR  # inches per second
-    MAX_DEGREES_PER_SECOND = 72.85 / SLOWED_FACTOR  # degrees per second
+    MAX_SPEED_INCHES_PER_SECOND : inches_per_second = 145.7 / SLOWED_FACTOR  # inches per second
+    MAX_DEGREES_PER_SECOND : degrees_per_second = 72.85 / SLOWED_FACTOR  # degrees per second
 
     # TODO: These are from Mako, not Kraken. We need to tune them for Kraken.
     # PID controller constants (gains)
@@ -70,15 +71,15 @@ class DriveConstants:
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
 
     # Horizontal (x or y) maxima and tolerances
-    HORIZ_MAX_V: float = 39.0  # Maximum velocity in inches/second
-    HORIZ_MAX_A: float = 78.0  # Maximum acceleration in inches/second/second
-    HORIZ_POS_TOL: float = (
+    HORIZ_MAX_V: inches_per_second = 39.0  # Maximum velocity in inches/second
+    HORIZ_MAX_A: inches_per_second_squared = 78.0  # Maximum acceleration in inches/second/second
+    HORIZ_POS_TOL: inches = (
         4.0  # Position tolerance in inches (within this distance is "close enough")
     )
-    HORIZ_VEL_TOL: float = 0.4  # Velocity tolerance in inches/second
+    HORIZ_VEL_TOL: inches_per_second = 0.4  # Velocity tolerance in inches/second
 
     # Rotational maxima and tolerances
-    ROT_MAX_V: float = 40.0  # Rotational maximum velocity in degrees/second
-    ROT_MAX_A: float = 20.0  # Rotational maximum acceleration in degrees/second/second
-    ROT_POS_TOL: float = 5.0  # Rotational position tolerance in degrees
-    ROT_VEL_TOL: float = 1.0  # Rotational velocity tolerance in degrees/second
+    ROT_MAX_V: degrees_per_second = 40.0  # Rotational maximum velocity in degrees/second
+    ROT_MAX_A: degrees_per_second_squared = 20.0  # Rotational maximum acceleration in degrees/second/second
+    ROT_POS_TOL: degrees = 5.0  # Rotational position tolerance in degrees
+    ROT_VEL_TOL: degrees_per_second = 1.0  # Rotational velocity tolerance in degrees/second
