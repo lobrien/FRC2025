@@ -1,5 +1,3 @@
-from typing import NewType
-
 import commands2
 import wpimath
 from wpilib import SmartDashboard, Field2d
@@ -15,12 +13,8 @@ from wpimath.kinematics import (
 from wpimath.units import inchesToMeters, degreesToRadians, degrees
 from phoenix6.hardware.pigeon2 import Pigeon2
 
-# This is for type hinting. You can use these types to make your code more readable and maintainable.
-# There will be a warning (but not an error!) if you try to assign a value of the wrong type to a variable
-inches_per_second = NewType("inches_per_second", float)
-degrees_per_second = NewType("degrees_per_second", float)
-
 from constants.driveconstants import DriveConstants
+from constants.new_types import inches_per_second, degrees_per_second, percentage
 from subsystems.swerve_module import SwerveModule
 
 
@@ -97,7 +91,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # ---------------------------------------------------------------------
 
         # The "pose" or position and rotation of the robot.  Usually, we will use
-        # odometry to estimate this, but we keep it as a member variable to carry
+        # odometry to estimate this, but we keep it as a member variable to
         # carry between different method calls.  Start at zero, facing +x direction,
         # which for poses, is like Translation2d, +x = forward.
         self.pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))
@@ -110,11 +104,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # of full speed. The speed and rotation values range from -1 to 1.
     # Note that the drive will continue at those values until told otherwise
     def drive_by_effort(
-        self, drive_speed: inches_per_second, turn_speed: degrees_per_second
+        self, drive_effort: percentage, turn_effort: percentage
     ) -> None:
         for module in self.modules:
-            module.set_drive_effort(drive_speed)
-            module.set_turn_effort(turn_speed)
+            module.set_drive_effort(drive_effort)
+            module.set_turn_effort(turn_effort)
 
     def set_drive_angle(self, desired_angle_degrees: degrees) -> None:
         # Probably:
@@ -203,15 +197,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         directions from the human operator's perspective, assuming the robot
         was initialized while facing the same direction as the driver/operator.
         :param x_speed_inches_per_second:    Speed forward (away from the driver)
-        :param x_speed_inches_per_second:    Speed to the left (from the driver's perspective)
+        :param y_speed_inches_per_second:    Speed to the left (from the driver's perspective)
         :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
         """
-        desatured_module_states = self._speeds_to_states(
+        desaturated_module_speeds = self._speeds_to_states(
             x_speed_inches_per_second,
             y_speed_inches_per_second,
             rot_speed_degrees_per_second,
         )
-        for module, state in zip(self.modules, desatured_module_states):
+        for module, state in zip(self.modules, desaturated_module_speeds):
             module.set_desired_state(state)
 
     # --------------------------------------
@@ -228,27 +222,25 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             x_speed_inches_per_second=x_speed,
             y_speed_inches_per_second=y_speed,
             rot_speed_degrees_per_second=rot_speed,
-            field_relative=True,
         )
         swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
-        desatured_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(
+        desaturated_module_speeds = SwerveDrive4Kinematics.desaturateWheelSpeeds(
             swerve_module_states,
             inchesToMeters(DriveConstants.MAX_SPEED_INCHES_PER_SECOND),
         )
-        return desatured_module_states
+        return desaturated_module_speeds
 
     def _get_chassis_speeds(
         self,
         x_speed_inches_per_second: inches_per_second,
         y_speed_inches_per_second: inches_per_second,
         rot_speed_degrees_per_second: degrees_per_second,
-        field_relative: bool = True,
     ) -> ChassisSpeeds:
         # ChassisSpeeds expects meters and radians
         x_speed_meters_per_second = inchesToMeters(x_speed_inches_per_second)
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
-        # TODO: When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negetive it works <-- IS THIS COMMENT HELPFUL?
+        # TODO: When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negative it works <-- IS THIS COMMENT HELPFUL?
         # TODO: Does the previous comment describe a bug?
         cs = ChassisSpeeds.fromRobotRelativeSpeeds(
             x_speed_meters_per_second,
@@ -271,7 +263,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             modulePositions=[module.get_position() for module in self.modules],
         )
 
-    def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
+    @staticmethod
+    def _get_module_translations() -> list[wpimath.geometry.Translation2d]:
         """
         Returns the physical positions of each swerve module relative to the center of the robot.
         The order should match the order of modules in self.modules:
@@ -366,7 +359,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             and self.y_controller.atGoal()
             and self.rot_controller.atGoal()
         )
-        return all_controllers_at_goal 
+        return all_controllers_at_goal
 
     def reset_pids(self):
         """
@@ -380,9 +373,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.y_controller.reset(self.pose.Y())
         self.rot_controller.reset(self.pose.rotation().degrees())
 
-    def _initialize_pid_controllers(
-        self,
-    ) -> tuple[ProfiledPIDController, ProfiledPIDController, ProfiledPIDController]:
+    @staticmethod
+    def _initialize_pid_controllers() -> (
+        tuple[ProfiledPIDController, ProfiledPIDController, ProfiledPIDController]
+    ):
         """
         Initialize the PID controllers for the drive subsystem.
         """
@@ -442,6 +436,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             module.stop()
 
 
-def clamp(val, minval, maxval):
+def clamp(val, min_val, max_val):
     """Returns a number clamped to minval and maxval."""
-    return max(min(val, maxval), minval)
+    return max(min(val, max_val), min_val)

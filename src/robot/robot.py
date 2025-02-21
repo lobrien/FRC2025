@@ -1,7 +1,10 @@
+from typing import Optional
+
 import commands2.command
 from commands2 import CommandScheduler
 
 import robot_container
+
 
 # The `Robot` class is the main robot class. It is responsible for
 # the robot lifecycle methods. Because this is a command-based robot,
@@ -17,14 +20,14 @@ class Robot(commands2.TimedCommandRobot):
     def __init__(self):
         super().__init__()
 
-        # The container is the place where all of the robot's components and commands are created.w
+        # The container is the place where all the robot's components and commands are created.w
         self.container = robot_container.RobotContainer()
-        self.autonomous_command = None
+        self.autonomous_command: Optional[commands2.Command] = None
         if Robot.isReal():
             print("Robot is real")
         else:
             print("Robot is not real")
-        #breakpoint()
+        # breakpoint()
 
     # Robot overall lifecycle methods
     def robotInit(self):
@@ -40,7 +43,7 @@ class Robot(commands2.TimedCommandRobot):
     def autonomousInit(self):
         self.autonomous_command = self.container.get_auto_command()
         if self.autonomous_command is not None:
-            self.autonomous_command.schedule() # Note that this is a single command for all of autonomous
+            self.autonomous_command.schedule()  # Note that this is a single command for all of autonomous
 
     def autonomousPeriodic(self):
         pass
@@ -50,15 +53,14 @@ class Robot(commands2.TimedCommandRobot):
 
     def disabledPeriodic(self):
         # Calling this here so when testing or changing the auto plan last minute would be updated
-        # For example while testing if we change the auto plan after selecting the auto state in driver station, 
+        # For example while testing if we change the auto plan after selecting the auto state in driver station,
         # the new auto plan wouldn't replace the one before changing to auto.
-        self.autonomousCommand = self.container.get_auto_command()
+        self.autonomous_command = self.container.get_auto_command()
 
     # Teleop lifecycle methods
     def teleopInit(self):
         if self.autonomous_command is not None:
             self.autonomous_command.cancel()
-            
 
     def teleopPeriodic(self):
         pass
@@ -69,7 +71,7 @@ class Robot(commands2.TimedCommandRobot):
     # Test lifecycle methods
     def testInit(self):
         # Cancel all running commands
-        CommandScheduler.getInstance().cancelAll();
+        CommandScheduler.getInstance().cancelAll()
 
     def testPeriodic(self):
         pass

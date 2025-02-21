@@ -1,6 +1,6 @@
 import unittest
 
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d
 
 from constants.driveconstants import DriveConstants
 from subsystems.drive_subsystem import DriveSubsystem

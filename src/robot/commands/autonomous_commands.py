@@ -17,7 +17,7 @@ class Autos:
         """Autonomous routine that drives forward, waits, then moves left."""
         return commands2.cmd.sequence(
             DriveToGoal(drive, Pose2d(36, 0, 10)),
-            commands2.cmd.wait(1),
+            commands2.WaitCommand(1),
             DriveToGoal(drive, Pose2d(0, 48, 0)),
         )
 
@@ -26,6 +26,7 @@ class Autos:
         """Autonomous routine that drives to a list of poses"""
         return commands2.cmd.sequence(*[DriveToGoal(drive, pose) for pose in poses])
 
+    @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
         return commands2.cmd.sequence(DriveToGoal(drive, Pose2d(36, 0, 10)))

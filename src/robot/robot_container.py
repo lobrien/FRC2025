@@ -6,13 +6,11 @@ from wpimath.geometry import Pose2d
 from commands.autonomous_commands import Autos
 from constants.autoconsts import AutoConsts
 from wpilib import SmartDashboard, SendableChooser
-from wpilib.shuffleboard import Shuffleboard
 
 
 from commands.print_something_command import PrintSomethingCommand
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 from subsystems.drive_subsystem import DriveSubsystem
-from commands.drive_forward_command import DriveForwardCommand
 from commands.drive_with_joystick_command import DriveWithJoystickCommand
 from commands.turn_to_angle_command import TurnToAngleCommand
 from commands.reset_gyro_command import ResetGyroCommand
@@ -38,7 +36,7 @@ class RobotContainer:
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
 
-        self.controller = self._initializeController()
+        self.controller = self._initialize_controller()
 
         self.teleop_command = DriveWithJoystickCommand(
             self.drive_subsystem, self.get_drive_value_from_joystick
@@ -50,9 +48,10 @@ class RobotContainer:
 
         self.auto_chooser = self._initialize_shuffleboard()
         # Add chooser to SmartDashboard
-        SmartDashboard.putData("Auto Commmand Selector", auto_chooser)
+        SmartDashboard.putData("Auto Command Selector", self.auto_chooser)
 
-    def _initialize_shuffleboard(self):
+    @staticmethod
+    def _initialize_shuffleboard():
         # Auto chooser
         auto_chooser = SendableChooser()
         auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)
@@ -64,11 +63,13 @@ class RobotContainer:
     def get_auto_command(self) -> commands2.Command:
         auto_reader = self.auto_chooser.getSelected()
 
-        if auto_reader == AutoConsts.FORWARD: # checks which Autonomous command is being used
+        if (
+            auto_reader == AutoConsts.FORWARD
+        ):  # checks which Autonomous command is being used
             return Autos.forward(self.drive_subsystem)
         elif auto_reader == AutoConsts.SIDE_STEP:
             return Autos.side_step(self.drive_subsystem)
-        elif auto_reader == AutoConsts.SEQUENCE: # added new Auto Command
+        elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)]
             )
@@ -85,9 +86,9 @@ class RobotContainer:
         y_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1)
         rot_percent = applyDeadband(value=self.controller.getRightX(), deadband=0.1)
 
-        x_percent = self.joystickscaling(x_percent)
-        y_percent = self.joystickscaling(y_percent)
-        rot_percent = self.joystickscaling(rot_percent)
+        x_percent = self.joystick_scaling(x_percent)
+        y_percent = self.joystick_scaling(y_percent)
+        rot_percent = self.joystick_scaling(rot_percent)
 
         return (
             x_percent,
@@ -95,14 +96,15 @@ class RobotContainer:
             rot_percent,
         )  # Gives us these variables when we call this function
 
-    def joystickscaling(
-        self, input
+    @staticmethod
+    def joystick_scaling(
+        input,
     ):  # this function helps bring an exponential curve in the joystick value and near the zero value it uses less value and is more flat
         a = 1
         output = a * input * input * input + (1 - a) * input
         return output
 
-    def _initializeController(self):
+    def _initialize_controller(self):
         """Initialize the controller"""
         controller = CommandXboxController(
             OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
@@ -113,10 +115,8 @@ class RobotContainer:
             TurnToAngleCommand(self.drive_subsystem, lambda: True)
         )  # for quick test
 
-        controller.leftBumper().and_(self.controller.rightBumper()).whileTrue(
+        controller.leftBumper().and_(controller.rightBumper()).whileTrue(
             ResetGyroCommand(self.drive_subsystem)
         )
 
         return controller
-
-

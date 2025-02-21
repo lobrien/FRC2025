@@ -19,7 +19,7 @@ This ensures you have everyone else's changes. If there is a "merge conflict" er
     5. Click the "✓" checkmark above your message to commit
 * At the end of a work session (or even better, every time get the next thing working) push your commits.
     1. In VS Code, click the "Source Control" icon
-    2. Select "Push" to send changes to Github. 
+    2. Select "Push" to send changes to GitHub. 
 
 TODO: talk about branching?
 {>> LOB: I'm thinking at a later date. My worry is that I know changes come fast and furious at competitions. 
@@ -53,7 +53,7 @@ There are a few ways to resolve merge conflicts, including graphical tools.
 But there's no need for anything but your editor. If, when trying to push
 your commits or trying to pull changes, you see the following dialog, 
 select "Pull then Push". ("Force push" is saying "Nope, I'm certain I'm 
-correct, use my stuff without asking any more.")
+correct, use my stuff without asking anymore.")
 
 ![VS Code Merge Conflict dialog](./media/git-conflicts-pull-push-ui.png)
 
@@ -106,4 +106,4 @@ Once all the conflicts have been resolved, you commit them just like you normall
 "+" key) and then choose the "✓" checkmark to commit. This is called a "Merge Commit" and it's doubly-important
 to write a clear message explaining **why** you resolved the conflicts the way you did. 
 
-After you've made the Merge Commit, you should be able to push it to Github without a problem. 
+After you've made the Merge Commit, you should be able to push it to GitHub without a problem. 

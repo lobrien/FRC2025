@@ -3,7 +3,7 @@ Code for 2025 season.
 
 # Initializing environment
 
-After you have cloned this repository, you will need to initialize the enironment. This will install the necessary dependencies for the project. 
+After you have cloned this repository, you will need to initialize the environment. This will install the necessary dependencies for the project. 
 
 Follow the instructions at [Installation.md](docs/Installation.md) to initialize the environment.
 

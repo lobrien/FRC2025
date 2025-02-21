@@ -44,7 +44,7 @@ class DriveConstants:
 
     # TODO: Consistent units! We agreed inches and degrees!
     #
-    FREE_SPEED = 3.76  # max veloctity colected from giving the motors max input. Not currently used any where
+    FREE_SPEED = 3.76  # max velocity collected from giving the motors max input. Not currently used anywhere
 
     SLOWED_FACTOR = 4
 
