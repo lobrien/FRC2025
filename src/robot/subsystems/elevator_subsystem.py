@@ -3,7 +3,7 @@ import wpilib
 from phoenix6.hardware.talon_fx import TalonFX
 from phoenix6.controls import PositionVoltage
 from phoenix6.configs import TalonFXConfiguration
-from phoenix6.signals import InvertedValue, NeutralModeValue
+from phoenix6.signals import InvertedValue, NeutralModeValue, ReverseLimitValue
 from constants.elevatorconstants import ElevatorConstants
 
 
@@ -90,7 +90,7 @@ class ElevatorSubsystem(commands2.Subsystem):
     def initialize_bottom_limit(self):
         initialized: bool = False
         # Initialize if the bottom limit exists (?)
-        if self.elevator_motor.get_reverse_limit().value:
+        if self.elevator_motor.get_reverse_limit().value == ReverseLimitValue.CLOSED_TO_GROUND:
             rotations = self._inches_to_motor_rot(ElevatorConstants.HOME)
             self.elevator_motor.set_position(rotations)
             initialized = True
