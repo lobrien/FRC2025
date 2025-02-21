@@ -104,9 +104,7 @@ class ElevatorSubsystem(commands2.Subsystem):
     def _motor_rot_to_inches(rot: float) -> inches:
         """Convert motor shaft rotations to height in inches."""
         return (
-            rot
-            * ElevatorConstants.SCREW_INCHES_PER_ROT
-            / ElevatorConstants.GEAR_RATIO
+            rot * ElevatorConstants.SCREW_INCHES_PER_ROT / ElevatorConstants.GEAR_RATIO
             + ElevatorConstants.HEIGHT_OFFSET
         )
 
