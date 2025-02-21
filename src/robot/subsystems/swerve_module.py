@@ -2,7 +2,7 @@ import wpimath
 from phoenix6.controls import PositionVoltage, NeutralOut
 from phoenix6.hardware import CANcoder
 from phoenix6.hardware.talon_fx import TalonFX
-from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
+from phoenix6.configs import TalonFXConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
@@ -232,14 +232,6 @@ class SwerveModule:
         configuration.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
 
-        return configuration
-
-    @staticmethod
-    def _configure_cancoder(
-        offset: float,
-    ) -> CANcoderConfiguration:  # Mostly for configuring offsets
-        configuration = CANcoderConfiguration()
-        # configuration.magnet_sensor(offset)
         return configuration
 
     # --------------------------------------
