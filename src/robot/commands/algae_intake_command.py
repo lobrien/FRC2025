@@ -1,7 +1,7 @@
 import commands2
 from subsystems.algae_subsystem import AlgaeSubsystem
 
-class AlgaeIntake(commands2.CommandBase):
+class AlgaeIntake(commands2.Command):
     """
     A command for intaking the algae game pieces 
     :param: algae The subsystem that works with algae

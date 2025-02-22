@@ -1,9 +1,9 @@
 import commands2
 from subsystems.algae_subsystem import AlgaeSubsystem
 
-class AlgaeOuttake(commands2.Command):
+class AlgaeIdle(commands2.Command):
     """
-    A command for outtaking the algae game pieces 
+    A command for when the algae needs to be idle
     :param: algae The subsystem that works with algae
     """
 
@@ -13,12 +13,13 @@ class AlgaeOuttake(commands2.Command):
         self.addRequirements(algae)
 
     def execute(self):
-        # Move wheels.
-        self.algae.outtake()
+        # Move intake.
+        self.algae.stop()
 
     def isFinished(self) -> bool:
-        return True
-    
-    def end(self, was_interrupted: bool):
-        #stop 
-        self.algae.stop()
+        return False
+
+    def end(self, interrupted: bool):
+        # Since this is the default command, it should only end if it is interrupted.
+        pass
+

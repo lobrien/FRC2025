@@ -4,7 +4,7 @@ from constants.new_types import inches
 from subsystems.elevator_subsystem import ElevatorSubsystem
 
 
-class ElevatorMoveToGoalHeightContinuously(commands2.CommandBase):
+class ElevatorMoveToGoalHeightContinuously(commands2.Command):
     """
     A command that moves the elevator toward a goal height in inches.
     :param: goal  The height to move toward.
@@ -25,9 +25,6 @@ class ElevatorMoveToGoalHeightContinuously(commands2.CommandBase):
         # Move the elevator toward the goal height.
         self.elev.move_to_goal()
 
-    def isFinished(self, interrupted: bool = False) -> bool:
+    def isFinished(self):
         # Since this is the default command, it should only end if it is interrupted.
-        if interrupted:
-            return True
-        else:
-            return False
+        return False

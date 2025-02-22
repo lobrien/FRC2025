@@ -1,10 +1,13 @@
 import commands2
 import rev
 from constants.algaeconsts import AlgaeConsts
+from util.current_threshold import CurrentThreshold
+
 
 class AlgaeSubsystem(commands2.Subsystem):
     def __init__(self) -> None:
         super().__init__()  # Call the Subsystem class's (the "super" part) init.
+        self.current_threshold = CurrentThreshold("Algae Intake", AlgaeConsts.ALGAE_STOP_CURRENT)
 
         # Motor object 
         self.algae_motor = rev.SparkMax(AlgaeConsts.ALGAE_MOTOR, rev.SparkMax.MotorType.kBrushless)
@@ -48,3 +51,8 @@ class AlgaeSubsystem(commands2.Subsystem):
             return True
         else:
             return False
+        
+    def periodic(self):
+        motor_current = self.algae_motor.getOutputCurrent()
+        
+        self.current_threshold.is_exceeded(motor_current)

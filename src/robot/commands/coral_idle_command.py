@@ -1,10 +1,9 @@
 import commands2
 from subsystems.coral_subsystem import CoralSubsystem
 
-
-class CoralOuttake(commands2.Command):
+class CoralIdle(commands2.Command):
     """
-    A command for outtaking the coral game pieces 
+    A command for when coral subsystem needs to be idle
     :param: coral The subsystem that works with coral
     """
 
@@ -15,11 +14,12 @@ class CoralOuttake(commands2.Command):
 
     def execute(self):
         # Move intake.
-        self.coral.outtake()
+        self.coral.stop()
 
     def isFinished(self) -> bool:
-        return True
-    
-    def end(self, was_interrupted: bool):
-        #stop 
-        self.coral.stop()
+        return False
+
+    def end(self, interrupted: bool):
+        # Since this is the default command, it should only end if it is interrupted.
+        pass
+

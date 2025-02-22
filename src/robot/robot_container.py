@@ -18,8 +18,10 @@ from commands.turn_to_angle_command import TurnToAngleCommand
 from commands.reset_gyro_command import ResetGyroCommand
 from commands.algae_intake_command import AlgaeIntake
 from commands.algae_outtake_command import AlgaeOuttake
+from commands.algae_idle_command import AlgaeIdle
 from commands.coral_intake_command import CoralIntake
 from commands.coral_outtake_command import CoralOuttake
+from commands.coral_idle_command import CoralIdle
 from subsystems.elevator_subsystem import ElevatorSubsystem
 
 
@@ -41,21 +43,34 @@ class RobotContainer:
     def __init__(self):
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
+        self.coral_subsystem = CoralSubsystem()
+        self.algae_subsystem = AlgaeSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
 
-        self.teleop_command = DriveWithJoystickCommand(
-            self.drive_subsystem, self.get_drive_value_from_joystick
-        )
-
-        self.drive_subsystem.setDefaultCommand(
-            self.teleop_command
-        )  # Set the teleop command as the default for drive subsystem
+        self._initialize_default_commands()
 
         self.auto_chooser = self._initialize_shuffleboard()
         # Add chooser to SmartDashboard
         SmartDashboard.putData("Auto Command Selector", self.auto_chooser)
+    
+    def _initialize_default_commands(self):
+        teleop_command = DriveWithJoystickCommand(
+            self.drive_subsystem, self.get_drive_value_from_joystick
+        )
+
+        self.drive_subsystem.setDefaultCommand(
+            teleop_command
+        )  # Set the teleop command as the default for drive subsystem
+
+        self.algae_subsystem.setDefaultCommand(
+            AlgaeIdle(algae=self.algae_subsystem)
+        )
+
+        self.coral_subsystem.setDefaultCommand(
+            CoralIdle(coral=self.coral_subsystem)
+        )
 
     @staticmethod
     def _initialize_shuffleboard():
@@ -89,10 +104,10 @@ class RobotContainer:
             Tuple of percentage values in the three joystick axes, leftX, leftY, rightX.
         """
         x_percent = applyDeadband(
-            value=self.controller.getLeftX(), deadband=0.1
+            value=self.dr_controller.getLeftX(), deadband=0.1
         )  # Apply deadband to the values above
-        y_percent = applyDeadband(value=self.controller.getLeftY(), deadband=0.1)
-        rot_percent = applyDeadband(value=self.controller.getRightX(), deadband=0.1)
+        y_percent = applyDeadband(value=self.dr_controller.getLeftY(), deadband=0.1)
+        rot_percent = applyDeadband(value=self.dr_controller.getRightX(), deadband=0.1)
 
         x_percent = self.joystick_scaling(x_percent)
         y_percent = self.joystick_scaling(y_percent)
@@ -135,10 +150,12 @@ class RobotContainer:
             OperatorInterfaceConstants.OPERATOR_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(CoralIntake(coral=CoralSubsystem))
-        controller.b().whileTrue(CoralOuttake(coral=CoralSubsystem))  
+        controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
+        controller.b().onTrue(CoralOuttake(coral=self.coral_subsystem))  
+        controller.b().onFalse(CoralIdle(coral=self.coral_subsystem))
 
-        controller.x().onTrue(AlgaeIntake(algae=AlgaeSubsystem))
-        controller.y().whileTrue(AlgaeOuttake(algae=AlgaeSubsystem))  
+        controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
+        controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
+        controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
 
         return controller

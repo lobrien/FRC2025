@@ -6,11 +6,13 @@ from phoenix6.configs import TalonFXConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue, ReverseLimitValue
 from constants.elevatorconstants import ElevatorConstants
 from constants.new_types import inches
+from util.current_threshold import CurrentThreshold
 
 
 class ElevatorSubsystem(commands2.Subsystem):
     def __init__(self) -> None:
         super().__init__()  # Call the Subsystem class's (the "super" part) init.
+        self.current_threshold = CurrentThreshold("Elevator Motor", ElevatorConstants.STOP_CURRENT)
 
         # ---------------------------------------------------------------------
         # Set up motors, their encoders, and the drivetrain.
@@ -51,6 +53,10 @@ class ElevatorSubsystem(commands2.Subsystem):
         wpilib.SmartDashboard.putString(
             "DB/String 4", 'elev: {:5.2f} in."'.format(height)
         )
+
+        motor_current = self.elevator_motor.get_stator_current().value
+        
+        self.current_threshold.is_exceeded(motor_current)
 
     def simulationPeriodic(self):
         """Called in simulation after periodic() to update simulation variables."""

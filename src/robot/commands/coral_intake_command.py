@@ -2,7 +2,7 @@ import commands2
 from subsystems.coral_subsystem import CoralSubsystem
 
 
-class CoralIntake(commands2.CommandBase):
+class CoralIntake(commands2.Command):
     """
     A command for intaking the coral game pieces 
     :param: coral The subsystem that works with coral

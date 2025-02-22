@@ -7,6 +7,8 @@ from constants.new_types import inches
 class ElevatorConstants:
     ELEVATOR_MOTOR = 14  # Motor ID
 
+    STOP_CURRENT = 70 #TODO: Update
+
     # TODO: Update height offset, and positions
 
     # Mechanical constants

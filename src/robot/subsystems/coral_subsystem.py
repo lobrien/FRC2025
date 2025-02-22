@@ -3,11 +3,14 @@ import wpilib
 import rev
 from constants.coralconsts import CoralConsts
 from constants.new_types import inches
+from wpilib import SmartDashboard
+from util.current_threshold import CurrentThreshold
 
 
 class CoralSubsystem(commands2.Subsystem):
     def __init__(self) -> None:
         super().__init__()  # Call the Subsystem class's (the "super" part) init.
+        self.current_threshold = CurrentThreshold("Coral Intake", CoralConsts.CORAL_STOP_CURRENT)
 
         # Motor object 
         self.coral_motor = rev.SparkMax(CoralConsts.CORAL_MOTOR, rev.SparkMax.MotorType.kBrushless)
@@ -51,3 +54,8 @@ class CoralSubsystem(commands2.Subsystem):
         else:
             return False
         
+    def periodic(self):
+        motor_current = self.coral_motor.getOutputCurrent()
+        
+        self.current_threshold.is_exceeded(motor_current)
+    
