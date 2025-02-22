@@ -1,8 +1,8 @@
 import commands2
 import wpimath
 from wpilib import SmartDashboard, Field2d
-from wpimath._controls._controls.controller import ProfiledPIDController
-from wpimath._controls._controls.trajectory import TrapezoidProfile
+from wpimath.controller import ProfiledPIDController
+from wpimath.trajectory import TrapezoidProfile
 from wpimath.geometry import Rotation2d, Pose2d
 from wpimath.kinematics import (
     SwerveDrive4Kinematics,

@@ -11,9 +11,15 @@ from wpilib import SmartDashboard, SendableChooser
 from commands.print_something_command import PrintSomethingCommand
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 from subsystems.drive_subsystem import DriveSubsystem
+from subsystems.coral_subsystem import CoralSubsystem
+from subsystems.algae_subsystem import AlgaeSubsystem
 from commands.drive_with_joystick_command import DriveWithJoystickCommand
 from commands.turn_to_angle_command import TurnToAngleCommand
 from commands.reset_gyro_command import ResetGyroCommand
+from commands.algae_intake_command import AlgaeIntake
+from commands.algae_outtake_command import AlgaeOuttake
+from commands.coral_intake_command import CoralIntake
+from commands.coral_outtake_command import CoralOuttake
 from subsystems.elevator_subsystem import ElevatorSubsystem
 
 
@@ -36,7 +42,8 @@ class RobotContainer:
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
 
-        self.controller = self._initialize_controller()
+        self.dr_controller = self._initialize_dr_controller()
+        self.op_controller = self._initialize_op_controller()
 
         self.teleop_command = DriveWithJoystickCommand(
             self.drive_subsystem, self.get_drive_value_from_joystick
@@ -55,9 +62,10 @@ class RobotContainer:
         # Auto chooser
         auto_chooser = SendableChooser()
         auto_chooser.setDefaultOption("Forward", AutoConsts.FORWARD)
+        
         # Add options
-        auto_chooser.setDefaultOption("Side Step", AutoConsts.SIDE_STEP)
-        auto_chooser.setDefaultOption("Sequence", AutoConsts.SEQUENCE)
+        auto_chooser.addOption("Side Step", AutoConsts.SIDE_STEP)
+        auto_chooser.addOption("Sequence", AutoConsts.SEQUENCE)
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
@@ -104,8 +112,8 @@ class RobotContainer:
         output = a * input * input * input + (1 - a) * input
         return output
 
-    def _initialize_controller(self):
-        """Initialize the controller"""
+    def _initialize_dr_controller(self):
+        """Initialize the driver controller"""
         controller = CommandXboxController(
             OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
         )
@@ -118,5 +126,19 @@ class RobotContainer:
         controller.leftBumper().and_(controller.rightBumper()).whileTrue(
             ResetGyroCommand(self.drive_subsystem)
         )
+
+        return controller
+    
+    def _initialize_op_controller(self):
+        """Initialize the operator controller"""
+        controller = CommandXboxController(
+            OperatorInterfaceConstants.OPERATOR_CONTROLLER_PORT
+        )
+
+        controller.a().onTrue(CoralIntake(coral=CoralSubsystem))
+        controller.b().whileTrue(CoralOuttake(coral=CoralSubsystem))  
+
+        controller.x().onTrue(AlgaeIntake(algae=AlgaeSubsystem))
+        controller.y().whileTrue(AlgaeOuttake(algae=AlgaeSubsystem))  
 
         return controller
