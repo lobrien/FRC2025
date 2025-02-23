@@ -1,12 +1,15 @@
+from typing import Optional
+
 import commands2
+import numpy as np
 import wpimath
-from wpilib import SmartDashboard, Field2d
+from wpilib import SmartDashboard, Field2d, RobotBase
+from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.controller import ProfiledPIDController
 from wpimath.trajectory import TrapezoidProfile
 from wpimath.geometry import Rotation2d, Pose2d
 from wpimath.kinematics import (
     SwerveDrive4Kinematics,
-    SwerveDrive4Odometry,
     ChassisSpeeds,
     SwerveModuleState,
 )
@@ -36,6 +39,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
                 DriveConstants.TURN_FR,
                 DriveConstants.CAN_FR,
                 DriveConstants.FR_OFFSET,
+                (DriveConstants.WHEELBASE_HALF_LENGTH, -DriveConstants.TRACK_HALF_WIDTH),
             ),
             SwerveModule(
                 "FrontLeft",
@@ -43,6 +47,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
                 DriveConstants.TURN_FL,
                 DriveConstants.CAN_FL,
                 DriveConstants.FL_OFFSET,
+                (DriveConstants.WHEELBASE_HALF_LENGTH, DriveConstants.TRACK_HALF_WIDTH),
             ),
             SwerveModule(
                 "BackLeft",
@@ -50,6 +55,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
                 DriveConstants.TURN_BL,
                 DriveConstants.CAN_BL,
                 DriveConstants.BL_OFFSET,
+                (-DriveConstants.WHEELBASE_HALF_LENGTH, DriveConstants.TRACK_HALF_WIDTH),
             ),
             SwerveModule(
                 "BackRight",
@@ -57,6 +63,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
                 DriveConstants.TURN_BR,
                 DriveConstants.CAN_BR,
                 DriveConstants.BR_OFFSET,
+                (-DriveConstants.WHEELBASE_HALF_LENGTH, -DriveConstants.TRACK_HALF_WIDTH),
             ),
         ]
         self.FrontRightModule = self.modules[0]
@@ -79,6 +86,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # Simulation support
         self.field_sim = Field2d()
         SmartDashboard.putData("Field", self.field_sim)
+        self.last_x_speed = inches_per_second(0.0)
+        self.last_y_speed = inches_per_second(0.0)
+        self.last_rot_speed = degrees_per_second(0.0)
+
 
         # PID Controllers for drive
         self.x_controller, self.y_controller, self.rot_controller = (
@@ -128,6 +139,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         return heading
 
+    def _simulate_gyro(self, rot_speed: degrees_per_second) -> degrees:
+        """
+        Simulates the gyro by integrating the rotation speed.
+        """
+        delta_degrees = rot_speed * 0.02  # 20ms period
+        current_yaw = self.gyro.get_yaw().value
+        self.gyro.set_yaw(current_yaw + delta_degrees)
+        return self.get_heading_degrees()
+
     def get_heading_rotation2d(self) -> Rotation2d:
         """
         Gets the heading of the robot (direction it is pointing) as a Rotation2D.
@@ -136,7 +156,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         return Rotation2d.fromDegrees(self.get_heading_degrees())
 
     def get_pose(self) -> wpimath.geometry.Pose2d:
-        return self.odometry.getPose()
+        #self.pose = self.odometry.getPose()
+        return self.pose
 
     def get_controllers_goals(self) -> tuple[float, float, float]:
         return (
@@ -156,15 +177,30 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             module.periodic()
 
         # Update the odometry
-        positions = [module.get_position() for module in self.modules]
-        self.odometry.update(self.get_heading_rotation2d(), tuple(positions))
+        if not RobotBase.isSimulation():
+            positions = [module.get_position() for module in self.modules]
+            robot_rotation = self.get_heading_rotation2d()
+        else:
+            positions = [module.simulate_position(self.last_x_speed, self.last_y_speed, self.last_rot_speed) \
+                         for module in self.modules]
+            heading : degrees = self._simulate_gyro(self.last_rot_speed)
+            robot_rotation = Rotation2d.fromDegrees(heading)
+        current_pos = self.odometry.getEstimatedPosition()
+        self.odometry.update(robot_rotation, tuple(positions))
+        estimated_pos = self.odometry.getEstimatedPosition()
+        if estimated_pos.__eq__(current_pos):
+            SmartDashboard.putBoolean("Odometry Move", False)
+        else:
+            SmartDashboard.putBoolean("Odometry Move", True)
+        SmartDashboard.putNumber("Odometry X", estimated_pos.X())
+        SmartDashboard.putNumber("Odometry Y", estimated_pos.Y())
+        SmartDashboard.putNumber("Odometry Heading", estimated_pos.rotation().degrees())
 
         # Update the dashboard
-        pose = self.odometry.getPose()
-        SmartDashboard.putNumber("Robot X", pose.X())
-        SmartDashboard.putNumber("Robot Y", pose.Y())
+        SmartDashboard.putNumber("Robot X", self.pose.X())
+        SmartDashboard.putNumber("Robot Y", self.pose.Y())
         SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
-        SmartDashboard.putNumber("Robot Heading", pose.rotation().degrees())
+        SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
         for name, module in zip(
             ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
             [
@@ -182,7 +218,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.heartbeat += 1
 
         # Update field sim
-        self.field_sim.setRobotPose(pose)
+        self.field_sim.setRobotPose(self.pose)
         # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
         # self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
@@ -200,6 +236,16 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         :param y_speed_inches_per_second:    Speed to the left (from the driver's perspective)
         :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
         """
+        # DEBUG
+        SmartDashboard.putNumber("drive X Speed", x_speed_inches_per_second)
+        SmartDashboard.putNumber("drive Y Speed", y_speed_inches_per_second)
+        SmartDashboard.putNumber("drive Rot Speed", rot_speed_degrees_per_second)
+        # Save the speeds for simulation
+        self.last_x_speed = x_speed_inches_per_second
+        self.last_y_speed = y_speed_inches_per_second
+        self.last_rot_speed = rot_speed_degrees_per_second
+
+
         desaturated_module_states = self._speeds_to_states(
             x_speed_inches_per_second,
             y_speed_inches_per_second,
@@ -255,12 +301,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # --------------------------------------
 
     def _initialize_odometry(
-        self, kinematics: SwerveDrive4Kinematics
-    ) -> SwerveDrive4Odometry:
-        return SwerveDrive4Odometry(
+        self, kinematics: SwerveDrive4Kinematics, initial_pose : Optional[Pose2d] = None
+    ) -> SwerveDrive4PoseEstimator:
+        return SwerveDrive4PoseEstimator(
             kinematics=kinematics,
             gyroAngle=self.get_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules],
+            initialPose=initial_pose or Pose2d(),
+            stateStdDevs=np.array([0.1, 0.1, 0.1]),  # X, Y, rotation standard deviations
+            visionMeasurementStdDevs=np.array([0.9, 0.9, 0.9])  # Vision measurement uncertainties
         )
 
     @staticmethod

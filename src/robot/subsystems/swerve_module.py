@@ -4,9 +4,10 @@ from phoenix6.hardware import CANcoder
 from phoenix6.hardware.talon_fx import TalonFX
 from phoenix6.configs import TalonFXConfiguration
 from phoenix6.signals import InvertedValue, NeutralModeValue
+from wpilib import RobotBase
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModulePosition, SwerveModuleState
-from wpimath.units import degrees, meters, inches, meters_per_second
+from wpimath.units import degrees, meters, inches, meters_per_second, degreesToRadians
 from wpimath.units import (
     metersToInches,
     inchesToMeters,
@@ -17,7 +18,7 @@ from wpimath.units import (
 import wpilib
 
 from constants.driveconstants import DriveConstants
-from constants.new_types import percentage, inches_per_second
+from constants.new_types import percentage, inches_per_second, degrees_per_second
 
 
 def _calc_drive_effort(speed: inches_per_second) -> percentage:
@@ -29,12 +30,13 @@ def _calc_drive_effort(speed: inches_per_second) -> percentage:
 class SwerveModule:
     def __init__(
         self,
-        name: str,
-        drive_motor_bus_id: int,
-        turn_motor_bus_id: int,
-        cancoder_bus_id: int,
-        offset_rotations: float,
-    ):
+            name: str,
+            drive_motor_bus_id: int,
+            turn_motor_bus_id: int,
+            cancoder_bus_id: int,
+            offset_rotations: float,
+            offset_translation: tuple[inches, inches]
+    ) -> None:
         """
 
         :param name:
@@ -78,6 +80,14 @@ class SwerveModule:
         self.turn_motor.set_position(
             steering_position_rotations * DriveConstants.TURN_GEAR_RATIO
         )
+
+        # Simulation support
+        self._offset_x = offset_translation[0]
+        self._offset_y = offset_translation[1]
+        self._simulated_drive_position = 0.0  # Simulated drive position
+        self._simulated_turn_position  = 0.0  # Simulated turn position
+        self._simulated_last_x_speed : inches_per_second = inches_per_second(0.0)  # Simulated last x speed
+        self._simulated_last_y_speed : inches_per_second = inches_per_second(0.0)  # Simulated last y speed
 
     # --------------------------------------
     # Public methods
@@ -164,6 +174,38 @@ class SwerveModule:
         angle: Rotation2d = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
         # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
         return SwerveModulePosition(wheel_distance, angle)
+
+    def simulate_position(self, x_speed: inches_per_second, y_speed: inches_per_second, rot_speed: degrees_per_second) -> SwerveModulePosition:
+        """
+        Simulates the motion of the swerve module based on the commanded speeds.
+        :param x_speed: Robot's x speed (forward/backward) in inches per second.
+        :param y_speed: Robot's y speed (left/right) in inches per second.
+        :param rot_speed: Robot's rotational speed in degrees per second.
+        """
+        # Convert rotational speed to radians per second
+        rot_speed_radians_per_second = degreesToRadians(rot_speed)
+
+        # Calculate the module's velocity contribution from rotation
+        # Each module's rotational velocity depends on its distance from the robot's center
+        rotational_velocity = wpimath.geometry.Translation2d(
+            -self._offset_y * rot_speed_radians_per_second,  # X component
+            self._offset_x * rot_speed_radians_per_second  # Y component
+        )
+
+        # Combine translational and rotational velocities
+        total_velocity = wpimath.geometry.Translation2d(x_speed, y_speed) + rotational_velocity
+
+        # Update the module's drive position based on the total velocity
+        delta_distance = total_velocity.norm() * 0.02  # 20ms period
+        self._simulated_drive_position += delta_distance
+
+        # Update the module's turn position based on the direction of the total velocity
+        delta_angle = total_velocity.angle().degrees() - self._simulated_turn_position
+        self._simulated_turn_position += delta_angle
+
+        # Return the simulated position
+        return SwerveModulePosition(self._simulated_drive_position, Rotation2d.fromDegrees(self._simulated_turn_position))
+
 
     def periodic(self):
         """
