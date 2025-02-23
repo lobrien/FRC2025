@@ -2,6 +2,7 @@ import commands2
 import commands2.cmd
 from wpimath.geometry import Pose2d
 
+from commands.follow_trajectory_command import FollowTrajectoryCommand
 from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_to_goal import DriveToGoal
 
@@ -30,6 +31,12 @@ class Autos:
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
         return commands2.cmd.sequence(DriveToGoal(drive, Pose2d(36, 0, 10)))
+
+    @staticmethod
+    def trajectory(drive: DriveSubsystem):
+        """Autonomous routine that follows a trajectory"""
+        # Note the filename here does not have the .traj extension (it MUST in the file system, though)
+        return FollowTrajectoryCommand("Bottom_Algae", drive)
 
     # def forward_elevator(
     #     drive: subsystems.drivesubsystem.DriveSubsystem,

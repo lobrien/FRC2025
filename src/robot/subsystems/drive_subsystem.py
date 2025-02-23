@@ -10,7 +10,7 @@ from wpimath.kinematics import (
     ChassisSpeeds,
     SwerveModuleState,
 )
-from wpimath.units import inchesToMeters, degreesToRadians, degrees
+from wpimath.units import inchesToMeters, degreesToRadians, degrees, metersToInches, radiansToDegrees
 from phoenix6.hardware.pigeon2 import Pigeon2
 
 from constants.driveconstants import DriveConstants
@@ -250,6 +250,35 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         )
         return cs
 
+    def _get_ips_speeds(
+            self,
+            chassis_speeds: ChassisSpeeds,
+    ) -> tuple[inches_per_second, inches_per_second, degrees_per_second]:
+        """
+        Convert ChassisSpeeds (in meters/radians) to inches per second and degrees per second
+        Returns tuple of (x_speed_ips, y_speed_ips, rot_speed_dps)
+        """
+        # Convert from field-relative to robot-relative speeds
+        robot_relative_speeds = ChassisSpeeds.toRobotRelativeSpeeds(
+            chassis_speeds,
+            -self.get_heading_rotation2d()  # Use negative heading to match _get_chassis_speeds
+        )
+
+        # Convert meters to inches
+        x_speed_ips = inches_per_second(
+            metersToInches(robot_relative_speeds.vx)
+        )
+        y_speed_ips = inches_per_second(
+            metersToInches(robot_relative_speeds.vy)
+        )
+
+        # Convert radians to degrees
+        rot_speed_dps = degrees_per_second(
+            radiansToDegrees(robot_relative_speeds.omega)
+        )
+
+        return x_speed_ips, y_speed_ips, rot_speed_dps
+
     # --------------------------------------
     # Private methods for initialization
     # --------------------------------------
@@ -434,6 +463,26 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def stop(self):
         for module in self.modules:
             module.stop()
+
+    def follow_trajectory(self, sample):
+        # Get the current pose of the robot
+        pose = self.get_pose()
+
+        # Generate the next speeds for the robot
+        speeds = ChassisSpeeds(
+            sample.vx + self.x_controller.calculate(pose.X(), sample.x),
+            sample.vy + self.y_controller.calculate(pose.Y(), sample.y),
+            sample.omega + self.rot_controller.calculate(pose.rotation().degrees(), sample.heading)
+        )
+
+        # Apply the generated speeds
+        x_speed, y_speed, rot_speed = self._get_ips_speeds(speeds)
+        self.drive(x_speed_inches_per_second=x_speed, y_speed_inches_per_second=y_speed, rot_speed_degrees_per_second=rot_speed)
+
+    def reset_odometry(self, initial_pose : Pose2d):
+        # TODO: Review. Or should it be self.set_goal_pose(initial_pose)?
+        self.pose = initial_pose
+        self.reset_pids()
 
 
 def clamp(val, min_val, max_val):

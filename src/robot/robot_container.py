@@ -52,6 +52,13 @@ class RobotContainer:
         self.auto_chooser = self._initialize_shuffleboard()
         # Add chooser to SmartDashboard
         SmartDashboard.putData("Auto Command Selector", self.auto_chooser)
+        self._initialize_trajectories()
+
+    def _initialize_trajectories(self):
+        # Trajectories can take as much as seconds to load, so we load them here
+        self._trajectory_commands = {
+            "Bottom_Algae": Autos.trajectory(self.drive_subsystem)
+        }
 
     def _initialize_default_commands(self):
         teleop_command = DriveWithJoystickCommand(
@@ -75,6 +82,7 @@ class RobotContainer:
         # Add options
         auto_chooser.addOption("Side Step", AutoConsts.SIDE_STEP)
         auto_chooser.addOption("Sequence", AutoConsts.SEQUENCE)
+        auto_chooser.addOption("Trajectory", AutoConsts.TRAJECTORY)
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
@@ -90,9 +98,11 @@ class RobotContainer:
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)]
             )
+        elif auto_reader == AutoConsts.TRAJECTORY:
+            return Autos.trajectory(self.drive_subsystem)
         else:
             # Default if, for some reason, auto_reader is not set
-            return Autos.forward(self.drive_subsystem)
+            return self._trajectory_commands["Bottom_Algae"]
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
         """
