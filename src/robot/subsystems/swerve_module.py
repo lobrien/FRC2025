@@ -1,3 +1,6 @@
+import math
+
+import numpy as np
 import wpimath
 from phoenix6.controls import PositionVoltage, NeutralOut
 from phoenix6.hardware import CANcoder
@@ -86,8 +89,19 @@ class SwerveModule:
         self._offset_y = offset_translation[1]
         self._simulated_drive_position = 0.0  # Simulated drive position
         self._simulated_turn_position  = 0.0  # Simulated turn position
+        self._simulated_speed = 0.0
+        self._simulated_angle = 0.0
         self._simulated_last_x_speed : inches_per_second = inches_per_second(0.0)  # Simulated last x speed
         self._simulated_last_y_speed : inches_per_second = inches_per_second(0.0)  # Simulated last y speed
+        self._last_drive_speed = 0
+        self._last_turn_rate = 0
+
+        # Add separate position tracking
+        self._simulated_x_position = 0.0
+        self._simulated_y_position = 0.0
+        self._simulated_drive_position = 0.0
+        self._simulated_turn_position = 0.0
+        self._last_commanded_state = SwerveModuleState(0.0, Rotation2d())
 
     # --------------------------------------
     # Public methods
@@ -161,56 +175,69 @@ class SwerveModule:
         Returns:
             Current position (total wheel distance traveled and module angle)
         """
-        # Distance is the wheel rim distance.
-        # can_coder_rotations = self._get_can_coder_pos_normalized()
-        # distance : meters = inchesToMeters(can_coder_rotations * self._inches_per_rotation())
+        if RobotBase.isSimulation():
+            # Use simulated values in simulation mode
+            wheel_distance = inchesToMeters(self._simulated_drive_position)
+            # Use the simulated steering angle
+            angle = Rotation2d.fromDegrees(self._simulated_angle)
+            return SwerveModulePosition(wheel_distance, angle)
+        else:
+            # Use sensor data for a real robot
+            wheel_rotations = self.drive_motor.get_position().value / DriveConstants.DRIVE_GEAR_RATIO
+            wheel_distance = inchesToMeters(self._inches_per_rotation() * wheel_rotations)
+            angle = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
+            return SwerveModulePosition(wheel_distance, angle)
 
-        wheel_rotations = (
-            self.drive_motor.get_position().value / DriveConstants.DRIVE_GEAR_RATIO
+    def simulate_position(self, x_speed: inches_per_second, y_speed: inches_per_second,
+                          rot_speed: degrees_per_second) -> SwerveModulePosition:
+        period = 0.02  # seconds
+
+        # Convert commanded chassis speeds to SI units.
+        x_speed_m = inchesToMeters(x_speed)  # robot–relative forward speed
+        y_speed_m = inchesToMeters(y_speed)  # robot–relative sideways speed
+        rot_speed_radians = degreesToRadians(rot_speed)
+
+        # For a pure forward command with rot_speed = 0, these are the chassis speeds in the robot frame.
+        # The wheel’s effective travel should be the projection of the chassis movement onto the wheel’s current rolling direction.
+        #
+        # Assume that the current desired steering angle (and thus the wheel’s rolling direction)
+        # is stored in self._simulated_angle (in degrees). Convert it to radians.
+        wheel_angle_rad = math.radians(self._simulated_angle)
+
+        # Compute the chassis’s instantaneous speed in the direction of the wheel.
+        # For example, if the wheel is oriented at angle θ relative to robot forward,
+        # then the effective wheel speed is:
+        effective_speed_m = (x_speed_m * math.cos(wheel_angle_rad) +
+                             y_speed_m * math.sin(wheel_angle_rad))
+
+        # The distance traveled by the wheel along its rolling axis during this period:
+        delta_distance_m = effective_speed_m * period
+
+        # Update the integrated drive distance. (Convert delta_distance_m to inches.)
+        self._simulated_drive_position += metersToInches(delta_distance_m)
+
+        # For simulation, we assume the steering follows the desired state instantly:
+        self._simulated_turn_position = self._simulated_angle
+
+        # Return the module's simulated encoder reading as a SwerveModulePosition.
+        return SwerveModulePosition(
+            distance=inchesToMeters(self._simulated_drive_position),
+            angle=Rotation2d.fromDegrees(self._simulated_turn_position)
         )
-        wheel_distance: meters = inchesToMeters(
-            self._inches_per_rotation() * wheel_rotations
-        )
-        angle: Rotation2d = Rotation2d.fromDegrees(self.get_turn_angle_degrees())
-        # Argument units per https://robotpy.readthedocs.io/projects/wpimath/en/latest/wpimath.kinematics/SwerveModulePosition.html
-        return SwerveModulePosition(wheel_distance, angle)
-
-    def simulate_position(self, x_speed: inches_per_second, y_speed: inches_per_second, rot_speed: degrees_per_second) -> SwerveModulePosition:
-        """
-        Simulates the motion of the swerve module based on the commanded speeds.
-        :param x_speed: Robot's x speed (forward/backward) in inches per second.
-        :param y_speed: Robot's y speed (left/right) in inches per second.
-        :param rot_speed: Robot's rotational speed in degrees per second.
-        """
-        # Convert rotational speed to radians per second
-        rot_speed_radians_per_second = degreesToRadians(rot_speed)
-
-        # Calculate the module's velocity contribution from rotation
-        # Each module's rotational velocity depends on its distance from the robot's center
-        rotational_velocity = wpimath.geometry.Translation2d(
-            -self._offset_y * rot_speed_radians_per_second,  # X component
-            self._offset_x * rot_speed_radians_per_second  # Y component
-        )
-
-        # Combine translational and rotational velocities
-        total_velocity = wpimath.geometry.Translation2d(x_speed, y_speed) + rotational_velocity
-
-        # Update the module's drive position based on the total velocity
-        delta_distance = total_velocity.norm() * 0.02  # 20ms period
-        self._simulated_drive_position += delta_distance
-
-        # Update the module's turn position based on the direction of the total velocity
-        delta_angle = total_velocity.angle().degrees() - self._simulated_turn_position
-        self._simulated_turn_position += delta_angle
-
-        # Return the simulated position
-        return SwerveModulePosition(self._simulated_drive_position, Rotation2d.fromDegrees(self._simulated_turn_position))
-
 
     def periodic(self):
         """
         Reports module data to dashboards.
         """
+        # In simulation mode, update simulated drive position.
+        if RobotBase.isSimulation():
+            # Calculate effective distance traveled in this cycle (for example, using the last commanded speed)
+            # Here, self._last_drive_speed holds the current speed in inches per second.
+            dt = 0.02  # time period per cycle, in seconds
+            distance_increment = dt * self._last_drive_speed  # in inches
+            self._simulated_drive_position += distance_increment
+            self._simulated_angle += self._last_turn_rate * dt
+
         wpilib.SmartDashboard.putString(
             f"{self.name}_turn_degrees",
             "degrees: {:5.1f}".format(self._get_full_turn_angle_from_motor()),
@@ -221,15 +248,29 @@ class SwerveModule:
         )
 
     def set_desired_state(self, desired_state: SwerveModuleState) -> None:
-        """
-        Sets the module's desired "state" (wheel rim speed and turning/steering angle).
-        :param desired_state: the state command to the module.
-        """
         # Get the full angle the steering shaft has rotated.
         current_degrees = self._get_full_turn_angle_from_motor()
         current_rotation = Rotation2d.fromDegrees(current_degrees)
-        # Optimize the state to minimize the amount the steering needs to turn.
-        optimized_state = self._optimize(desired_state, current_rotation)
+
+        # For simulation, skip the optimization so that all modules report the same angle.
+        if RobotBase.isSimulation():
+            optimized_state = desired_state
+        else:
+            optimized_state = self._optimize(desired_state, current_rotation)
+
+        # Store optimized (or raw) state for simulation.
+        self._simulated_speed = optimized_state.speed
+        self._simulated_angle = optimized_state.angle.degrees()
+        # Immediately update the simulated turning position.
+        self._simulated_turn_position = self._simulated_angle
+
+        # **Update the simulation tracking variables here:**
+        # Convert the optimized speed (in m/s) to inches/s.
+        self._last_drive_speed = metersToInches(optimized_state.speed)
+        # For the turn rate, compute the desired change (you might compute a difference from the current simulated angle).
+        # For simplicity, if you want the steering to track instantly, you can set:
+        self._last_turn_rate = 0.0
+
 
         drive_effort = _calc_drive_effort(
             inches_per_second(metersToInches(optimized_state.speed))

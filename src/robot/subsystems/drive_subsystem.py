@@ -140,12 +140,14 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         return heading
 
     def _simulate_gyro(self, rot_speed: degrees_per_second) -> degrees:
-        """
-        Simulates the gyro by integrating the rotation speed.
-        """
-        delta_degrees = rot_speed * 0.02  # 20ms period
+        period = 0.02  # 20ms
+        if rot_speed == 0:
+            return self.get_heading_degrees()
+        delta_degrees = rot_speed * period
         current_yaw = self.gyro.get_yaw().value
-        self.gyro.set_yaw(current_yaw + delta_degrees)
+        new_yaw = current_yaw + delta_degrees
+        print(f"Simulated gyro: current_yaw={current_yaw}, delta={delta_degrees}, new_yaw={new_yaw}")
+        self.gyro.set_yaw(new_yaw)
         return self.get_heading_degrees()
 
     def get_heading_rotation2d(self) -> Rotation2d:
@@ -177,15 +179,18 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             module.periodic()
 
         # Update the odometry
-        if not RobotBase.isSimulation():
+        if RobotBase.isSimulation():
+            # Update gyro first
+            heading = self._simulate_gyro(self.last_rot_speed)
+            robot_rotation = Rotation2d.fromDegrees(heading)
+            # Now update each module's simulated position
+            positions = [module.simulate_position(self.last_x_speed, self.last_y_speed, self.last_rot_speed) for module
+                         in self.modules]
+        else:
             positions = [module.get_position() for module in self.modules]
             robot_rotation = self.get_heading_rotation2d()
-        else:
-            positions = [module.simulate_position(self.last_x_speed, self.last_y_speed, self.last_rot_speed) \
-                         for module in self.modules]
-            heading : degrees = self._simulate_gyro(self.last_rot_speed)
-            robot_rotation = Rotation2d.fromDegrees(heading)
         current_pos = self.odometry.getEstimatedPosition()
+
         self.odometry.update(robot_rotation, tuple(positions))
         estimated_pos = self.odometry.getEstimatedPosition()
         if estimated_pos.__eq__(current_pos):
@@ -223,52 +228,54 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
     def drive(
-        self,
-        x_speed_inches_per_second: inches_per_second,
-        y_speed_inches_per_second: inches_per_second,
-        rot_speed_degrees_per_second: degrees_per_second,
+            self,
+            x_speed_inches_per_second: inches_per_second,
+            y_speed_inches_per_second: inches_per_second,
+            rot_speed_degrees_per_second: degrees_per_second,
     ) -> None:
-        """
-        The main method to use to command the drive system.  Uses field-relative
-        directions from the human operator's perspective, assuming the robot
-        was initialized while facing the same direction as the driver/operator.
-        :param x_speed_inches_per_second:    Speed forward (away from the driver)
-        :param y_speed_inches_per_second:    Speed to the left (from the driver's perspective)
-        :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
-        """
-        # DEBUG
-        SmartDashboard.putNumber("drive X Speed", x_speed_inches_per_second)
-        SmartDashboard.putNumber("drive Y Speed", y_speed_inches_per_second)
-        SmartDashboard.putNumber("drive Rot Speed", rot_speed_degrees_per_second)
-        # Save the speeds for simulation
+        print("\nDriveSubsystem.drive() input:")
+        print(f"x_speed: {x_speed_inches_per_second:.2f} in/s")
+        print(f"y_speed: {y_speed_inches_per_second:.2f} in/s")
+        print(f"rot_speed: {rot_speed_degrees_per_second:.2f} deg/s")
+        print(f"Current heading: {self.get_heading_degrees():.2f} degrees")
+
+        # Save speeds for simulation
         self.last_x_speed = x_speed_inches_per_second
         self.last_y_speed = y_speed_inches_per_second
         self.last_rot_speed = rot_speed_degrees_per_second
 
-
+        # Get module states
         desaturated_module_states = self._speeds_to_states(
             x_speed_inches_per_second,
             y_speed_inches_per_second,
             rot_speed_degrees_per_second,
         )
+
+        print("\nModule states after speed conversion:")
+        for i, state in enumerate(desaturated_module_states):
+            print(f"Module {i}: speed={state.speed:.2f} m/s, angle={state.angle.degrees():.2f} deg")
+
+        # Command the modules
         for module, state in zip(self.modules, desaturated_module_states):
             module.set_desired_state(state)
 
-    # --------------------------------------
-    # Private methods to compute module states
-    # --------------------------------------
-
     def _speeds_to_states(
-        self,
-        x_speed: inches_per_second,
-        y_speed: inches_per_second,
-        rot_speed: degrees_per_second,
+            self,
+            x_speed: inches_per_second,
+            y_speed: inches_per_second,
+            rot_speed: degrees_per_second,
     ) -> list[SwerveModuleState]:
         chassis_speeds = self._get_chassis_speeds(
             x_speed_inches_per_second=x_speed,
             y_speed_inches_per_second=y_speed,
             rot_speed_degrees_per_second=rot_speed,
         )
+
+        print("\n_get_chassis_speeds output:")
+        print(f"vx: {chassis_speeds.vx:.3f} m/s")
+        print(f"vy: {chassis_speeds.vy:.3f} m/s")
+        print(f"omega: {chassis_speeds.omega:.3f} rad/s")
+
         swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
         desaturated_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(
             swerve_module_states,
@@ -277,22 +284,22 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         return desaturated_module_states
 
     def _get_chassis_speeds(
-        self,
-        x_speed_inches_per_second: inches_per_second,
-        y_speed_inches_per_second: inches_per_second,
-        rot_speed_degrees_per_second: degrees_per_second,
+            self,
+            x_speed_inches_per_second: inches_per_second,
+            y_speed_inches_per_second: inches_per_second,
+            rot_speed_degrees_per_second: degrees_per_second,
     ) -> ChassisSpeeds:
-        # ChassisSpeeds expects meters and radians
+        # Convert to meters and radians
         x_speed_meters_per_second = inchesToMeters(x_speed_inches_per_second)
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
-        # TODO: When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negative it works <-- IS THIS COMMENT HELPFUL?
-        # TODO: Does the previous comment describe a bug?
+
+        # Create ChassisSpeeds - use the actual heading without negation
         cs = ChassisSpeeds.fromRobotRelativeSpeeds(
             x_speed_meters_per_second,
             y_speed_meters_per_second,
             rot_speed_radians,
-            -self.get_heading_rotation2d(),
+            self.get_heading_rotation2d(),  # Removed the negation
         )
         return cs
 
@@ -307,9 +314,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             kinematics=kinematics,
             gyroAngle=self.get_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules],
-            initialPose=initial_pose or Pose2d(),
-            stateStdDevs=np.array([0.1, 0.1, 0.1]),  # X, Y, rotation standard deviations
-            visionMeasurementStdDevs=np.array([0.9, 0.9, 0.9])  # Vision measurement uncertainties
+            initialPose=initial_pose or Pose2d()
         )
 
     @staticmethod
