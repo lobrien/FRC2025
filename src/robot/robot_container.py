@@ -23,6 +23,7 @@ from commands.coral_intake_command import CoralIntake
 from commands.coral_outtake_command import CoralOuttake
 from commands.coral_idle_command import CoralIdle
 from subsystems.elevator_subsystem import ElevatorSubsystem
+from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
 
 
 # The `RobotContainer` class is where the robot's structure and behavior are defined.
@@ -81,6 +82,7 @@ class RobotContainer:
         # Add options
         auto_chooser.addOption("Side Step", AutoConsts.SIDE_STEP)
         auto_chooser.addOption("Sequence", AutoConsts.SEQUENCE)
+        auto_chooser.addOption("Mid Score L2", AutoConsts.MID_SCORE_L_TWO)
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
@@ -94,8 +96,10 @@ class RobotContainer:
             return Autos.side_step(self.drive_subsystem)
         elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
             return Autos.goal_sequence(
-                self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)]
-            )
+                self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
+        elif auto_reader == AutoConsts.MID_SCORE_L_TWO:
+            return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
+            
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
         """
@@ -157,5 +161,12 @@ class RobotContainer:
         controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
         controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
         controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
+
+        controller.leftStick().whileTrue(ElevatorMoveToGoalHeightContinuously.elevatorUp())
+        controller.rightStick().whileTrue(ElevatorMoveToGoalHeightContinuously.elevatorDown())
+        
+        #TODO: is this needed? Or would the above just work
+        # controller.leftStick().whileFalse(ElevatorMoveToGoalHeightContinuously.elevatorStop())
+        # controller.rightStick().whileFalse(ElevatorMoveToGoalHeightContinuously.elevatorStop())
 
         return controller
