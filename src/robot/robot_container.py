@@ -24,6 +24,10 @@ from commands.coral_outtake_command import CoralOuttake
 from commands.coral_idle_command import CoralIdle
 from subsystems.elevator_subsystem import ElevatorSubsystem
 from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
+from commands.elevator_idle_command import ElevatorIdle
+from commands.elevator_down_command import ElevatorDown
+from commands.elevator_up_command import ElevatorUp
+from constants.elevatorconstants import ElevatorConstants
 
 
 # The `RobotContainer` class is where the robot's structure and behavior are defined.
@@ -44,8 +48,8 @@ class RobotContainer:
     def __init__(self):
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
-        self.coral_subsystem = CoralSubsystem()
-        self.algae_subsystem = AlgaeSubsystem()
+        # self.coral_subsystem = CoralSubsystem()
+        # self.algae_subsystem = AlgaeSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
@@ -65,13 +69,18 @@ class RobotContainer:
             teleop_command
         )  # Set the teleop command as the default for drive subsystem
 
-        self.algae_subsystem.setDefaultCommand(
-            AlgaeIdle(algae=self.algae_subsystem)
-        )
+        # self.algae_subsystem.setDefaultCommand(
+        #     AlgaeIdle(algae=self.algae_subsystem)
+        # )
 
-        self.coral_subsystem.setDefaultCommand(
-            CoralIdle(coral=self.coral_subsystem)
+        # self.coral_subsystem.setDefaultCommand(
+        #     CoralIdle(coral=self.coral_subsystem)
+        # )
+
+        self.elevator_subsystem.setDefaultCommand(
+            ElevatorIdle(elevator=self.elevator_subsystem)
         )
+        
 
     @staticmethod
     def _initialize_shuffleboard():
@@ -97,8 +106,8 @@ class RobotContainer:
         elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
-        elif auto_reader == AutoConsts.MID_SCORE_L_TWO:
-            return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
+        # elif auto_reader == AutoConsts.MID_SCORE_L_TWO:
+        #     return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
             
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
@@ -154,19 +163,19 @@ class RobotContainer:
             OperatorInterfaceConstants.OPERATOR_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
-        controller.b().onTrue(CoralOuttake(coral=self.coral_subsystem))  
-        controller.b().onFalse(CoralIdle(coral=self.coral_subsystem))
+        # controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
+        # controller.b().onTrue(CoralOuttake(coral=self.coral_subsystem))  
+        # controller.b().onFalse(CoralIdle(coral=self.coral_subsystem))
 
-        controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
-        controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
-        controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
+        # controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
+        # controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
+        # controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
 
-        controller.leftStick().whileTrue(ElevatorMoveToGoalHeightContinuously.elevatorUp())
-        controller.rightStick().whileTrue(ElevatorMoveToGoalHeightContinuously.elevatorDown())
+        controller.leftStick().whileTrue(ElevatorUp(self.elevator_subsystem))
+        controller.rightStick().whileTrue(ElevatorDown(self.elevator_subsystem))
         
-        #TODO: is this needed? Or would the above just work
-        # controller.leftStick().whileFalse(ElevatorMoveToGoalHeightContinuously.elevatorStop())
-        # controller.rightStick().whileFalse(ElevatorMoveToGoalHeightContinuously.elevatorStop())
+        controller.leftBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elev=self.elevator_subsystem))
+        controller.leftTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.HOME, elev=self.elevator_subsystem))
+        controller.rightTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.FEEDER, elev=self.elevator_subsystem))
 
         return controller

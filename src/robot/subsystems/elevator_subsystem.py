@@ -25,11 +25,13 @@ class ElevatorSubsystem(commands2.Subsystem):
         self.elevator_motor.configurator.apply(self._configure_elevator_motor())
 
         # Create lower limit switch
-        self.lower_limit = wpilib.DigitalInput(0)
+        self.lower_limit = wpilib.DigitalInput(1)
             
         # Create higher limit switch
-        self.higher_limit = wpilib.DigitalInput(1)
+        self.higher_limit = wpilib.DigitalInput(0)
         
+        self.panic_stop = False
+
         self.initialized: bool = False
         if not self.lower_limit.get():
             self.elevator_motor.set_position(self._inches_to_motor_rot(ElevatorConstants.HOME))
@@ -59,6 +61,10 @@ class ElevatorSubsystem(commands2.Subsystem):
             "DB/String 4", 'elev: {:5.2f} in."'.format(height)
         )
 
+
+        wpilib.SmartDashboard.putBoolean("At lowest height", self.lower_limit.get())
+        wpilib.SmartDashboard.putBoolean("At highest height", self.higher_limit.get())
+
         motor_current = self.elevator_motor.get_stator_current().value
         
         self.current_threshold.is_exceeded(motor_current)
@@ -76,6 +82,12 @@ class ElevatorSubsystem(commands2.Subsystem):
         # Convert because internally, we use rotations.
         self.goal_pos = self._inches_to_motor_rot(height)
 
+    def lower_limit_reached(self):
+        return not self.lower_limit.get()
+    
+    def higher_limit_reached(self):
+        return not self.higher_limit.get()
+
     def get_current_height_inches(self) -> inches:
         """Get the current height of the elevator in inches"""
         return self._motor_rot_to_inches(self.elevator_motor.get_position().value)
@@ -83,9 +95,16 @@ class ElevatorSubsystem(commands2.Subsystem):
     def move_to_goal(self):
         """Move toward the goal position"""
         if self.initialized:
-            self.elevator_motor.set_control(
-                self.position_request.with_position(self.goal_pos)
-            )
+            motor_duty = self.elevator_motor.get_duty_cycle().value
+
+            if (self.lower_limit_reached() and motor_duty < -0.05) or (self.higher_limit_reached() and motor_duty > 0.05):
+                print("Panick Stop!!")
+                self.elevator_motor.set(0.0)
+                self.panic_stop = True
+            else:
+                self.elevator_motor.set_control(
+                    self.position_request.with_position(self.goal_pos)
+                )
         else:
             # If not initialized, move downward slowly to find the bottom.
             self.elevator_motor.set(-0.1)
@@ -106,12 +125,15 @@ class ElevatorSubsystem(commands2.Subsystem):
     #         self.elevator_motor.set_position(rotations)
     #         initialized = True
     #     return initialized
+
+    def is_at_goal(self):
+        return self.panic_stop
     
     def elevator_up(self):
         self.elevator_motor.set(0.2)
     
     def elevator_down(self):
-        self.elevator_motor.set(-0.5)
+        self.elevator_motor.set(-0.2)
 
     def elevator_stop(self):
         self.elevator_motor.set(0.0)
@@ -144,11 +166,11 @@ class ElevatorSubsystem(commands2.Subsystem):
         configuration = TalonFXConfiguration()
 
         configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
-        configuration.motor_output.neutral_mode = NeutralModeValue.COAST
+        configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
 
         # Set control loop parameters for "slot 0", the profile we'll use for position control.
         configuration.slot0.k_p = (
-            1.0  # An error of one rotation results in 1.0V to the motor.
+            0.2  # An error of one rotation results in 1.0V to the motor.
         )
         configuration.slot0.k_i = 0.0  # No integral control
         configuration.slot0.k_d = 0.0  # No differential component
