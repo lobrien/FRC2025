@@ -24,7 +24,7 @@ from commands.coral_outtake_command import CoralOuttake
 from commands.coral_idle_command import CoralIdle
 from subsystems.elevator_subsystem import ElevatorSubsystem
 from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
-from commands.elevator_idle_command import ElevatorIdle
+from commands.elevator_init_and_idle_command import ElevatorInitAndIdle
 from commands.elevator_down_command import ElevatorDown
 from commands.elevator_up_command import ElevatorUp
 from constants.elevatorconstants import ElevatorConstants
@@ -78,7 +78,7 @@ class RobotContainer:
         # )
 
         self.elevator_subsystem.setDefaultCommand(
-            ElevatorIdle(elevator=self.elevator_subsystem)
+            ElevatorInitAndIdle(elevator=self.elevator_subsystem)
         )
         
 

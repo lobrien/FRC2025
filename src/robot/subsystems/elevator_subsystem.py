@@ -114,6 +114,20 @@ class ElevatorSubsystem(commands2.Subsystem):
                 self.elevator_motor.set_position(rotations, timeout_seconds=10.0)
                 self.initialized = True
 
+    def initialized_and_stop(self):
+        if self.initialized:
+            self.elevator_stop()
+            
+        else:
+            # If not initialized, move downward slowly to find the bottom.
+            self.elevator_motor.set(-0.1)
+            if not self.lower_limit.get():
+                self.elevator_motor.set(0.0)
+                rotations = self._inches_to_motor_rot(ElevatorConstants.HOME)
+                self.elevator_motor.set_position(rotations, timeout_seconds=10.0)
+                self.initialized = True
+        
+
     # def initialize_bottom_limit(self):
     #     initialized: bool = False
     #     # Initialize if the bottom limit exists (?)

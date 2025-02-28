@@ -1,7 +1,7 @@
 import commands2
 from subsystems.elevator_subsystem import ElevatorSubsystem
 
-class ElevatorIdle(commands2.Command):
+class ElevatorInitAndIdle(commands2.Command):
     """
     A command for when elevator subsystem needs to be idle
     :param: elevator The subsystem that works with elevator
@@ -14,7 +14,7 @@ class ElevatorIdle(commands2.Command):
 
     def execute(self):
         # Stop elevator.
-        self.elevator.elevator_stop()
+        self.elevator.initialized_and_stop()
 
     def isFinished(self) -> bool:
         return False
