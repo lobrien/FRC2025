@@ -48,7 +48,7 @@ class RobotContainer:
     def __init__(self):
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
-        # self.coral_subsystem = CoralSubsystem()
+        self.coral_subsystem = CoralSubsystem()
         # self.algae_subsystem = AlgaeSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
@@ -73,9 +73,9 @@ class RobotContainer:
         #     AlgaeIdle(algae=self.algae_subsystem)
         # )
 
-        # self.coral_subsystem.setDefaultCommand(
-        #     CoralIdle(coral=self.coral_subsystem)
-        # )
+        self.coral_subsystem.setDefaultCommand(
+            CoralIdle(coral=self.coral_subsystem)
+        )
 
         self.elevator_subsystem.setDefaultCommand(
             ElevatorInitAndIdle(elevator=self.elevator_subsystem)
@@ -163,9 +163,9 @@ class RobotContainer:
             OperatorInterfaceConstants.OPERATOR_CONTROLLER_PORT
         )
 
-        # controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
-        # controller.b().onTrue(CoralOuttake(coral=self.coral_subsystem))  
-        # controller.b().onFalse(CoralIdle(coral=self.coral_subsystem))
+        controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
+        controller.b().onTrue(CoralOuttake(coral=self.coral_subsystem))  
+        controller.b().onFalse(CoralIdle(coral=self.coral_subsystem))
 
         # controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
         # controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
