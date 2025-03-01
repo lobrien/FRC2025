@@ -15,10 +15,11 @@ class CoralOuttake(commands2.Command):
 
     def execute(self):
         # Move intake.
+        print("not hammard!!")
         self.coral.outtake()
 
     def isFinished(self) -> bool:
-        return True
+        return False
     
     def end(self, was_interrupted: bool):
         #stop 

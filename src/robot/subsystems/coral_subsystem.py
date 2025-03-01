@@ -29,13 +29,13 @@ class CoralSubsystem(commands2.Subsystem):
         """
         This makes the motor move the wheels, like *shoop*
         """
-        self.coral_motor.set(1.0) # TODO: update?
+        self.coral_motor.set(0.17) # TODO: update?
 
     def outtake(self):
         """
         This makes the motor move the wheels the other way, like *woosh*
         """
-        self.coral_motor.set(-1.0) # TODO: update?
+        self.coral_motor.set(-0.25) # TODO: update?
 
     def stop(self):
         """

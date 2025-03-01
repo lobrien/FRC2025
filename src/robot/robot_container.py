@@ -164,8 +164,7 @@ class RobotContainer:
         )
 
         controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
-        controller.b().onTrue(CoralOuttake(coral=self.coral_subsystem))  
-        controller.b().onFalse(CoralIdle(coral=self.coral_subsystem))
+        controller.b().whileTrue(CoralOuttake(coral=self.coral_subsystem))  
 
         # controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
         # controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
