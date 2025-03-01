@@ -21,11 +21,12 @@ class ElevatorConstants:
     )
 
     # Heights in inches (lowest is 10.5, highest is ~55.5)  #Change names of the different heights when writing the official code
-    HOME: inches = 12.25  # Elevator at its lowest position. 
-    LEVEL_ONE: inches = 12.25
-    LEVEL_TWO: inches = 12.25
-    LEVEL_THREE: inches = 28.75     
-    FEEDER: inches = 16.75
+    HOME: inches = 12.0  # Elevator at its lowest position. 
+    LEVEL_ONE: inches = 12.0
+    LEVEL_TWO: inches = 12.0
+    LEVEL_THREE: inches = 28.25
+    CLIMB: inches = 26.25
+    FEEDER: inches = 17.75
     TOP: inches = 29.75  #Elevator at its Highest position
 
    

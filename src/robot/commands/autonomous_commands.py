@@ -33,7 +33,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return commands2.cmd.sequence(DriveToGoal(drive, Pose2d(36, 0, 0)))
+        return commands2.cmd.sequence(DriveToGoal(drive, Pose2d(-36, 0, 0)))
 
     def forward_elevator_and_score(
         drive: DriveSubsystem,

@@ -184,9 +184,9 @@ class ElevatorSubsystem(commands2.Subsystem):
 
         # Set control loop parameters for "slot 0", the profile we'll use for position control.
         configuration.slot0.k_p = (
-            0.2  # An error of one rotation results in 1.0V to the motor.
+            0.4  # An error of one rotation results in 1.0V to the motor.
         )
-        configuration.slot0.k_i = 0.0  # No integral control
+        configuration.slot0.k_i = 0.01  # No integral control
         configuration.slot0.k_d = 0.0  # No differential component
 
         return configuration

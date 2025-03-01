@@ -176,5 +176,6 @@ class RobotContainer:
         controller.leftBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elev=self.elevator_subsystem))
         controller.leftTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.HOME, elev=self.elevator_subsystem))
         controller.rightTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.FEEDER, elev=self.elevator_subsystem))
+        controller.rightBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.CLIMB, elev=self.elevator_subsystem))
 
         return controller

@@ -65,7 +65,7 @@ class DriveConstants:
         145.7 / SLOWED_FACTOR
     )  # inches per second
     MAX_DEGREES_PER_SECOND: degrees_per_second = (
-        72.85 / SLOWED_FACTOR
+        (72.85 / SLOWED_FACTOR) /2
     )  # degrees per second
 
     # TODO: These are from Mako, not Kraken. We need to tune them for Kraken.
@@ -74,8 +74,8 @@ class DriveConstants:
     # For X and Y, 1 meter error results in a motor command of 1.0 (full voltage).
     # Converted to 1/0.0254 = 39 inches => full voltage.
     # For rotation, 90 degrees error => full voltage.
-    PIDX_KP: float = 1.0 * 0.0254 * 2 # X dimension PID controller's proportional constant
-    PIDY_KP: float = 1.0 * 0.0254 * 2 # Y dimension PID controller's proportional constant
+    PIDX_KP: float = 1.0 * 0.0254 * 4 # X dimension PID controller's proportional constant
+    PIDY_KP: float = 1.0 * 0.0254 * 4# Y dimension PID controller's proportional constant
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
 
     # Horizontal (x or y) maxima and tolerances
