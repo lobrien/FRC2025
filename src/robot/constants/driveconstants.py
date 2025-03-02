@@ -51,7 +51,7 @@ class DriveConstants:
 
     FREE_SPEED = 3.76  # max velocity collected from giving the motors max input. Not currently used anywhere
 
-    SLOWED_FACTOR = 4
+    SLOWED_FACTOR = 8
 
     # TODO: Change FREE_SPEED above to the measured motor RPM, and then use that in
     # an explicit calculation of MAX_SPEED_INCHES_PER_SECOND that uses the gear ratio and wheel diameter.
@@ -65,7 +65,7 @@ class DriveConstants:
         145.7 / SLOWED_FACTOR
     )  # inches per second
     MAX_DEGREES_PER_SECOND: degrees_per_second = (
-        (72.85 / SLOWED_FACTOR) /2
+        (72.85 / SLOWED_FACTOR) / 2
     )  # degrees per second
 
     # TODO: These are from Mako, not Kraken. We need to tune them for Kraken.

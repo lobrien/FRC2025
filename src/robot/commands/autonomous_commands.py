@@ -44,7 +44,7 @@ class Autos:
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
         return commands2.cmd.parallel(
-            DriveToGoal(drive, Pose2d(36, 0, 0)),
-            ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_TWO, elevator),
+            DriveToGoal(drive, Pose2d(-36, 0, 0)),
+            ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
             CoralSubsystem.outtake()
         )
