@@ -10,7 +10,7 @@ from wpimath.kinematics import (
     ChassisSpeeds,
     SwerveModuleState,
 )
-from wpimath.units import inchesToMeters, degreesToRadians, degrees
+from wpimath.units import inchesToMeters, degreesToRadians, degrees, metersToInches
 from phoenix6.hardware.pigeon2 import Pigeon2
 
 from constants.driveconstants import DriveConstants
@@ -94,7 +94,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # odometry to estimate this, but we keep it as a member variable to
         # carry between different method calls.  Start at zero, facing +x direction,
         # which for poses, is like Translation2d, +x = forward.
-        self.pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))
+        self.pose = self.odometry.getPose()
 
     # --------------------------------------
     # Public methods for debugging, but not production
@@ -160,11 +160,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.odometry.update(self.get_heading_rotation2d(), tuple(positions))
 
         # Update the dashboard
-        pose = self.odometry.getPose()
-        SmartDashboard.putNumber("Robot X", pose.X())
-        SmartDashboard.putNumber("Robot Y", pose.Y())
+        self.pose = self.odometry.getPose()
+        SmartDashboard.putNumber("Robot X", metersToInches(self.pose.X()))
+        SmartDashboard.putNumber("Robot Y", self.pose.Y())
         SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
-        SmartDashboard.putNumber("Robot Heading", pose.rotation().degrees())
+        SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
         for name, module in zip(
             ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
             [
@@ -182,7 +182,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.heartbeat += 1
 
         # Update field sim
-        self.field_sim.setRobotPose(pose)
+        self.field_sim.setRobotPose(self.pose)
         # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
         # self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
@@ -261,6 +261,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             kinematics=kinematics,
             gyroAngle=self.get_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules],
+            initialPose=Pose2d(x = 0.0, y = 0.0, rotation = self.get_heading_rotation2d())
         )
 
     @staticmethod
@@ -321,32 +322,32 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         """
         # Calculate the "gas pedal" values for each axis.
         present_x = self.pose.X()
-        pid_output_x = self.x_controller.calculate(present_x)
+        pid_output_x = metersToInches(self.x_controller.calculate(present_x))
         clamped_x = clamp(
-            pid_output_x,
-            -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
-            DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
-        )  # Drive expects between -1 and 1.
+            val = pid_output_x,
+            min_val = -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
+            max_val = DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
+        )  # Drive expects inches per second.
 
         present_y = self.pose.Y()
-        pid_output_y = self.y_controller.calculate(present_y)
+        pid_output_y = metersToInches(self.y_controller.calculate(present_y))
         clamped_y = clamp(
-            pid_output_y,
-            -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
-            DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
+            val = pid_output_y,
+            min_val = -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
+            max_val = DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
         )
 
         present_rot = self.pose.rotation().degrees()
         present_rot = wpimath.inputModulus(present_rot, -180, 180)
         pid_output_rot = self.rot_controller.calculate(present_rot)
         clamped_rot = clamp(
-            pid_output_rot,
-            -DriveConstants.MAX_DEGREES_PER_SECOND,
-            DriveConstants.MAX_DEGREES_PER_SECOND,
+            val = pid_output_rot,
+            min_val = -DriveConstants.MAX_DEGREES_PER_SECOND,
+            max_val = DriveConstants.MAX_DEGREES_PER_SECOND,
         )
 
         # Send the values to the drive train.
-        self.drive(clamped_x, clamped_y, clamped_rot)
+        self.drive(clamped_x, 0.0, 0.0)
 
     def is_at_goal(self):
         """
@@ -394,11 +395,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             0,
             0,
             TrapezoidProfile.Constraints(
-                DriveConstants.HORIZ_MAX_V, DriveConstants.HORIZ_MAX_A
+                inchesToMeters(DriveConstants.HORIZ_MAX_V), inchesToMeters(DriveConstants.HORIZ_MAX_A)
             ),
         )
         x_controller.setTolerance(
-            DriveConstants.HORIZ_POS_TOL, DriveConstants.HORIZ_VEL_TOL
+            inchesToMeters(DriveConstants.HORIZ_POS_TOL), inchesToMeters(DriveConstants.HORIZ_VEL_TOL)
         )
 
         # Controller for the y direction (+ left, viewed by the driver)
@@ -407,11 +408,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             0,
             0,
             TrapezoidProfile.Constraints(
-                DriveConstants.HORIZ_MAX_V, DriveConstants.HORIZ_MAX_A
+                inchesToMeters(DriveConstants.HORIZ_MAX_V), inchesToMeters(DriveConstants.HORIZ_MAX_A)
             ),
         )
         y_controller.setTolerance(
-            DriveConstants.HORIZ_POS_TOL, DriveConstants.HORIZ_VEL_TOL
+            inchesToMeters(DriveConstants.HORIZ_POS_TOL), inchesToMeters(DriveConstants.HORIZ_VEL_TOL)
         )
 
         # Controller for the rotation direction (+ counterclockwise, viewed from above)

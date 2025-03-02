@@ -69,9 +69,9 @@ class RobotContainer:
             teleop_command
         )  # Set the teleop command as the default for drive subsystem
 
-        # self.algae_subsystem.setDefaultCommand(
-        #     AlgaeIdle(algae=self.algae_subsystem)
-        # )
+        self.algae_subsystem.setDefaultCommand(
+            AlgaeIdle(algae=self.algae_subsystem)
+        )
 
         self.coral_subsystem.setDefaultCommand(
             CoralIdle(coral=self.coral_subsystem)

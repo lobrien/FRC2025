@@ -1,6 +1,7 @@
 import commands2
 import commands2.cmd
 from wpimath.geometry import Pose2d
+from wpimath.units import inchesToMeters
 
 from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_to_goal import DriveToGoal
@@ -33,18 +34,21 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return commands2.cmd.sequence(DriveToGoal(drive, Pose2d(-36, 0, 0)))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(-62.0), 0.0, 0.0))
 
     def forward_elevator_and_score(
         drive: DriveSubsystem,
         elevator: ElevatorSubsystem,
         coral: CoralSubsystem,
     ):
-        """Autonomous routine that drives forward and moves elevator to mid
+        """Autonomous routine that drives forward and moves elevator to level 3
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
-        return commands2.cmd.parallel(
-            DriveToGoal(drive, Pose2d(-36, 0, 0)),
-            ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
-            CoralSubsystem.outtake()
+        return commands2.cmd.sequence(
+            commands2.cmd.parallel(
+                ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
+                DriveToGoal(drive, Pose2d(inchesToMeters(-62.0), 0.0, 0.0))
+        ),
+        
+            coral.outtake()
         )
