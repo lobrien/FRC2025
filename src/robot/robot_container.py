@@ -156,3 +156,12 @@ class RobotContainer:
         controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
 
         return controller
+
+    def periodic(self):
+        for subsystem in [
+            self.drive_subsystem,
+            self.elevator_subsystem,
+            self.coral_subsystem,
+            self.algae_subsystem,
+        ]:
+            subsystem.periodic()

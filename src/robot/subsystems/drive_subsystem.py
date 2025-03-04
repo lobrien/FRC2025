@@ -1,17 +1,21 @@
 from typing import Optional
+import math
 
 import commands2
 import numpy as np
+import wpilib
 import wpimath
 from wpilib import SmartDashboard, Field2d, RobotBase
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.controller import ProfiledPIDController
 from wpimath.trajectory import TrapezoidProfile
-from wpimath.geometry import Rotation2d, Pose2d
+from wpimath.geometry import Rotation2d, Pose2d, Translation2d
 from wpimath.kinematics import (
     SwerveDrive4Kinematics,
+    SwerveDrive4Odometry,
     ChassisSpeeds,
     SwerveModuleState,
+    SwerveModulePosition,
 )
 from wpimath.units import inchesToMeters, degreesToRadians, degrees
 from phoenix6.hardware.pigeon2 import Pigeon2
@@ -21,15 +25,9 @@ from constants.new_types import inches_per_second, degrees_per_second, percentag
 from subsystems.swerve_module import SwerveModule
 
 
-# The `DriveSubsystem` class is a `Subsystem` that contains the robot's drive motors and sensors. It
-# is responsible for moving the robot around on the field. Public methods exposed by this class
-# should make logical sense for *any* kind of drive, whether it be tank, arcade, swerve, or hovercraft.
-# For instance, you wouldn't want to expose a `setLeftSpeed` method for a swerve drive, because that
-# doesn't make sense for a swerve drive. Instead, you would want to expose a `drive` method that takes
-# a speed and a rotation, because that makes sense for *any* kind of drive.
-class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
+class DriveSubsystem(commands2.Subsystem):
     def __init__(self):
-        super().__init__()  # Allows the class to call parent class
+        super().__init__()
 
         # Create a swerve module for each corner.
         self.modules = [
@@ -73,9 +71,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         # Gyro to determine robot heading (the direction it is pointed).
         self.gyro = Pigeon2(DriveConstants.PIGEON_ID)
-        self.gyro.set_yaw(
-            0.0
-        )  # Assumes that the robot is facing in the same direction as the driver at the start.
+        self.gyro.set_yaw(0.0)  # Reset gyro to zero
+
+        # Simulation support (must precede kinematics and odometry initialization)
+        self.field_sim = Field2d()
+        SmartDashboard.putData("Field", self.field_sim)
+        # Initialize simulation variables
+        self.sim_pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))  # Match initial pose
+        self.prev_sim_time = 0.0
+
 
         # Initialize kinematics (equations of motion) and odometry (where are we on the field?)
         self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
@@ -83,46 +87,34 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         self.heartbeat = 0
 
-        # Simulation support
-        self.field_sim = Field2d()
-        SmartDashboard.putData("Field", self.field_sim)
-        self.last_x_speed = inches_per_second(0.0)
-        self.last_y_speed = inches_per_second(0.0)
-        self.last_rot_speed = degrees_per_second(0.0)
 
+        # Create module visualization objects
+        if wpilib.RobotBase.isSimulation():
+            self.module_visualization = self.field_sim.getObject("Swerve Modules")
+            self.module_poses = []
+            for _ in range(4):
+                self.module_poses.append(Pose2d(0, 0, Rotation2d(0)))
 
         # PID Controllers for drive
         self.x_controller, self.y_controller, self.rot_controller = (
             self._initialize_pid_controllers()
         )
 
-        # ---------------------------------------------------------------------
-        # Set up odometry, that is figuring out how far we have driven. Example:
-        # https://github.com/robotpy/examples/blob/main/MecanumBot/drivetrain.py
-        # ---------------------------------------------------------------------
-
-        # The "pose" or position and rotation of the robot.  Usually, we will use
-        # odometry to estimate this, but we keep it as a member variable to
-        # carry between different method calls.  Start at zero, facing +x direction,
-        # which for poses, is like Translation2d, +x = forward.
-        self.pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))
+        # The "pose" or position and rotation of the robot.
+        self.pose = Pose2d(10, 10, Rotation2d.fromDegrees(45))
 
     # --------------------------------------
     # Public methods for debugging, but not production
     # --------------------------------------
 
-    # Sets the drive to the given speed and rotation, expressed as percentages
-    # of full speed. The speed and rotation values range from -1 to 1.
-    # Note that the drive will continue at those values until told otherwise
     def drive_by_effort(
-        self, drive_effort: percentage, turn_effort: percentage
+            self, drive_effort: percentage, turn_effort: percentage
     ) -> None:
         for module in self.modules:
             module.set_drive_effort(drive_effort)
             module.set_turn_effort(turn_effort)
 
     def set_drive_angle(self, desired_angle_degrees: degrees) -> None:
-        # Probably:
         for module in self.modules:
             module.set_turn_angle(desired_angle_degrees)
 
@@ -135,20 +127,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         Gets the heading of the robot (direction it is pointing) in degrees.
         CCW is positive.
         """
-        heading = self.gyro.get_yaw().value
-
-        return heading
-
-    def _simulate_gyro(self, rot_speed: degrees_per_second) -> degrees:
-        period = 0.02  # 20ms
-        if rot_speed == 0:
-            return self.get_heading_degrees()
-        delta_degrees = rot_speed * period
-        current_yaw = self.gyro.get_yaw().value
-        new_yaw = current_yaw + delta_degrees
-        print(f"Simulated gyro: current_yaw={current_yaw}, delta={delta_degrees}, new_yaw={new_yaw}")
-        self.gyro.set_yaw(new_yaw)
-        return self.get_heading_degrees()
+        if wpilib.RobotBase.isSimulation():
+            return self.sim_pose.rotation().degrees()
+        else:
+            heading = self.gyro.get_yaw().value
+            return heading
 
     def get_heading_rotation2d(self) -> Rotation2d:
         """
@@ -158,8 +141,13 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         return Rotation2d.fromDegrees(self.get_heading_degrees())
 
     def get_pose(self) -> wpimath.geometry.Pose2d:
-        #self.pose = self.odometry.getPose()
-        return self.pose
+        """
+        Get the current robot pose, either from simulation or odometry.
+        """
+        if wpilib.RobotBase.isSimulation():
+            return self.sim_pose
+        else:
+            return self.odometry.getEstimatedPosition()
 
     def get_controllers_goals(self) -> tuple[float, float, float]:
         return (
@@ -172,48 +160,49 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # Public methods for core functionality
     # --------------------------------------
 
-    # This periodic function is called every 20ms during the robotPeriodic phase
-    # *in all modes*. It is called automatically by the Commands2 framework.
     def periodic(self):
+        """
+        Called periodically during all robot modes.
+        Updates odometry and dashboard displays.
+        """
+        if RobotBase.isSimulation():
+            SmartDashboard.putBoolean("Simulation", True)
+            self.simulationPeriodic()
+        else:
+            SmartDashboard.putBoolean("Simulation", False)
         for module in self.modules:
             module.periodic()
 
         # Update the odometry
-        if RobotBase.isSimulation():
-            # Update gyro first
-            heading = self._simulate_gyro(self.last_rot_speed)
-            robot_rotation = Rotation2d.fromDegrees(heading)
-            # Now update each module's simulated position
-            positions = [module.simulate_position(self.last_x_speed, self.last_y_speed, self.last_rot_speed) for module
-                         in self.modules]
-        else:
-            positions = [module.get_position() for module in self.modules]
-            robot_rotation = self.get_heading_rotation2d()
+        positions = [module.get_position() for module in self.modules]
+        robot_rotation = self.get_heading_rotation2d()
         current_pos = self.odometry.getEstimatedPosition()
-
         self.odometry.update(robot_rotation, tuple(positions))
         estimated_pos = self.odometry.getEstimatedPosition()
-        if estimated_pos.__eq__(current_pos):
-            SmartDashboard.putBoolean("Odometry Move", False)
-        else:
-            SmartDashboard.putBoolean("Odometry Move", True)
+
+        # Update dashboard data
+        SmartDashboard.putBoolean(
+            "Odometry Move", not estimated_pos.__eq__(current_pos)
+        )
         SmartDashboard.putNumber("Odometry X", estimated_pos.X())
         SmartDashboard.putNumber("Odometry Y", estimated_pos.Y())
         SmartDashboard.putNumber("Odometry Heading", estimated_pos.rotation().degrees())
 
-        # Update the dashboard
+        # Update additional dashboard data
         SmartDashboard.putNumber("Robot X", self.pose.X())
         SmartDashboard.putNumber("Robot Y", self.pose.Y())
         SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
         SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
+
+        # Update module dashboard data
         for name, module in zip(
-            ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
-            [
-                self.FrontLeftModule,
-                self.FrontRightModule,
-                self.BackLeftModule,
-                self.BackRightModule,
-            ],
+                ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
+                [
+                    self.FrontLeftModule,
+                    self.FrontRightModule,
+                    self.BackLeftModule,
+                    self.BackRightModule,
+                ],
         ):
             state = module.get_state()
             SmartDashboard.putNumber(f"{name} Speed", state.speed)
@@ -222,10 +211,90 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         SmartDashboard.putNumber("Heartbeat", self.heartbeat)
         self.heartbeat += 1
 
-        # Update field sim
+        # Update pose for user code
+        self.pose = estimated_pos
+
+        # Update field sim visualization
         self.field_sim.setRobotPose(self.pose)
-        # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
-        # self.field_sim.setModuleStates([module.get_state() for module in self.modules])
+
+    def simulationPeriodic(self):
+        """
+        Update simulation model.
+        This should be called during simulationPeriodic in the robot class.
+        """
+        # Calculate time delta
+        current_time = wpilib.Timer.getFPGATimestamp()
+        dt = current_time - self.prev_sim_time
+        if dt <= 0:
+            dt = 0.02  # Use default timestep on first call
+        self.prev_sim_time = current_time
+
+        # Get the current module states
+        module_states = [module.get_state() for module in self.modules]
+
+        # Convert to chassis speeds
+        chassis_speeds = self.kinematics.toChassisSpeeds(module_states)
+
+        # Get robot-relative speeds
+        vx = chassis_speeds.vx  # m/s
+        vy = chassis_speeds.vy  # m/s
+        omega = chassis_speeds.omega  # rad/s
+
+        # Convert to field-relative movement
+        heading = self.sim_pose.rotation().radians()
+        dx = (vx * math.cos(heading) - vy * math.sin(heading)) * dt
+        dy = (vx * math.sin(heading) + vy * math.cos(heading)) * dt
+        dtheta = omega * dt
+
+        # Update simulated robot pose
+        new_x = self.sim_pose.X() + dx
+        new_y = self.sim_pose.Y() + dy
+        new_theta = self.sim_pose.rotation().radians() + dtheta
+
+        self.sim_pose = Pose2d(new_x, new_y, Rotation2d(new_theta))
+
+        # Update simulated gyro
+        if hasattr(self.gyro, 'set_yaw'):
+            degrees_val = self.sim_pose.rotation().degrees()
+            self.gyro.set_yaw(degrees_val)
+
+        # Update module visualizations
+        self._update_module_visualizations()
+
+        # Update odometry with simulated values
+        module_positions = [module.get_position() for module in self.modules]
+        self.odometry.update(self.sim_pose.rotation(), tuple(module_positions))
+
+    def _update_module_visualizations(self):
+        """
+        Update the visualization of swerve modules on the field.
+        """
+        if not wpilib.RobotBase.isSimulation():
+            return
+
+        for i, module in enumerate(self.modules):
+            # Get module position relative to robot center
+            module_translation = self._get_module_translations()[i]
+            x_offset = module_translation.X()  # Already in meters
+            y_offset = module_translation.Y()  # Already in meters
+
+            # Calculate module position in field coordinates
+            robot_heading = self.sim_pose.rotation().radians()
+            rotated_x = x_offset * math.cos(robot_heading) - y_offset * math.sin(robot_heading)
+            rotated_y = x_offset * math.sin(robot_heading) + y_offset * math.cos(robot_heading)
+
+            module_x = self.sim_pose.X() + rotated_x
+            module_y = self.sim_pose.Y() + rotated_y
+
+            # Get the module's wheel direction
+            module_state = module.get_state()
+            module_angle = self.sim_pose.rotation().rotateBy(module_state.angle)
+
+            # Update the module pose
+            self.module_poses[i] = Pose2d(module_x, module_y, module_angle)
+
+        # Update field visualization
+        self.module_visualization.setPoses(self.module_poses)
 
     def drive(
             self,
@@ -233,31 +302,25 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             y_speed_inches_per_second: inches_per_second,
             rot_speed_degrees_per_second: degrees_per_second,
     ) -> None:
-        print("\nDriveSubsystem.drive() input:")
-        print(f"x_speed: {x_speed_inches_per_second:.2f} in/s")
-        print(f"y_speed: {y_speed_inches_per_second:.2f} in/s")
-        print(f"rot_speed: {rot_speed_degrees_per_second:.2f} deg/s")
-        print(f"Current heading: {self.get_heading_degrees():.2f} degrees")
-
-        # Save speeds for simulation
-        self.last_x_speed = x_speed_inches_per_second
-        self.last_y_speed = y_speed_inches_per_second
-        self.last_rot_speed = rot_speed_degrees_per_second
-
-        # Get module states
+        """
+        The main method to use to command the drive system.  Uses field-relative
+        directions from the human operator's perspective, assuming the robot
+        was initialized while facing the same direction as the driver/operator.
+        :param x_speed_inches_per_second:    Speed forward (away from the driver)
+        :param y_speed_inches_per_second:    Speed to the left (from the driver's perspective)
+        :param rot_speed_degrees_per_second: Desired rotational speed, CCW is positive.
+        """
         desaturated_module_states = self._speeds_to_states(
             x_speed_inches_per_second,
             y_speed_inches_per_second,
             rot_speed_degrees_per_second,
         )
-
-        print("\nModule states after speed conversion:")
-        for i, state in enumerate(desaturated_module_states):
-            print(f"Module {i}: speed={state.speed:.2f} m/s, angle={state.angle.degrees():.2f} deg")
-
-        # Command the modules
         for module, state in zip(self.modules, desaturated_module_states):
             module.set_desired_state(state)
+
+    # --------------------------------------
+    # Private methods to compute module states
+    # --------------------------------------
 
     def _speeds_to_states(
             self,
@@ -270,12 +333,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             y_speed_inches_per_second=y_speed,
             rot_speed_degrees_per_second=rot_speed,
         )
-
-        print("\n_get_chassis_speeds output:")
-        print(f"vx: {chassis_speeds.vx:.3f} m/s")
-        print(f"vy: {chassis_speeds.vy:.3f} m/s")
-        print(f"omega: {chassis_speeds.omega:.3f} rad/s")
-
         swerve_module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
         desaturated_module_states = SwerveDrive4Kinematics.desaturateWheelSpeeds(
             swerve_module_states,
@@ -289,17 +346,16 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             y_speed_inches_per_second: inches_per_second,
             rot_speed_degrees_per_second: degrees_per_second,
     ) -> ChassisSpeeds:
-        # Convert to meters and radians
+        # ChassisSpeeds expects meters and radians
         x_speed_meters_per_second = inchesToMeters(x_speed_inches_per_second)
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
 
-        # Create ChassisSpeeds - use the actual heading without negation
-        cs = ChassisSpeeds.fromRobotRelativeSpeeds(
+        cs = ChassisSpeeds.fromFieldRelativeSpeeds(
             x_speed_meters_per_second,
             y_speed_meters_per_second,
             rot_speed_radians,
-            self.get_heading_rotation2d(),  # Removed the negation
+            self.get_heading_rotation2d(),
         )
         return cs
 
@@ -308,26 +364,26 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # --------------------------------------
 
     def _initialize_odometry(
-        self, kinematics: SwerveDrive4Kinematics, initial_pose : Optional[Pose2d] = None
+            self, kinematics: SwerveDrive4Kinematics, initial_pose : Optional[Pose2d] = None
     ) -> SwerveDrive4PoseEstimator:
         return SwerveDrive4PoseEstimator(
             kinematics=kinematics,
             gyroAngle=self.get_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules],
-            initialPose=initial_pose or Pose2d()
+            initialPose=initial_pose or Pose2d(),
+            stateStdDevs=np.array([0.1, 0.1, 0.1]),  # X, Y, rotation standard deviations
+            visionMeasurementStdDevs=np.array([0.9, 0.9, 0.9])  # Vision measurement uncertainties
         )
 
-    @staticmethod
-    def _get_module_translations() -> list[wpimath.geometry.Translation2d]:
+    def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
         """
         Returns the physical positions of each swerve module relative to the center of the robot.
         The order should match the order of modules in self.modules:
         [FrontRight, FrontLeft, BackLeft, BackRight]
 
         Returns:
-            list[Translation2d]: List of module positions in inches
+            list[Translation2d]: List of module positions in meters
         """
-
         # Create Translation2d objects for each module position
         # The coordinate system is:
         # - Positive x is forward
@@ -335,16 +391,20 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # - Origin (0,0) is at robot center
         translations = [
             wpimath.geometry.Translation2d(
-                DriveConstants.WHEELBASE_HALF_LENGTH, -DriveConstants.TRACK_HALF_WIDTH
+                inchesToMeters(DriveConstants.WHEELBASE_HALF_LENGTH),
+                inchesToMeters(-DriveConstants.TRACK_HALF_WIDTH)
             ),  # Front Right
             wpimath.geometry.Translation2d(
-                DriveConstants.WHEELBASE_HALF_LENGTH, DriveConstants.TRACK_HALF_WIDTH
+                inchesToMeters(DriveConstants.WHEELBASE_HALF_LENGTH),
+                inchesToMeters(DriveConstants.TRACK_HALF_WIDTH)
             ),  # Front Left
             wpimath.geometry.Translation2d(
-                -DriveConstants.WHEELBASE_HALF_LENGTH, DriveConstants.TRACK_HALF_WIDTH
+                inchesToMeters(-DriveConstants.WHEELBASE_HALF_LENGTH),
+                inchesToMeters(DriveConstants.TRACK_HALF_WIDTH)
             ),  # Back Left
             wpimath.geometry.Translation2d(
-                -DriveConstants.WHEELBASE_HALF_LENGTH, -DriveConstants.TRACK_HALF_WIDTH
+                inchesToMeters(-DriveConstants.WHEELBASE_HALF_LENGTH),
+                inchesToMeters(-DriveConstants.TRACK_HALF_WIDTH)
             ),  # Back Right
         ]
 
@@ -409,9 +469,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         :returns: True if all three axes (X, Y, rotation) are at the goal.
         """
         all_controllers_at_goal = (
-            self.x_controller.atGoal()
-            and self.y_controller.atGoal()
-            and self.rot_controller.atGoal()
+                self.x_controller.atGoal()
+                and self.y_controller.atGoal()
+                and self.rot_controller.atGoal()
         )
         return all_controllers_at_goal
 
@@ -429,7 +489,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
     @staticmethod
     def _initialize_pid_controllers() -> (
-        tuple[ProfiledPIDController, ProfiledPIDController, ProfiledPIDController]
+            tuple[ProfiledPIDController, ProfiledPIDController, ProfiledPIDController]
     ):
         """
         Initialize the PID controllers for the drive subsystem.
