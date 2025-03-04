@@ -75,7 +75,7 @@ class DriveSubsystem(commands2.Subsystem):
 
         # Simulation support (must precede kinematics and odometry initialization)
         self.field_sim = Field2d()
-        SmartDashboard.putData("Field", self.field_sim)
+        SmartDashboard.putData("Field_Sim", self.field_sim)
         # Initialize simulation variables
         self.sim_pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))  # Match initial pose
         self.prev_sim_time = 0.0
@@ -216,6 +216,10 @@ class DriveSubsystem(commands2.Subsystem):
 
         # Update field sim visualization
         self.field_sim.setRobotPose(self.pose)
+        SmartDashboard.putNumber("Robot X", self.pose.X())
+        SmartDashboard.putNumber("Robot Y", self.pose.Y())
+        SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
+        SmartDashboard.putNumber("field_sim X", self.field_sim.getRobotPose().X())
 
     def simulationPeriodic(self):
         """
