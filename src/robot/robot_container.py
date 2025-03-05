@@ -28,6 +28,8 @@ from commands.elevator_init_and_idle_command import ElevatorInitAndIdle
 from commands.elevator_down_command import ElevatorDown
 from commands.elevator_up_command import ElevatorUp
 from constants.elevatorconstants import ElevatorConstants
+from commands.vision_auto_alignment_command import VisionAutoAlign
+from subsystems.vision_subsystem import VisionSubsystem
 
 
 # The `RobotContainer` class is where the robot's structure and behavior are defined.
@@ -50,6 +52,7 @@ class RobotContainer:
         self.elevator_subsystem = ElevatorSubsystem()
         self.coral_subsystem = CoralSubsystem()
         # self.algae_subsystem = AlgaeSubsystem()
+        self.vision_susbsystem = VisionSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
@@ -146,7 +149,7 @@ class RobotContainer:
             OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(PrintSomethingCommand("WHEA A Button Pressed"))
+        controller.a().onTrue(VisionAutoAlign(vision_subsystem=VisionSubsystem, drive=self.drive_subsystem))
         controller.b().whileTrue(
             TurnToAngleCommand(self.drive_subsystem, lambda: True)
         )  # for quick test
