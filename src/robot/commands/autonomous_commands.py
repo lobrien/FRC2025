@@ -34,7 +34,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(-62.0), 0.0, 0.0))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(-88.0), 0.0, 0.0))
 
     def forward_elevator_and_score(
         drive: DriveSubsystem,
@@ -47,7 +47,7 @@ class Autos:
         return commands2.cmd.sequence(
             commands2.cmd.parallel(
                 ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
-                DriveToGoal(drive, Pose2d(inchesToMeters(-62.0), 0.0, 0.0))
+                DriveToGoal(drive, Pose2d(inchesToMeters(-88.0), 0.0, 0.0))
         ),
         
             coral.outtake()
