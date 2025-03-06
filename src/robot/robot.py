@@ -35,6 +35,7 @@ class Robot(commands2.TimedCommandRobot):
 
     def robotPeriodic(self):
         CommandScheduler.getInstance().run()
+        self.container.periodic()
 
     def robotEnd(self):
         pass
