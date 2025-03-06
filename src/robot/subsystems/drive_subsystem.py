@@ -113,11 +113,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # https://github.com/robotpy/examples/blob/main/MecanumBot/drivetrain.py
         # ---------------------------------------------------------------------
 
-        # The "pose" or position and rotation of the robot.  Usually, we will use
+        # The initial "pose" or position and rotation of the robot.  Usually, we will use
         # odometry to estimate this, but we keep it as a member variable to
         # carry between different method calls.  Start at zero, facing +x direction,
         # which for poses, is like Translation2d, +x = forward.
-        self.pose = self.odometry.getPose()
+        self.pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))
 
     # --------------------------------------
     # Public methods for debugging, but not production
@@ -181,23 +181,27 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         Called periodically during all robot modes.
         Updates odometry and dashboard displays.
         """
+        for module in self.modules:
+            module.periodic()
         if RobotBase.isSimulation():
-            SmartDashboard.putBoolean("Simulation", True)
+            self.simulationPeriodic()
+
+        # TODO: This block needs to be cleaned up. We have 3 different poses! Which one is correct?
+        current_pos, estimated_pos = self._odometry_periodic()
+        # Update pose for user code
+        self.pose = estimated_pos  # TODO: Override to estimated seems mistake? Maybe current_pos if RobotBase.isReal() else estimated_pos (?)
+        # Update field sim
+        self.field_sim.setRobotPose(self.pose)
+
+        self._dashboard_periodic(current_pos, estimated_pos)
+        self.heartbeat += 1
+
+    def _dashboard_periodic(self, current_pos, estimated_pos):
+        # Update the dashboard
+        if RobotBase.isSimulation():
             self.simulationPeriodic()
         else:
             SmartDashboard.putBoolean("Simulation", False)
-        for module in self.modules:
-            module.periodic()
-
-        # Update the odometry
-        positions = [module.get_position() for module in self.modules]
-        robot_rotation = self.get_heading_rotation2d()
-        current_pos = self.odometry.getEstimatedPosition()
-        self.odometry.update(robot_rotation, tuple(positions))
-        estimated_pos = self.odometry.getEstimatedPosition()
-
-        # Update the dashboard
-        self.pose = self.odometry.getPose()
         SmartDashboard.putNumber("Robot X", metersToInches(self.pose.X()))
         SmartDashboard.putNumber("Robot Y", metersToInches(self.pose.Y()))
         # Update dashboard data
@@ -207,7 +211,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         SmartDashboard.putNumber("Odometry X", estimated_pos.X())
         SmartDashboard.putNumber("Odometry Y", estimated_pos.Y())
         SmartDashboard.putNumber("Odometry Heading", estimated_pos.rotation().degrees())
-
         # Update additional dashboard data
         SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
         SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
@@ -223,21 +226,20 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             state = module.get_state()
             SmartDashboard.putNumber(f"{name} Speed", state.speed)
             SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
-
         SmartDashboard.putNumber("Heartbeat", self.heartbeat)
-        self.heartbeat += 1
-
-        # Update pose for user code
-        self.pose = estimated_pos # TODO: LOB check. Override to estimated seems mistake?
-        # Update field sim
-        self.field_sim.setRobotPose(self.pose)
-
-        # Update field sim visualization
-        self.field_sim.setRobotPose(self.pose)
         SmartDashboard.putNumber("Robot X", self.pose.X())
         SmartDashboard.putNumber("Robot Y", self.pose.Y())
         SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
         SmartDashboard.putNumber("field_sim X", self.field_sim.getRobotPose().X())
+
+    def _odometry_periodic(self):
+        # Update the odometry
+        positions = [module.get_position() for module in self.modules]
+        robot_rotation = self.get_heading_rotation2d()
+        current_pos = self.odometry.getEstimatedPosition()
+        self.odometry.update(robot_rotation, tuple(positions))
+        estimated_pos = self.odometry.getEstimatedPosition()
+        return current_pos, estimated_pos
 
     def simulationPeriodic(self):
         """
