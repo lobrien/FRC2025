@@ -100,7 +100,7 @@ class VisionSubsystem(commands2.Subsystem):
         distance to reef  calculates the distance from the robots pos to the reef  in meters. it uses the distance formula subtracting the desired x,y (the reef )
         by our current x, y and square roots the awnser to get our distance to be used in our shooter angle calculations. returns the distance from the robot to the reef 
         '''
-        distance = math.sqrt(pow(2, reef_x - bot_x)) + (pow(2, reef_y - bot_y))
+        distance = math.sqrt(pow(reef_x - bot_x, 2)) + (pow(reef_y - bot_y,2))
         return distance
     def calculate_desired_angle(self, distance_to_reef_y, distance_to_wall):
         """
