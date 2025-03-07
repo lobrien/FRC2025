@@ -43,7 +43,8 @@ class VisionAutoAlign(commands2.Command):
                 return True
             # TODO: These indices need to be confirmed and put into constants (e.g., "BOTPOSE_X_INDEX")
             robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
-            if self._close_enough(robot_relative_pose):
+            # TODO: Convert these tolerances to constants
+            if self._close_enough(robot_relative_pose, inches(1), degrees(5)):
                 return True
             else:
                 return False
@@ -61,107 +62,108 @@ class VisionAutoAlign(commands2.Command):
                 return False
 
         def execute(self):
-            bot_pose = self.vision_subsystem.get_botpose()
-            if bot_pose is None:
-                logger.error("No botpose available, cannot align")
-            else:
+
                 ### REWORK THIS CODE FROM HERE ###
                 # Step 1: Get the botpose from the vision subsystem
-                # Step 2: Calculate distance to desired position
-                robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
-                # Step 3: Calculate speeds for next 20ms
-                x_speed : inches_per_second = raise NotImplementedError("Calculate x_speed")
-                y_speed : inches_per_second = raise NotImplementedError("Calculate y_speed")
-                rot_speed : degrees_per_second = raise NotImplementedError("Calculate rot_speed")
-                # Step 4: Send power to drive subsystem
-                self.drive_subsystem.drive(x_speed, y_speed, rot_speed)
-
-
-                #### CURRENT CODE TO REWORK INTO STEPS above
-                if self.is_botpose_valid(self.botpose):
-                    self.bot_x = self.botpose[0]
-                robot_x = self.botpose[0]
-                robot_y = self.botpose[1]
-                robot_yaw = self.botpose[5]
-
-                desired_bot_angle = 0
-                desired_x_pos = desired_x - robot_x
-
-                desired_direction = desired_bot_angle - robot_yaw
-                if desired_direction > 180:
-                    desired_direction -= 360
-                if desired_direction < -180:
-                    desired_direction += 360
-
-                x_kp = 0.3
-                x_max_speed = 0.5
-                self.x_speed = x_kp * desired_x_pos
-
-                # this acts like the p value in a pid loop for the rotation action
-
-                if self.x_speed > x_max_speed:
-                    self.x_speed = x_max_speed
-                elif self.x_speed < -x_max_speed:
-                    self.x_speed = -x_max_speed
-                #     # this sets makes sure that the rot value does not pass the maximum we give
-
-                self.x_distance = desired_x_pos
-
-                if robot_x > -0.1 and robot_x < 0.1:
-                    self.x_speed = 0.0
-                elif desired_x_pos > -0.5:
-                    self.x_speed = -self.x_speed
-                elif abs(desired_x_pos) < 3:
-                    self.x_speed = 0.0
+                bot_pose = self.vision_subsystem.get_botpose()
+                if bot_pose is None:
+                    logger.error("No botpose available, cannot align")
                 else:
-                    self.x_speed = self.x_speed + 0.25
-
-                print(f"speed is{self.x_speed}")
-                print(f"distance is{desired_x_pos}")
-
-
-                desired_y = 1.45
-                desired_y_pos = desired_y - robot_y
-
-                y_kp = 0.3
-                y_max_speed = 0.4
-                self.y_speed = y_kp * desired_y_pos
-
-                # this acts like the p value in a pid loop for the rotation action
-
-                if self.y_speed > y_max_speed:
-                    self.y_speed = y_max_speed
-                elif self.y_speed < -y_max_speed:
-                    self.y_speed = -y_max_speed
-
-                if robot_y > -0.1 and robot_y < 0.1:
-                    self.y_speed = 0.0
-                elif desired_y_pos > -0.5:
-                    self.y_speed = -self.y_speed
-                elif abs(desired_y_pos) < 3:
-                    self.y_speed = 0.0
-                else:
-                    self.y_speed = self.y_speed
+                    # Step 2: Calculate distance and rotation to desired position
+                    robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
+                    # Step 3: Calculate speeds for next 20ms
+                    x_speed : inches_per_second = raise NotImplementedError("Calculate x_speed")
+                    y_speed : inches_per_second = raise NotImplementedError("Calculate y_speed")
+                    rot_speed : degrees_per_second = raise NotImplementedError("Calculate rot_speed")
+                    # Step 4: Send power to drive subsystem
+                    self.drive_subsystem.drive(x_speed, y_speed, rot_speed)
 
 
-                # yaw_kp = 0.7
-                # max_rot_value = 0.3
-                # rot = yaw_kp * desired_direction
+                    #### CURRENT CODE TO REWORK INTO STEPS above
+                    if self.is_botpose_valid(self.botpose):
+                        self.bot_x = self.botpose[0]
+                    robot_x = self.botpose[0]
+                    robot_y = self.botpose[1]
+                    robot_yaw = self.botpose[5]
 
-                # if rot > max_rot_value:
-                #     rot = max_rot_value
-                # elif rot < -max_rot_value:
-                #     rot = -max_rot_value
+                    desired_bot_angle = 0
+                    desired_x_pos = desired_x - robot_x
 
-                # if robot_yaw > -0.1 and robot_yaw < 0.1:
-                #     self.rot = 0.0
-                # elif desired_bot_angle > -0.5:
-                #     self.rot = -self.rot
-                # elif abs(desired_bot_angle) < 1:
-                #     self.rot = 0.0
-                # else:
-                #     self.rot = self.rot
+                    desired_direction = desired_bot_angle - robot_yaw
+                    if desired_direction > 180:
+                        desired_direction -= 360
+                    if desired_direction < -180:
+                        desired_direction += 360
 
-                print(self.rot)
+                    x_kp = 0.3
+                    x_max_speed = 0.5
+                    self.x_speed = x_kp * desired_x_pos
 
-                self.drive_subsystem.drive(self.x_speed, self.y_speed, 0.0) #self.rot)
+                    # this acts like the p value in a pid loop for the rotation action
+
+                    if self.x_speed > x_max_speed:
+                        self.x_speed = x_max_speed
+                    elif self.x_speed < -x_max_speed:
+                        self.x_speed = -x_max_speed
+                    #     # this sets makes sure that the rot value does not pass the maximum we give
+
+                    self.x_distance = desired_x_pos
+
+                    if robot_x > -0.1 and robot_x < 0.1:
+                        self.x_speed = 0.0
+                    elif desired_x_pos > -0.5:
+                        self.x_speed = -self.x_speed
+                    elif abs(desired_x_pos) < 3:
+                        self.x_speed = 0.0
+                    else:
+                        self.x_speed = self.x_speed + 0.25
+
+                    print(f"speed is{self.x_speed}")
+                    print(f"distance is{desired_x_pos}")
+
+
+                    desired_y = 1.45
+                    desired_y_pos = desired_y - robot_y
+
+                    y_kp = 0.3
+                    y_max_speed = 0.4
+                    self.y_speed = y_kp * desired_y_pos
+
+                    # this acts like the p value in a pid loop for the rotation action
+
+                    if self.y_speed > y_max_speed:
+                        self.y_speed = y_max_speed
+                    elif self.y_speed < -y_max_speed:
+                        self.y_speed = -y_max_speed
+
+                    if robot_y > -0.1 and robot_y < 0.1:
+                        self.y_speed = 0.0
+                    elif desired_y_pos > -0.5:
+                        self.y_speed = -self.y_speed
+                    elif abs(desired_y_pos) < 3:
+                        self.y_speed = 0.0
+                    else:
+                        self.y_speed = self.y_speed
+
+
+                    # yaw_kp = 0.7
+                    # max_rot_value = 0.3
+                    # rot = yaw_kp * desired_direction
+
+                    # if rot > max_rot_value:
+                    #     rot = max_rot_value
+                    # elif rot < -max_rot_value:
+                    #     rot = -max_rot_value
+
+                    # if robot_yaw > -0.1 and robot_yaw < 0.1:
+                    #     self.rot = 0.0
+                    # elif desired_bot_angle > -0.5:
+                    #     self.rot = -self.rot
+                    # elif abs(desired_bot_angle) < 1:
+                    #     self.rot = 0.0
+                    # else:
+                    #     self.rot = self.rot
+
+                    print(self.rot)
+
+                    self.drive_subsystem.drive(self.x_speed, self.y_speed, 0.0) #self.rot)
