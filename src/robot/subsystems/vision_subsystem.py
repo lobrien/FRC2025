@@ -4,11 +4,12 @@ from typing import Optional
 import ntcore
 import commands2
 import logging
+from wpimath.units import radiansToDegrees
 # pip install limelightlib-python (0.9.6 for 2025)
 import limelight
 import limelightresults
 
-import time # Temporary for diagnostics
+from constants.new_types import inches, degrees, radians
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,8 @@ class VisionSubsystem(commands2.Subsystem):
             self.limelight = None
         else:
             logger.info("Found Limelight!")
-            limelight_address = limelight.Limelight(discovered_limelights[0])
-            self.limelight = limelight.Limelight(limelight_address) # TODO: That seems redundant
+            self.limelight = limelight.Limelight(discovered_limelights[0])
+            limelight_address = self.limelight.base_url
             logger.debug("Limelight address: %s", limelight_address)
             status = self.limelight.get_status()
             logger.info("Limelight status: %s", status)
@@ -45,6 +46,9 @@ class VisionSubsystem(commands2.Subsystem):
         self._log_periodic()
 
     def debug_status(self) -> str:
+        """
+        Can be used for debugging purposes. Returns a string indicating whether the Limelight is found, if results are being received, and the time of the last result.
+        """
         found_limelight = "Limelight found" if self.limelight is not None else "No Limelight found"
         getting_status = "Getting results..." if self.limelight_result is not None and self.limelight_result is not None else "No results available."
         time_status = f"Last result at {self.result_timestamp}" if self.result_timestamp is not None else "no results yet"
@@ -72,18 +76,20 @@ class VisionSubsystem(commands2.Subsystem):
         self.limelight_result = result
         self.result_timestamp = result.timestamp
 
-    def checkBotpose(self) -> Optional[list[float]]:
+    def get_botpose(self) -> Optional[list[float]]:
         if self.limelight_result is not None:
             return self.limelight_result.botpose
         else:
             return None
     
-    def calculate_desired_x_distance(self, desired_x, bot_x):
+    @staticmethod
+    def calculate_desired_x_distance(desired_x, bot_x):
         desired_pos = desired_x - bot_x
         return desired_pos
             
 
-    def calculate_desired_direction(self, desired_angle, current_angle):
+    @staticmethod
+    def calculate_desired_direction(desired_angle, current_angle):
         """
         this function calculates the direction to travel for the robots yaw by saying if the value is greater than 180 it returns a negative number in degrees needed to travel
         if it is less it returns a positive amount of degrees to travel to get to the desired position.
@@ -95,33 +101,31 @@ class VisionSubsystem(commands2.Subsystem):
             desired_direction += 360
         return desired_direction
     
-    def distance_to_reef (self, bot_x, bot_y, reef_x, reef_y):
-        '''
+    @staticmethod
+    def distance_to_reef (bot_x, bot_y, reef_x, reef_y):
+        """
         distance to reef  calculates the distance from the robots pos to the reef  in meters. it uses the distance formula subtracting the desired x,y (the reef )
-        by our current x, y and square roots the awnser to get our distance to be used in our shooter angle calculations. returns the distance from the robot to the reef 
-        '''
-        distance = math.sqrt(pow(reef_x - bot_x, 2)) + (pow(reef_y - bot_y,2))
+        by our current x, y and square roots the answer to get our distance to be used in our shooter angle calculations. returns the distance from the robot to the reef
+        """
+        distance = math.sqrt(pow(reef_x - bot_x, 2) + pow(reef_y - bot_y, 2))
         return distance
-    def calculate_desired_angle(self, distance_to_reef_y, distance_to_wall):
+
+    @staticmethod
+    def calculate_desired_angle(distance_to_reef_y : inches, distance_to_wall : inches) -> degrees:
         """
         This function calculates the desired angle for the robot's orientation at different positions. It's measured by getting the distance to reef  on the y axis and the distance to the wall using the x axis
         and dividing them and uses the arctan function to calculate the angle needed to for the robot to rotate to into the reef  angle. This function returns the robots needed orientation in degrees.
         distance to reef Y is the adjacent angle
         distance to wall is the opposite angle
         """
-        desired_angle_rad = math.atan2(distance_to_reef_y, distance_to_wall) 
-        desired_angle = self.radians_to_degrees(desired_angle_rad)
+        desired_angle_rad = radians(math.atan2(distance_to_reef_y, distance_to_wall))
+        desired_angle = degrees(radiansToDegrees (desired_angle_rad))
         if desired_angle < 0:
             desired_angle += 360
         return desired_angle
-    
-    def radians_to_degrees(self, radians):
-        '''
-        calculates radians into degrees
-        '''
-        return radians * (180/math.pi)
-    
-    def get_rotation_autonomous_periodic_for_reef_shot(self, botpose, current_yaw):
+
+    @staticmethod
+    def get_rotation_autonomous_periodic_for_reef_shot(botpose, current_yaw):
         x = botpose[0]
         # desired_x = self.desired_x_for_autonomous_driving
         y = botpose[1]
@@ -160,7 +164,7 @@ class VisionSubsystem(commands2.Subsystem):
 
         # return rot, direction_to_travel
 
-# TODO: These return results that are just lists should be changed to returning typed objects
+# TODO 2026: These classes should be replaced with TypedDicts or dataclasses
 class GeneralResult:
     def __init__(self, results):
         self.barcode = results.get("Barcode", [])
