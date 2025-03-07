@@ -51,8 +51,7 @@ class RobotContainer:
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
         self.coral_subsystem = CoralSubsystem()
-        # self.algae_subsystem = AlgaeSubsystem()
-        self.vision_susbsystem = VisionSubsystem()
+        self.algae_subsystem = AlgaeSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
@@ -149,7 +148,14 @@ class RobotContainer:
             OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(VisionAutoAlign(vision_subsystem=VisionSubsystem, drive=self.drive_subsystem))
+        # TODO: These should be updated relative to robot's initial field-relative position and angle
+        AUTOALIGN_X = 0
+        AUTOALIGN_Y = 10
+        AUTOALIGN_ANGLE = 45
+        controller.a().onTrue(VisionAutoAlign(
+            drive=self.drive_subsystem,
+            desired_field_relative_position_inches=(AUTOALIGN_X, AUTOALIGN_Y),
+            desired_field_relative_angle_degrees=AUTOALIGN_ANGLE))
         controller.b().whileTrue(
             TurnToAngleCommand(self.drive_subsystem, lambda: True)
         )  # for quick test
