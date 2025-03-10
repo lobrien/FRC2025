@@ -64,13 +64,7 @@ class RobotContainer:
         SmartDashboard.putData("Auto Command Selector", self.auto_chooser)
     
     def _initialize_default_commands(self):
-        teleop_command = DriveWithJoystickCommand(
-            self.drive_subsystem, self.get_drive_value_from_joystick
-        )
-
-        self.drive_subsystem.setDefaultCommand(
-            teleop_command
-        )  # Set the teleop command as the default for drive subsystem
+        # TODO: Reconsider these, given that they are called in auto
 
         self.algae_subsystem.setDefaultCommand(
             AlgaeIdle(algae=self.algae_subsystem)
@@ -112,6 +106,11 @@ class RobotContainer:
         # elif auto_reader == AutoConsts.MID_SCORE_L_TWO:
         #     return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
             
+
+    def get_teleop_command(self):
+        return DriveWithJoystickCommand(
+            drive=self.drive_subsystem, drive_percent_fn=self.get_drive_value_from_joystick
+        )
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
         """
