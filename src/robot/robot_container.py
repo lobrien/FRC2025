@@ -144,7 +144,7 @@ class RobotContainer:
             OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(VisionAutoAlign(vision_subsystem=VisionSubsystem, drive=self.drive_subsystem))
+        controller.a().onTrue(VisionAutoAlign(vision_subsystem=VisionSubsystem, drive=self.drive_subsystem, desired_field_relative_position_inches=(0, 0), desired_field_relative_angle_degrees=0))
         controller.b().whileTrue(
             TurnToAngleCommand(self.drive_subsystem, lambda: True)
         )  # for quick test
