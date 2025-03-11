@@ -21,7 +21,7 @@ class DriveToGoal(Command):
         """
         when the robot is at the goal, tells the drive command its on the goal so it can stop
         """
-        return False #self.drive_subsystem.is_at_goal()
+        return self.drive_subsystem.is_at_goal()
 
     def end(self, interrupted: bool):
         if interrupted:
