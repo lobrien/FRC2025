@@ -1,25 +1,22 @@
 import commands2
-from phoenix6 import rotation
 from wpimath.geometry import Pose2d
 from wpimath.units import metersToInches, inchesToMeters, degreesToRadians
 import logging
 
 from constants.new_types import inches, degrees, inches_per_second
-from subsystems.vision_subsystem import VisionSubsystem
 from subsystems.drive_subsystem import DriveSubsystem
 
 logger = logging.getLogger(__name__)
 
 class VisionAutoAlign(commands2.Command):
         def __init__(self, 
-                     vision_subsystem:VisionSubsystem, 
-                     drive:DriveSubsystem, 
+                     drive:DriveSubsystem,
                      desired_field_relative_position_inches : tuple[inches, inches],
                      desired_field_relative_angle_degrees : degrees):
             """
             VisionAutoAlign Command.
 
-            Takes a robot-relative position and angle, and drives the robot to that position and angle.
+            Takes a field-relative position and angle, and drives the robot to that position and angle.
             """
             super().__init__()
             
@@ -29,29 +26,28 @@ class VisionAutoAlign(commands2.Command):
             desired_yaw_radians = degreesToRadians(desired_field_relative_angle_degrees)
             self.desired_pose = Pose2d(desired_x_meters, desired_y_meters, desired_yaw_radians)
 
-            self.vision_subsystem = vision_subsystem
             self.drive_subsystem = drive
 
-            self.addRequirements(vision_subsystem)
             self.addRequirements(drive)
 
         def isFinished(self) -> bool:
             # If there is no botpose, we cannot align
-            bot_pose = self.vision_subsystem.get_botpose()
+            bot_pose = self.drive_subsystem.get_estimated_pose()
             if bot_pose is None:
                 logger.error("No botpose available, cannot align")
                 return True
             # TODO: These indices need to be confirmed and put into constants (e.g., "BOTPOSE_X_INDEX")
             robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
             # TODO: Convert these tolerances to constants
-            if self._close_enough(robot_relative_pose, inches(1), degrees(5)):
+            if VisionAutoAlign._close_enough(robot_relative_pose, inches(1), degrees(5)):
                 return True
             else:
                 return False
 
-        def _close_enough(self, pose_relative_to_desired: Pose2d, transform_tolerance : inches, rotation_tolerance : degrees) -> bool:
-            pose_x_inches = metersToInches(pose_relative_to_desired.translation().x())
-            pose_y_inches = metersToInches(pose_relative_to_desired.translation().y())
+        @staticmethod
+        def _close_enough(pose_relative_to_desired: Pose2d, transform_tolerance : inches, rotation_tolerance : degrees) -> bool:
+            pose_x_inches = metersToInches(pose_relative_to_desired.translation().x)
+            pose_y_inches = metersToInches(pose_relative_to_desired.translation().y)
             pose_yaw_degrees = degrees(pose_relative_to_desired.rotation().degrees())
 
             distance = (pose_x_inches**2 + pose_y_inches**2)**0.5
@@ -64,24 +60,25 @@ class VisionAutoAlign(commands2.Command):
         def execute(self):
 
                 ### REWORK THIS CODE FROM HERE ###
-                # Step 1: Get the botpose from the vision subsystem
-                bot_pose = self.vision_subsystem.get_botpose()
+                # Step 1: Get the botpose from the drive
+                bot_pose = self.drive_subsystem.get_estimated_pose()
                 if bot_pose is None:
                     logger.error("No botpose available, cannot align")
                 else:
                     # Step 2: Calculate distance and rotation to desired position
                     robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
                     # Step 3: Calculate speeds for next 20ms
-                    x_speed : inches_per_second = raise NotImplementedError("Calculate x_speed")
-                    y_speed : inches_per_second = raise NotImplementedError("Calculate y_speed")
-                    rot_speed : degrees_per_second = raise NotImplementedError("Calculate rot_speed")
+                    raise NotImplementedError("Calculate speeds")
+                    x_speed : inches_per_second = 0
+                    y_speed : inches_per_second = 0
+                    rot_speed : degrees_per_second = 0
                     # Step 4: Send power to drive subsystem
                     self.drive_subsystem.drive(x_speed, y_speed, rot_speed)
 
 
                     #### CURRENT CODE TO REWORK INTO STEPS above
                     if self.is_botpose_valid(self.botpose):
-                        self.bot_x = self.botpose[0]
+                        bot_x = self.botpose[0]
                     robot_x = self.botpose[0]
                     robot_y = self.botpose[1]
                     robot_yaw = self.botpose[5]
