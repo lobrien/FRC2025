@@ -1,3 +1,5 @@
+import math
+
 import wpilib
 import commands2
 
@@ -25,9 +27,19 @@ class DriveForwardCommand(commands2.Command):
         self.timer.start()
 
     def execute(self):  # What actions it does
+        # Step 1: Determine the robot's current heading, which we want to maintain
+        current_rotation = self.drive_subsystem.get_heading_rotation2d()
+        # Convert from Rotation2d to radians (which is the unit required by Python trig functions)
+        current_heading = current_rotation.radians()
+
+        # Step 2: Calculate the x and y components of the speed
+        x_speed : inches_per_second = self.speed * math.cos(current_heading)
+        y_speed : inches_per_second = self.speed * math.sin(current_heading)
+
+        # Step 3: Drive the robot
         self.drive_subsystem.drive(
-            x_speed_inches_per_second=self.speed,
-            y_speed_inches_per_second=self.speed,
+            x_speed_inches_per_second=x_speed,
+            y_speed_inches_per_second=y_speed,
             rot_speed_degrees_per_second=degrees_per_second(0.0),
         )
 
