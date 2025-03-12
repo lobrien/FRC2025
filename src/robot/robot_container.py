@@ -28,8 +28,8 @@ from commands.elevator_init_and_idle_command import ElevatorInitAndIdle
 from commands.elevator_down_command import ElevatorDown
 from commands.elevator_up_command import ElevatorUp
 from constants.elevatorconstants import ElevatorConstants
-from commands.vision_auto_alignment_command import VisionAutoAlign
-from subsystems.vision_subsystem import VisionSubsystem
+# from commands.vision_auto_alignment_command import VisionAutoAlign
+# from subsystems.vision_subsystem import VisionSubsystem
 
 
 # The `RobotContainer` class is where the robot's structure and behavior are defined.
@@ -52,7 +52,6 @@ class RobotContainer:
         self.elevator_subsystem = ElevatorSubsystem()
         self.coral_subsystem = CoralSubsystem()
         # self.algae_subsystem = AlgaeSubsystem()
-        self.vision_susbsystem = VisionSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
@@ -66,9 +65,9 @@ class RobotContainer:
     def _initialize_default_commands(self):
         # TODO: Reconsider these, given that they are called in auto
 
-        self.algae_subsystem.setDefaultCommand(
-            AlgaeIdle(algae=self.algae_subsystem)
-        )
+        # self.algae_subsystem.setDefaultCommand(
+        #     AlgaeIdle(algae=self.algae_subsystem)
+        # )
 
         self.coral_subsystem.setDefaultCommand(
             CoralIdle(coral=self.coral_subsystem)
@@ -148,7 +147,14 @@ class RobotContainer:
             OperatorInterfaceConstants.DRIVER_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(VisionAutoAlign(vision_subsystem=VisionSubsystem, drive=self.drive_subsystem))
+        # TODO: These should be updated relative to robot's initial field-relative position and angle
+        AUTOALIGN_X = 0
+        AUTOALIGN_Y = 10
+        AUTOALIGN_ANGLE = 45
+        # controller.a().onTrue(VisionAutoAlign(
+        #     drive=self.drive_subsystem,
+        #     desired_field_relative_position_inches=(AUTOALIGN_X, AUTOALIGN_Y),
+        #     desired_field_relative_angle_degrees=AUTOALIGN_ANGLE))
         controller.b().whileTrue(
             TurnToAngleCommand(self.drive_subsystem, lambda: True)
         )  # for quick test
