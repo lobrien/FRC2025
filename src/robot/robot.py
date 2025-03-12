@@ -64,7 +64,7 @@ class Robot(commands2.TimedCommandRobot):
         CommandScheduler.getInstance().cancelAll()
 
         # Start the drive with joystick command
-        self.container.get_teleop_command().schedule()
+        #self.container.get_teleop_command().schedule()
 
     def disabledInit(self):
         # Cancel all currently running commands

@@ -62,7 +62,7 @@ class RobotContainer:
         SmartDashboard.putData("Auto Command Selector", self.auto_chooser)
 
     def _initialize_default_commands(self):
-        # TODO: Reconsider these, given that they are called in auto
+        self.drive_subsystem.setDefaultCommand(self)
 
         self.algae_subsystem.setDefaultCommand(AlgaeIdle(algae=self.algae_subsystem))
 
