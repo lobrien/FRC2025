@@ -245,7 +245,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         SmartDashboard.putNumber("Odometry Y", estimated_pos.Y())
         SmartDashboard.putNumber("Odometry Heading", estimated_pos.rotation().degrees())
         # Update additional dashboard data
-        SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
+        SmartDashboard.putNumber("Gyro Degree", self.get_gyro_heading_degrees())
         SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
         logger.debug(f"Robot X: {metersToInches(self.pose.X())}")
         logger.debug(f"Robot Y: {metersToInches(self.pose.Y())}")
@@ -278,7 +278,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     def _odometry_periodic(self):
         # Update the odometry
         positions = [module.get_position() for module in self.modules]
-        robot_rotation = self.get_heading_rotation2d()
+        robot_rotation = self.get_gyro_heading_rotation2d()
         current_pos = self.odometry.getEstimatedPosition()
         self.odometry.update(robot_rotation, tuple(positions))
         estimated_pos = self.odometry.getEstimatedPosition()
@@ -449,15 +449,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             kinematics=kinematics,
             gyroAngle=self.get_gyro_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules],
-            initialPose=initial_pose or Pose2d(x = 0.0, y = 0.0, rotation = self.get_heading_rotation2d()),
+            initialPose=initial_pose or Pose2d(x = 0.0, y = 0.0, rotation = self.get_gyro_heading_rotation2d()),
             stateStdDevs=np.array([0.1, 0.1, 0.1]),  # X, Y, rotation standard deviations
-            visionMeasurementStdDevs=np.array([0.9, 0.9, 0.9])  # Vision measurement uncertainties
+            visionMeasurementStdDevs=np.array([0.7, 0.7, 9999999])  # Vision measurement uncertainties (values from "Using WPILib's Pose Estimator" sample at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2)
         )
-        # From "Using WPILib's Pose Estimator" sample at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
-        estimator.setVisionMeasurementStdDevs((0.7, 0.7, 9999999))
-
-        return estimator
-
 
     def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
         """

@@ -50,7 +50,7 @@ class RobotContainer:
         self.elevator_subsystem = ElevatorSubsystem()
         self.coral_subsystem = CoralSubsystem()
         self.algae_subsystem = AlgaeSubsystem()
-        self.vision_susbsystem = VisionSubsystem()
+        #self.vision_subsystem = VisionSubsystem()
 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
