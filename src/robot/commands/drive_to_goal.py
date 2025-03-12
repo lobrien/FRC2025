@@ -9,6 +9,7 @@ class DriveToGoal(Command):
         super().__init__()  # Allows "drive_to_goal" to be Initialized, executed, and end by itself
         self.drive_subsystem = drive_subsystem
         self.goal_pose = goal_pose
+        self.addRequirements(self.drive_subsystem)
 
     def initialize(self):
         self.drive_subsystem.set_goal_pose(self.goal_pose)
@@ -21,7 +22,7 @@ class DriveToGoal(Command):
         """
         when the robot is at the goal, tells the drive command its on the goal so it can stop
         """
-        return False #self.drive_subsystem.is_at_goal()
+        return self.drive_subsystem.is_at_goal()
 
     def end(self, interrupted: bool):
         if interrupted:

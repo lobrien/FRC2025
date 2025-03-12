@@ -325,7 +325,7 @@ class SwerveModule:
         configuration = TalonFXConfiguration()
 
         configuration.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
-        configuration.motor_output.neutral_mode = NeutralModeValue.COAST
+        configuration.motor_output.neutral_mode = NeutralModeValue.BRAKE
 
         # Set control loop parameters for "slot 0", the profile we'll use for position control.
         configuration.slot0.k_p = (

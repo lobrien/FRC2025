@@ -42,6 +42,7 @@ class Robot(commands2.TimedCommandRobot):
 
     # Autonomous lifecycle methods
     def autonomousInit(self):
+        print("Robot.autonomousInit()")
         self.autonomous_command = self.container.get_auto_command()
         if self.autonomous_command is not None:
             self.autonomous_command.schedule()  # Note that this is a single command for all of autonomous
@@ -50,7 +51,7 @@ class Robot(commands2.TimedCommandRobot):
         pass
 
     def autonomousEnd(self):
-        pass
+        print("Robot.autonomousEnd()")
 
     def disabledPeriodic(self):
         # Calling this here so when testing or changing the auto plan last minute would be updated
@@ -64,7 +65,7 @@ class Robot(commands2.TimedCommandRobot):
         CommandScheduler.getInstance().cancelAll()
 
         # Start the drive with joystick command
-        #self.container.get_teleop_command().schedule()
+        self.container.get_teleop_command().schedule()
 
     def disabledInit(self):
         # Cancel all currently running commands

@@ -107,6 +107,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.x_controller, self.y_controller, self.rot_controller = (
             self._initialize_pid_controllers()
         )
+        # Feedforward values for PID controllers
+        self.prev_velocity_x = 0
+        self.prev_velocity_y = 0
+        self.prev_velocity_rot = 0
 
         # ---------------------------------------------------------------------
         # Set up odometry, that is figuring out how far we have driven. Example:
@@ -118,6 +122,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # carry between different method calls.  Start at zero, facing +x direction,
         # which for poses, is like Translation2d, +x = forward.
         self.pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))
+
+        SmartDashboard.putNumber("clamped_x", -1)
 
     # --------------------------------------
     # Public methods for debugging, but not production
@@ -460,14 +466,25 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # Calculate the "gas pedal" values for each axis.
         present_x = self.pose.X()
         pid_output_x = metersToInches(self.x_controller.calculate(present_x))
-        clamped_x = clamp(
-            val = pid_output_x,
-            min_val = -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
-            max_val = DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
-        )  # Drive expects inches per second.
-
         present_y = self.pose.Y()
         pid_output_y = metersToInches(self.y_controller.calculate(present_y))
+
+        feedforward_x, feedforward_y = self._calculate_feed_forward()
+        pid_output_x += feedforward_x
+        pid_output_y += feedforward_y
+
+        # clamped_x = clamp(
+        #     val = pid_output_x,
+        #     min_val = -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
+        #     max_val = DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
+        # )  # Drive expects inches per second.
+        goal_velocity_x = self.x_controller.getGoal().velocity
+        clamped_x = clamp(
+            val=pid_output_x,
+            min_val=-max(abs(goal_velocity_x), DriveConstants.MAX_SPEED_INCHES_PER_SECOND),
+            max_val=DriveConstants.MAX_SPEED_INCHES_PER_SECOND
+        )
+
         clamped_y = clamp(
             val = pid_output_y,
             min_val = -DriveConstants.MAX_SPEED_INCHES_PER_SECOND,
@@ -483,8 +500,13 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             max_val = DriveConstants.MAX_DEGREES_PER_SECOND,
         )
 
+
+        SmartDashboard.putNumber("clamped_x", clamped_x)
+        SmartDashboard.putNumber("clamped_y", clamped_y)
+        SmartDashboard.putNumber("clamped_rot", clamped_rot)
+        SmartDashboard.putNumber("clamped_pid_x", pid_output_x + 0.05)
         # Send the values to the drive train.
-        self.drive(clamped_x, 0.0, 0.0)
+        self.drive(clamped_x, clamped_y, clamped_rot)
 
     def is_at_goal(self):
         """
@@ -498,6 +520,36 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
                 and self.rot_controller.atGoal()
         )
         return all_controllers_at_goal
+
+    def _calculate_feed_forward(self) -> tuple[float, float]:
+        """
+        Calculate the feed forward term for the PID controllers.
+
+        TODO: Add rotation feed forward. Maybe in separate method? Or extract common algorithm?
+        """
+        # Define feedforward gains
+        kV = 1 / DriveConstants.HORIZ_MAX_V  # Velocity feedforward gain
+        kA = 1 / DriveConstants.HORIZ_MAX_A  # Acceleration feedforward gain
+
+        # Estimate desired velocity (difference between setpoint and current position)
+        desired_velocity_x = (self.x_controller.getGoal().velocity - self.pose.X()) * kV
+        desired_velocity_y = (self.y_controller.getGoal().velocity - self.pose.Y()) * kV
+
+        # Estimate desired acceleration (change in velocity)
+        desired_acceleration_x = (desired_velocity_x - self.prev_velocity_x) / 0.02  # 20ms loop time
+        desired_acceleration_y = (desired_velocity_y - self.prev_velocity_y) / 0.02
+
+        # Compute feedforward terms
+        feedforward_x = kV * desired_velocity_x + kA * desired_acceleration_x
+        feedforward_y = kV * desired_velocity_y + kA * desired_acceleration_y
+        SmartDashboard.putNumber("feedforward_x", feedforward_x)
+        SmartDashboard.putNumber("feedforward_y", feedforward_y)
+
+        # Store previous velocity for next iteration
+        self.prev_velocity_x = desired_velocity_x
+        self.prev_velocity_y = desired_velocity_y
+
+        return feedforward_x, feedforward_y
 
     def reset_pids(self):
         """
@@ -530,7 +582,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         x_controller = ProfiledPIDController(
             DriveConstants.PIDX_KP,
             0,
-            0,
+            DriveConstants.PIDX_KD,
             TrapezoidProfile.Constraints(
                 inchesToMeters(DriveConstants.HORIZ_MAX_V), inchesToMeters(DriveConstants.HORIZ_MAX_A)
             ),
