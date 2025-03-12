@@ -1,22 +1,28 @@
 from typing import Optional
 import math
 
+from typing import Optional
+
 import commands2
 import numpy as np
 import wpilib
 import wpimath
 from wpilib import SmartDashboard, Field2d, RobotBase
 from wpimath.estimator import SwerveDrive4PoseEstimator
+import logging
+from wpilib import SmartDashboard, Field2d
 from wpimath.controller import ProfiledPIDController
 from wpimath.trajectory import TrapezoidProfile
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
 from wpimath.kinematics import (
     SwerveDrive4Kinematics,
-    SwerveDrive4Odometry,
+    # SwerveDrive4Odometry,
     ChassisSpeeds,
     SwerveModuleState,
     SwerveModulePosition,
 )
+from wpimath.estimator import SwerveDrive4PoseEstimator
+
 from wpimath.units import inchesToMeters, degreesToRadians, degrees, metersToInches
 from phoenix6.hardware.pigeon2 import Pigeon2
 
@@ -24,6 +30,7 @@ from constants.driveconstants import DriveConstants
 from constants.new_types import inches_per_second, degrees_per_second, percentage
 from subsystems.swerve_module import SwerveModule
 
+logger = logging.getLogger(__name__)
 
 # The `DriveSubsystem` class is a `Subsystem` that contains the robot's drive motors and sensors. It
 # is responsible for moving the robot around on the field. Public methods exposed by this class
@@ -117,7 +124,21 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # odometry to estimate this, but we keep it as a member variable to
         # carry between different method calls.  Start at zero, facing +x direction,
         # which for poses, is like Translation2d, +x = forward.
-        self.pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))
+        self.pose = self.odometry.getEstimatedPosition()
+
+        # Limelight should be part of this subsystem due to interaction with odometry
+        # discovered_limelights = limelight.discover_limelights(debug=True)
+        # if len(discovered_limelights) == 0:
+        #     logger.warning("No Limelight found!")
+        #     self.limelight = None
+        # else:
+        #     logger.info("Found Limelight!")
+        #     self.limelight = limelight.Limelight(discovered_limelights[0])
+        #     limelight_address = self.limelight.base_url
+        #     logger.debug("Limelight address: %s", limelight_address)
+        #     status = self.limelight.get_status()
+        #     logger.info("Limelight status: %s", status)
+        #     self.limelight.enable_websocket()
 
     # --------------------------------------
     # Public methods for debugging, but not production
@@ -138,7 +159,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # Public methods to get status
     # --------------------------------------
 
-    def get_heading_degrees(self) -> degrees:
+    def get_gyro_heading_degrees(self) -> degrees:
         """
         Gets the heading of the robot (direction it is pointing) in degrees.
         CCW is positive.
@@ -149,12 +170,12 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             heading = self.gyro.get_yaw().value
             return heading
 
-    def get_heading_rotation2d(self) -> Rotation2d:
+    def get_gyro_heading_rotation2d(self) -> Rotation2d:
         """
         Gets the heading of the robot (direction it is pointing) as a Rotation2D.
         CCW is positive.
         """
-        return Rotation2d.fromDegrees(self.get_heading_degrees())
+        return Rotation2d.fromDegrees(self.get_gyro_heading_degrees())
 
     def get_pose(self) -> wpimath.geometry.Pose2d:
         """
@@ -186,6 +207,15 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         if RobotBase.isSimulation():
             self.simulationPeriodic()
 
+        # Update the odometry
+        positions = [module.get_position() for module in self.modules]
+        self.odometry.update(self.get_gyro_heading_rotation2d(), tuple(positions))
+
+        # # Update with vision
+        # maybe_result = self._limelight_periodic()
+        # if maybe_result is not None:
+        #     self._on_new_vision_result(maybe_result)
+
         # TODO: This block needs to be cleaned up. We have 3 different poses! Which one is correct?
         current_pos, estimated_pos = self._odometry_periodic()
         # Update pose for user code
@@ -202,7 +232,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             self.simulationPeriodic()
         else:
             SmartDashboard.putBoolean("Simulation", False)
+        self.pose = self.odometry.getEstimatedPosition()
         SmartDashboard.putNumber("Robot X", metersToInches(self.pose.X()))
+        SmartDashboard.putNumber("Robot Y", metersToInches(self.pose.Y()))
+        SmartDashboard.putNumber("Gyro Degree", self.get_gyro_heading_degrees())
         SmartDashboard.putNumber("Robot Y", metersToInches(self.pose.Y()))
         # Update dashboard data
         SmartDashboard.putBoolean(
@@ -214,6 +247,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # Update additional dashboard data
         SmartDashboard.putNumber("Gyro Degree", self.get_heading_degrees())
         SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
+        logger.debug(f"Robot X: {metersToInches(self.pose.X())}")
+        logger.debug(f"Robot Y: {metersToInches(self.pose.Y())}")
+        logger.debug(f"Gyro Degree: {self.get_gyro_heading_degrees()}")
+        logger.debug(f"Robot Heading: {self.pose.rotation().degrees()}")
+
         for name, module in zip(
                 ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
                 [
@@ -226,6 +264,11 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             state = module.get_state()
             SmartDashboard.putNumber(f"{name} Speed", state.speed)
             SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
+
+        # if maybe_result is not None:
+        #     SmartDashboard.putNumberArray("Limelight botpose", maybe_result.botpose)
+        #     SmartDashboard.putNumber("Limelight timestamp", maybe_result.timestamp)
+
         SmartDashboard.putNumber("Heartbeat", self.heartbeat)
         SmartDashboard.putNumber("Robot X", self.pose.X())
         SmartDashboard.putNumber("Robot Y", self.pose.Y())
@@ -346,6 +389,18 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # Private methods to compute module states
     # --------------------------------------
 
+    # def _limelight_periodic(self) -> Optional[limelightresults.GeneralResult]:
+    #     if self.limelight is None:
+    #         return None
+    #     else:
+    #         # Several results available. See https://docs.limelightvision.io/docs/docs-limelight/apis/limelightlib-python#websocket-based
+    #         generalResult = self.limelight.get_results()
+    #         if generalResult is None:
+    #             return None
+    #         else:
+    #             return generalResult
+
+
     def _speeds_to_states(
             self,
             x_speed: inches_per_second,
@@ -379,7 +434,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             x_speed_meters_per_second,
             y_speed_meters_per_second,
             rot_speed_radians,
-            self.get_heading_rotation2d(),
+            -self.get_gyro_heading_rotation2d(),
         )
         return cs
 
@@ -392,12 +447,17 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     ) -> SwerveDrive4PoseEstimator:
         return SwerveDrive4PoseEstimator(
             kinematics=kinematics,
-            gyroAngle=self.get_heading_rotation2d(),
+            gyroAngle=self.get_gyro_heading_rotation2d(),
             modulePositions=[module.get_position() for module in self.modules],
             initialPose=initial_pose or Pose2d(x = 0.0, y = 0.0, rotation = self.get_heading_rotation2d()),
             stateStdDevs=np.array([0.1, 0.1, 0.1]),  # X, Y, rotation standard deviations
             visionMeasurementStdDevs=np.array([0.9, 0.9, 0.9])  # Vision measurement uncertainties
         )
+        # From "Using WPILib's Pose Estimator" sample at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
+        estimator.setVisionMeasurementStdDevs((0.7, 0.7, 9999999))
+
+        return estimator
+
 
     def _get_module_translations(self) -> list[wpimath.geometry.Translation2d]:
         """
@@ -484,7 +544,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         )
 
         # Send the values to the drive train.
-        self.drive(clamped_x, clamped_y, clamped_rot)
+        self.drive(x_speed_inches_per_second=clamped_x, y_speed_inches_per_second=clamped_y, rot_speed_degrees_per_second=clamped_rot)
 
     def is_at_goal(self):
         """
@@ -573,6 +633,22 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
             module.stop()
 
+    # def _on_new_vision_result(self, result: limelightresults.GeneralResult):
+    #     # Based on "Using WPILib's Pose Estimator" at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
+    #     # Odd that we used both odometry and gyro to get the yaw, but that's from limelight sample
+    #     estimated_yaw = self.odometry.getEstimatedPosition().rotation().degrees()
+    #     self.limelight.update_robot_orientation(estimated_yaw, 0, 0, 0, 0, 0)
+    #     megatag2_estimate = result.botpose_wpiblue
+
+    #     # If our angular velocity is > 360 degrees per second, ignore vision updates
+    #     angular_velocity = self.gyro.get_yaw_rate().value
+    #     if abs(angular_velocity) > 360:
+    #         reject_update = True
+    #     # If we didn't actually see any tags, ignore vision updates
+    #     if megatag2_estimate.tagCount == 0:
+    #         reject_update = True
+    #     if not reject_update:
+    #         self.odometry.addVisionMeasurement(megatag2_estimate, result.timestamp)
 
 def clamp(val, min_val, max_val):
     """Returns a number clamped to minval and maxval."""

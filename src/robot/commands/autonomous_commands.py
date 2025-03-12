@@ -49,7 +49,7 @@ class Autos:
         return commands2.cmd.sequence(
             commands2.cmd.parallel(
                 ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
-                DriveToGoal(drive, Pose2d(inchesToMeters(-88.0), 0.0, 0.0))
+                DriveToGoal(drive, Pose2d(inchesToMeters(-80.0), 0.0, 0.0))
         ),
         
             coral.outtake()
