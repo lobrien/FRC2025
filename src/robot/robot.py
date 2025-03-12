@@ -31,7 +31,7 @@ class Robot(commands2.TimedCommandRobot):
 
     # Robot overall lifecycle methods
     def robotInit(self):
-        pass
+        CommandScheduler.getInstance().onCommandExecute(lambda command: print(f"Executing: {command.getName()}"))
 
     def robotPeriodic(self):
         CommandScheduler.getInstance().run()

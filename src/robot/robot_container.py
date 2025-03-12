@@ -62,7 +62,7 @@ class RobotContainer:
         SmartDashboard.putData("Auto Command Selector", self.auto_chooser)
 
     def _initialize_default_commands(self):
-        self.drive_subsystem.setDefaultCommand(self)
+        self.drive_subsystem.setDefaultCommand(DriveWithJoystickCommand(self.drive_subsystem, self.get_drive_value_from_joystick))
 
         self.algae_subsystem.setDefaultCommand(AlgaeIdle(algae=self.algae_subsystem))
 
