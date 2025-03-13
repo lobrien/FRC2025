@@ -9,6 +9,7 @@ class DriveToGoal(Command):
         super().__init__()  # Allows "drive_to_goal" to be Initialized, executed, and end by itself
         self.drive_subsystem = drive_subsystem
         self.goal_pose = goal_pose
+        self.addRequirements(drive_subsystem)
 
     def initialize(self):
         self.drive_subsystem.set_goal_pose(self.goal_pose)

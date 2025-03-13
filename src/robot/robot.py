@@ -59,11 +59,16 @@ class Robot(commands2.TimedCommandRobot):
 
     # Teleop lifecycle methods
     def teleopInit(self):
+        if self.autonomous_command is not None:
+            self.autonomous_command.cancel()
         # Cancel all currently running commands at the start of teleop (i.e., auto)
         CommandScheduler.getInstance().cancelAll()
 
-        # Start the drive with joystick command
-        self.container.get_teleop_command().schedule()
+    def teleopPeriodic(self):
+        pass
+
+    def teleopEnd(self):
+        pass
 
     def disabledInit(self):
         # Cancel all currently running commands

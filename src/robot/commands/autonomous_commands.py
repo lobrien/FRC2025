@@ -1,6 +1,6 @@
 import commands2
 import commands2.cmd
-from wpimath.geometry import Pose2d
+from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import inchesToMeters
 
 from subsystems.drive_subsystem import DriveSubsystem
@@ -34,7 +34,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(-80.0), 0.0, 0.0))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(-80.0), 0.0, Rotation2d.fromDegrees(-180.0)))
 
     def forward_elevator_and_score(
         drive: DriveSubsystem,
