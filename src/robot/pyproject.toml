@@ -7,15 +7,16 @@ name = "frc2025-robot"
 version = "0.1.0"
 description = "FRC 2025 Robot Code"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "Team 3881: WHEA Robotics" }
 ]
 dependencies = [
     "numpy >= 1.24.0",
-    "wpilib >= 2025.3.1.1,
-    limelightlib-python == 0.9.6
+    "wpilib > 2025.3.1, < 2025.4",
+    "limelightlib-python == 0.9.6",
+    "typing-extensions >= 4.0.0",
 ]
 
 [project.optional-dependencies]
@@ -58,8 +59,12 @@ python_files = "test_*.py"
 
 [tool.black]
 line-length = 88
-target-version = ["py310"]
+target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
 line_length = 88
+
+[tool.setuptools.packages.find]
+include = ["commands*", "constants*", "subsystems*", "util*"]
+exclude = ["deploy*", "logs*", "ctre_sim*"]
