@@ -598,7 +598,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         y_controller = ProfiledPIDController(
             DriveConstants.PIDY_KP,
             0,
-            0,
+            DriveConstants.PIDY_KD,
             TrapezoidProfile.Constraints(
                 inchesToMeters(DriveConstants.HORIZ_MAX_V), inchesToMeters(DriveConstants.HORIZ_MAX_A)
             ),
@@ -612,7 +612,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         rot_controller = ProfiledPIDController(
             DriveConstants.PID_ROT_KP,
             0,
-            0,
+            DriveConstants.PID_ROT_KD,
             TrapezoidProfile.Constraints(
                 DriveConstants.ROT_MAX_V, DriveConstants.ROT_MAX_A
             ),
