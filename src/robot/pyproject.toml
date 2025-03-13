@@ -7,15 +7,15 @@ name = "frc2025-robot"
 version = "0.1.0"
 description = "FRC 2025 Robot Code"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Team 3881: WHEA Robotics" }
 ]
 dependencies = [
     "numpy >= 1.24.0",
-    "wpilib >= 2025.3.1.1,
-    limelightlib-python == 0.9.6
+    "wpilib >= 2025.3.1.1",
+    "limelightlib-python == 0.9.6"
 ]
 
 [project.optional-dependencies]
