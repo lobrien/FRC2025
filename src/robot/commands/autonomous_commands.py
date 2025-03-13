@@ -1,7 +1,7 @@
 import commands2
 import commands2.cmd
 from wpimath.geometry import Pose2d
-from wpimath.units import inchesToMeters
+from wpimath.units import inchesToMeters, degreesToRadians
 
 from commands.drive_forward_command import DriveForwardCommand
 from subsystems.drive_subsystem import DriveSubsystem
@@ -22,9 +22,9 @@ class Autos:
     def side_step(drive: DriveSubsystem):
         """Autonomous routine that drives forward, waits, then moves left."""
         return commands2.cmd.sequence(
-            DriveToGoal(drive, Pose2d(36, 0, 0)),
+            DriveToGoal(drive, Pose2d(inchesToMeters(36), 0, 0)),
             commands2.WaitCommand(1),
-            DriveToGoal(drive, Pose2d(0, 48, 0)),
+            DriveToGoal(drive, Pose2d(inchesToMeters(36), inchesToMeters(48), 0))
         )
 
     @staticmethod
@@ -35,7 +35,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(120.0), 0.0, 0.0))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(120.0), 0, 0))
         #return DriveForwardCommand(drive, 1, 120)
 
     def forward_elevator_and_score(

@@ -74,10 +74,12 @@ class DriveConstants:
     # For X and Y, 1 meter error results in a motor command of 1.0 (full voltage).
     # Converted to 1/0.0254 = 39 inches => full voltage.
     # For rotation, 90 degrees error => full voltage.
-    PIDX_KP: float = 128.0 * 0.0254 # X dimension PID controller's proportional constant
-    PIDX_KD : float = 0.0 * 0.0254
-    PIDY_KP: float = 128.0 * 0.0254   # Y dimension PID controller's proportional constant
+    PIDX_KP: float = 512.0 * 0.0254 # X dimension PID controller's proportional constant
+    PIDX_KD : float = .0001 * PIDX_KP
+    PIDY_KP: float = 512.0 * 0.0254   # Y dimension PID controller's proportional constant
+    PIDY_KD = .0001 * PIDY_KP
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
+    PID_ROT_KD = .0001 * PID_ROT_KP
 
     # Horizontal (x or y) maxima and tolerances
     HORIZ_MAX_V: inches_per_second = 39.0  # Maximum velocity in inches/second
