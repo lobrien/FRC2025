@@ -85,7 +85,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # Gyro to determine robot heading (the direction it is pointed).
         self.gyro = Pigeon2(DriveConstants.PIGEON_ID)
         self.gyro.set_yaw(
-            -180.0
+            0.0
         )  # Assumes that the robot is facing in the same direction as the driver at the start.
 
         # Simulation support (must precede kinematics and odometry initialization)

@@ -2,6 +2,8 @@ import commands2
 import commands2.cmd
 from wpimath.geometry import Pose2d
 from wpimath.units import inchesToMeters, degreesToRadians
+from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.units import inchesToMeters
 
 from commands.drive_forward_command import DriveForwardCommand
 from subsystems.drive_subsystem import DriveSubsystem
@@ -47,10 +49,10 @@ class Autos:
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
         return commands2.cmd.sequence(
-            commands2.cmd.parallel(
-                ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
-                DriveToGoal(drive, Pose2d(inchesToMeters(-80.0), 0.0, 0.0))
-        ),
-        
-            coral.outtake()
+            DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
+            commands2.WaitCommand(seconds = 10),
+            print("waited"),
+            ElevatorMoveToGoalHeightContinuously(goal_height = ElevatorConstants.LEVEL_THREE,elev = elevator),
+            coral.outtake(),
+            print("outtaken")
         )
