@@ -15,7 +15,10 @@ authors = [
 dependencies = [
     "numpy >= 1.24.0",
     "wpilib >= 2025.3.1.1",
-    "limelightlib-python == 0.9.6"
+    "limelightlib-python == 0.9.6",
+    "phoenix6",
+    "cryptography",
+    "paramiko"
 ]
 
 [project.optional-dependencies]
@@ -26,27 +29,16 @@ dev = [
 ]
 
 [tool.robotpy]
-
 # Version of robotpy this project depends on
 robotpy_version = "2025.3.1.1"
 
 # Which extra RobotPy components should be installed
-# -> equivalent to `pip install robotpy[extra1, ...]
 robotpy_extras = [
-    # "all",
     "apriltag",
     "commands2",
-    # "cscore",
-    # "navx",
-    # "pathplannerlib",
-    # "phoenix5",
     "phoenix6",
-    # "photonvision",
-    # "playingwithfusion",
     "rev",
-    # "romi",
-    "sim",
-    # "xrp",
+    "sim"
 ]
 
 # Additional package requirements
