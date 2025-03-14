@@ -94,7 +94,7 @@ class RobotContainer:
         # Add options
         auto_chooser.addOption("Side Step", AutoConsts.SIDE_STEP)
         auto_chooser.addOption("Sequence", AutoConsts.SEQUENCE)
-        auto_chooser.addOption("Mid Score L2", AutoConsts.MID_SCORE_L_TWO)
+        auto_chooser.addOption("Mid Score L3", AutoConsts.MID_SCORE_L_THREE)
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
@@ -109,11 +109,11 @@ class RobotContainer:
         elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
-        # elif auto_reader == AutoConsts.MID_SCORE_L_TWO:
-        #     return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
+        elif auto_reader == AutoConsts.MID_SCORE_L_THREE:
+            return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
         else:
             return Autos.forward(self.drive_subsystem) # There has to be a command on this code path
-            
+
 
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:

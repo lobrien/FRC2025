@@ -26,7 +26,7 @@ class ElevatorConstants:
     LEVEL_TWO: inches = 12.0
     LEVEL_THREE: inches = 27.75
     CLIMB: inches = 27.25
-    FEEDER: inches = 17.75
+    FEEDER: inches = 16.75
     TOP: inches = 29.75  #Elevator at its Highest position
 
    
