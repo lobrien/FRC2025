@@ -111,12 +111,10 @@ class RobotContainer:
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
         # elif auto_reader == AutoConsts.MID_SCORE_L_TWO:
         #     return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
+        else:
+            return Autos.forward(self.drive_subsystem) # There has to be a command on this code path
             
 
-    # def get_teleop_command(self):
-    #     return DriveWithJoystickCommand(
-    #         drive=self.drive_subsystem, drive_percent_fn=self.get_drive_value_from_joystick
-    #     )
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
         """
