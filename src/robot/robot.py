@@ -1,4 +1,5 @@
 from typing import Optional
+import wpilib
 
 import commands2.command
 from commands2 import CommandScheduler
@@ -27,6 +28,8 @@ class Robot(commands2.TimedCommandRobot):
             print("Robot is real")
         else:
             print("Robot is not real")
+
+        wpilib.CameraServer.launch()
         # breakpoint()
 
     # Robot overall lifecycle methods
@@ -55,7 +58,8 @@ class Robot(commands2.TimedCommandRobot):
         # Calling this here so when testing or changing the auto plan last minute would be updated
         # For example while testing if we change the auto plan after selecting the auto state in driver station,
         # the new auto plan wouldn't replace the one before changing to auto.
-        self.autonomous_command = self.container.get_auto_command()
+        # self.autonomous_command = self.container.get_auto_command()
+        pass
 
     # Teleop lifecycle methods
     def teleopInit(self):

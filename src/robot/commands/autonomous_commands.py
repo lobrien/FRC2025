@@ -21,9 +21,9 @@ class Autos:
     def side_step(drive: DriveSubsystem):
         """Autonomous routine that drives forward, waits, then moves left."""
         return commands2.cmd.sequence(
-            DriveToGoal(drive, Pose2d(36, 0, 0)),
+            DriveToGoal(drive, Pose2d(inchesToMeters(36), 0, 0)),
             commands2.WaitCommand(1),
-            DriveToGoal(drive, Pose2d(0, 48, 0)),
+            DriveToGoal(drive, Pose2d(0, inchesToMeters(48), 0)),
         )
 
     @staticmethod
@@ -34,7 +34,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(-80.0), 0.0, Rotation2d.fromDegrees(-180.0)))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(69.75), 0.0, 0.0))
 
     def forward_elevator_and_score(
         drive: DriveSubsystem,
@@ -45,10 +45,10 @@ class Autos:
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
         return commands2.cmd.sequence(
-            commands2.cmd.parallel(
-                ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elevator),
-                DriveToGoal(drive, Pose2d(inchesToMeters(-80.0), 0.0, 0.0))
-        ),
-        
-            coral.outtake()
+            DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
+            commands2.WaitCommand(seconds = 10),
+            print("waited"),
+            ElevatorMoveToGoalHeightContinuously(goal_height = ElevatorConstants.LEVEL_THREE,elev = elevator),
+            coral.outtake(),
+            print("outtaken")
         )
