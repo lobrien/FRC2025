@@ -80,6 +80,8 @@ class DriveConstants:
         PIDX_KD : float = .0001 * PIDX_KP
         PIDY_KP: float = 512.0 * 0.0254   # Y dimension PID controller's proportional constant
         PIDY_KD = .0001 * PIDY_KP
+        PID_ROT_KP: float = 1.0 / 90.0
+        PID_ROT_KD = .0001 * PID_ROT_KP
     else:
         PIDX_KP: float = 1.0 * 0.0264 # X dimension PID controller's proportional constant
         PIDY_KP: float = 1.0 * 0.0264   # Y dimension PID controller's proportional constant
