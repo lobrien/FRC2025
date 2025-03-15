@@ -6,6 +6,7 @@ from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.units import inchesToMeters
 
 from commands.drive_forward_command import DriveForwardCommand
+from constants.new_types import inches, degrees
 from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_to_goal import DriveToGoal
 from subsystems.elevator_subsystem import ElevatorSubsystem
@@ -13,6 +14,7 @@ from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
 from commands.coral_outtake_command import CoralOuttake
 from constants.elevatorconstants import ElevatorConstants
 from subsystems.coral_subsystem import CoralSubsystem
+from util.fieldcalcs import robot_relative_to_field
 
 
 class Autos:
@@ -46,8 +48,28 @@ class Autos:
         """Autonomous routine that drives forward and moves elevator to level 3
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
-        return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(-7.574), Rotation2d(0.0))) \
-            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(11.574), Rotation2d(0.0))))
+        field_relative_goal_1 = robot_relative_to_field(
+            drive.get_pose(),
+            robot_relative_x = inches(47.127),
+            robot_relative_y = inches(-7.574),
+            robot_relative_rotation = degrees(0.0)
+        )
+
+        field_relative_goal_2 = robot_relative_to_field(
+            drive.get_pose(),
+            robot_relative_x = inches(47.127),
+            robot_relative_y = inches(11.574),
+            robot_relative_rotation = degrees(0.0)
+        )
+
+        return DriveToGoal(
+            drive_subsystem = drive,
+            goal_pose = field_relative_goal_1) \
+            .andThen( \
+            DriveToGoal(
+                drive_subsystem = drive,
+                goal_pose = field_relative_goal_2)
+        )
         # return commands2.cmd.sequence(
         #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
         #     commands2.WaitCommand(seconds = 10),

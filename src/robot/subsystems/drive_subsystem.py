@@ -27,6 +27,7 @@ from wpimath.units import inchesToMeters, degreesToRadians, degrees, metersToInc
 from phoenix6.hardware.pigeon2 import Pigeon2
 
 from constants.driveconstants import DriveConstants
+from constants.fieldconstants import FieldConstants
 from constants.new_types import inches_per_second, degrees_per_second, percentage
 from subsystems.swerve_module import SwerveModule
 
@@ -92,13 +93,23 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.field_sim = Field2d()
         SmartDashboard.putData("Field_Sim", self.field_sim)
         # Initialize simulation variables
-        self.sim_pose = Pose2d(0, 0, Rotation2d.fromDegrees(0))  # Match initial pose
+        self.sim_pose = Pose2d(
+            inchesToMeters(FieldConstants.AUTO_START_X),
+            inchesToMeters(FieldConstants.AUTO_START_Y),
+            Rotation2d.fromDegrees(0))
         self.prev_sim_time = 0.0
 
 
         # Initialize kinematics (equations of motion) and odometry (where are we on the field?)
         self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
-        self.odometry = self._initialize_odometry(kinematics=self.kinematics)
+        self.odometry = self._initialize_odometry(
+            kinematics=self.kinematics,
+            initial_pose=Pose2d(
+                inchesToMeters(FieldConstants.AUTO_START_X),
+                inchesToMeters(FieldConstants.AUTO_START_Y),
+                Rotation2d.fromDegrees(0)
+            )
+        )
 
         self.heartbeat = 0
 

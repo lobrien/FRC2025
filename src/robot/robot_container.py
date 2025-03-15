@@ -86,19 +86,20 @@ class RobotContainer:
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
-        auto_reader = self.auto_chooser.getSelected()
-
-        if (
-            auto_reader == AutoConsts.FORWARD
-        ):  # checks which Autonomous command is being used
-            return Autos.forward(self.drive_subsystem)
-        elif auto_reader == AutoConsts.SIDE_STEP:
-            return Autos.side_step(self.drive_subsystem)
-        elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
-            return Autos.goal_sequence(
-                self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
-        elif auto_reader == AutoConsts.MID_TAKEOUT_ALGAE:
-            return Autos.forward_and_takeout_algae(self.drive_subsystem)
+        return Autos.forward_and_takeout_algae(self.drive_subsystem)
+        # auto_reader = self.auto_chooser.getSelected()
+        #
+        # if (
+        #     auto_reader == AutoConsts.FORWARD
+        # ):  # checks which Autonomous command is being used
+        #     return Autos.forward(self.drive_subsystem)
+        # elif auto_reader == AutoConsts.SIDE_STEP:
+        #     return Autos.side_step(self.drive_subsystem)
+        # elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
+        #     return Autos.goal_sequence(
+        #         self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
+        # elif auto_reader == AutoConsts.MID_TAKEOUT_ALGAE:
+        #     return Autos.forward_and_takeout_algae(self.drive_subsystem)
             
 
     # def get_teleop_command(self):
