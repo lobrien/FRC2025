@@ -15,12 +15,13 @@ class CoralIntake(commands2.Command):
 
     def execute(self):
         # Move intake.
+        print("still not hammard")
         self.coral.intake()
 
     def isFinished(self) -> bool:
         # checking if the coral is loaded
         return self.coral.is_coral_loaded()
     
-    def end(self):
+    def end(self, was_interupted):
         #stop after the coral is loaded
         self.coral.stop()

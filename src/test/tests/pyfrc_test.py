@@ -3,4 +3,5 @@
     to test basic functionality of just about any robot.
 '''
 
-from pyfrc.tests import *
+# Not used in 2025, but could be useful in the future
+# from pyfrc.tests import *

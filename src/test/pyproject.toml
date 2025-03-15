@@ -9,7 +9,7 @@ robotpy_extras = [
     # "all",
     "apriltag",
     "commands2",
-    # "cscore",
+    "cscore",
     # "navx",
     # "pathplannerlib",
     # "phoenix5",
@@ -22,4 +22,4 @@ robotpy_extras = [
     # "xrp",
 ]
 
-requires = ["robotpy-rev==2025.0.2"]
+requires = []

@@ -27,4 +27,7 @@ class ElevatorMoveToGoalHeightContinuously(commands2.Command):
 
     def isFinished(self):
         # Since this is the default command, it should only end if it is interrupted.
-        return False
+        return self.elev.is_at_goal()
+    
+    def end(self, interrupted):
+        self.elev.elevator_stop()

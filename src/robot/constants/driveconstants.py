@@ -51,7 +51,7 @@ class DriveConstants:
 
     FREE_SPEED = 3.76  # max velocity collected from giving the motors max input. Not currently used anywhere
 
-    SLOWED_FACTOR = 4
+    SLOWED_FACTOR = 8
 
     # TODO: Change FREE_SPEED above to the measured motor RPM, and then use that in
     # an explicit calculation of MAX_SPEED_INCHES_PER_SECOND that uses the gear ratio and wheel diameter.
@@ -65,7 +65,7 @@ class DriveConstants:
         145.7 / SLOWED_FACTOR
     )  # inches per second
     MAX_DEGREES_PER_SECOND: degrees_per_second = (
-        72.85 / SLOWED_FACTOR
+        (72.85 / SLOWED_FACTOR) / 2
     )  # degrees per second
 
     # TODO: These are from Mako, not Kraken. We need to tune them for Kraken.
@@ -74,8 +74,8 @@ class DriveConstants:
     # For X and Y, 1 meter error results in a motor command of 1.0 (full voltage).
     # Converted to 1/0.0254 = 39 inches => full voltage.
     # For rotation, 90 degrees error => full voltage.
-    PIDX_KP: float = 1.0 * 0.0254  # X dimension PID controller's proportional constant
-    PIDY_KP: float = 1.0 * 0.0254  # Y dimension PID controller's proportional constant
+    PIDX_KP: float = 1.0 * 0.8448 # X dimension PID controller's proportional constant
+    PIDY_KP: float = 1.0 * 0.8948   # Y dimension PID controller's proportional constant
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
 
     # Horizontal (x or y) maxima and tolerances

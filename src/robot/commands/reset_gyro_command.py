@@ -15,3 +15,6 @@ class ResetGyroCommand(
     def execute(self):
         print("reset gyro")
         self.drive_subsystem.gyro.set_yaw(0.0)
+
+    def isFinished(self) -> bool:
+        return True
