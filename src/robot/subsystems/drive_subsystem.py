@@ -489,23 +489,64 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
             module.stop()
 
+    @staticmethod
+    def _limelight_pose_array_to_pose2d(botpose : [float]) -> Pose2d :
+        """ 'botpose_wpiblue': [
+            10.136975883213303,
+            3.5339885377848725,
+            0.24281211997370503,
+            1.2174989280220971,
+            1.469149795646692,
+            4.781001211826239
+        ], 'botpose_wpired': [
+            6.404775371567011,
+            4.479716414081244,
+            0.24281211997370503,
+            1.2174989280220971,
+            1.469149795646692,
+            -175.21915082766515"
+        """
+        bot_x_meters = botpose[0]
+        bot_y_meters = botpose[1]
+        # 3rd is z?
+        bot_rot_z_degrees = botpose[5]
+        bot_rot = Rotation2d.fromDegrees(bot_rot_z_degrees)
+        pose = Pose2d(x = bot_x_meters, y = bot_y_meters, rotation = bot_rot)
+        return pose
+
     def _on_new_vision_result(self, result: limelightresults.GeneralResult):
-        # Based on "Using WPILib's Pose Estimator" at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
-        # Odd that we used both odometry and gyro to get the yaw, but that's from limelight sample
-        estimated_yaw = self.odometry.getEstimatedPosition().rotation().degrees()
-        self.limelight.update_robot_orientation(estimated_yaw, 0, 0, 0, 0, 0)
-        megatag2_estimate = result.botpose_wpiblue
+        msg = f"Limelight results: {result}"
+        SmartDashboard.putString("LIMELIGHT RESULT", msg)
+        botpose_blue = result["Results"]["botpose_wpiblue"]
+        SmartDashboard.putString("botpose_blue", str(botpose_blue))
+        SmartDashboard.putString("botposetype", str(type(botpose_blue)))
+
+        botpose = DriveSubsystem._limelight_pose_array_to_pose2d(botpose_blue)
+
+        # # Based on "Using WPILib's Pose Estimator" at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
+        # # Odd that we used both odometry and gyro to get the yaw, but that's from limelight sample
+        # estimated_yaw = self.odometry.getEstimatedPosition().rotation().degrees()
+        # SmartDashboard.putNumber("Estimated_yaw", estimated_yaw)
+        # # This is what explodes. Has to do with what argument type is expected by update_robot_orientation
+        # self.limelight.update_robot_orientation(estimated_yaw)
+        # TODO: MAYBE MAYBE self.limelight.update_robot_orientation([0, 0, 0, 0, 0, estimated_yaw])
+        # megatag2_estimate = result.botpose_wpiblue
+        # SmartDashboard.putString("megatag2", str(megatag2_estimate))
 
         reject_update = False
-        # If our angular velocity is > 360 degrees per second, ignore vision updates
-        # angular_velocity = self.gyro.get_yaw_rate().value
-        # if abs(angular_velocity) > 360:
+        # # If our angular velocity is > 360 degrees per second, ignore vision updates
+        # # angular_velocity = self.gyro.get_yaw_rate().value
+        # # if abs(angular_velocity) > 360:
+        # #     reject_update = True
+        # # If we didn't actually see any tags, ignore vision updates
+        # if megatag2_estimate.tagCount == 0: # MAYBE len(results["Results"]["Fiducial"] == 0
         #     reject_update = True
-        # If we didn't actually see any tags, ignore vision updates
-        if megatag2_estimate.tagCount == 0:
-            reject_update = True
+        # SmartDashboard.putBoolean("RejectUpdate", reject_update)
         if not reject_update:
-            self.odometry.addVisionMeasurement(megatag2_estimate, result.timestamp)
+             self.odometry.addVisionMeasurement(botpose, result.timestamp)
+        # SmartDashboard.putString("_on_new_vision_result", "complete")
+        SmartDashboard.putString("limelight_botpose", str(botpose))
+        SmartDashboard.putString("odometry_botpose", str(self.odometry.getEstimatedPosition()))
 
 def clamp(val, min_val, max_val):
     """Returns a number clamped to minval and maxval."""
