@@ -10,6 +10,7 @@ from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
 from commands.coral_outtake_command import CoralOuttake
 from constants.elevatorconstants import ElevatorConstants
 from subsystems.coral_subsystem import CoralSubsystem
+from commands.print_something_command import PrintSomethingCommand
 
 
 class Autos:
@@ -43,8 +44,10 @@ class Autos:
         """Autonomous routine that drives forward and moves elevator to level 3
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
-        return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(-7.574), Rotation2d(0.0))) \
+        return (DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(-7.574), Rotation2d(0.0)))
             .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(11.574), Rotation2d(0.0))))
+            .andThen(PrintSomethingCommand("Third command"))
+            )
         # return commands2.cmd.sequence(
         #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
         #     commands2.WaitCommand(seconds = 10),

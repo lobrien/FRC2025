@@ -28,7 +28,7 @@ from commands.elevator_init_and_idle_command import ElevatorInitAndIdle
 from commands.elevator_down_command import ElevatorDown
 from commands.elevator_up_command import ElevatorUp
 from constants.elevatorconstants import ElevatorConstants
-# from commands.vision_auto_alignment_command import VisionAutoAlign
+from commands.vision_auto_alignment_command import VisionAutoAlign
 # from subsystems.vision_subsystem import VisionSubsystem
 
 
@@ -158,10 +158,10 @@ class RobotContainer:
         AUTOALIGN_X = 0
         AUTOALIGN_Y = 10
         AUTOALIGN_ANGLE = 45
-        # controller.a().onTrue(VisionAutoAlign(
-        #     drive=self.drive_subsystem,
-        #     desired_field_relative_position_inches=(AUTOALIGN_X, AUTOALIGN_Y),
-        #     desired_field_relative_angle_degrees=AUTOALIGN_ANGLE))
+        controller.a().onTrue(VisionAutoAlign(
+            drive=self.drive_subsystem,
+            desired_field_relative_position_inches=(AUTOALIGN_X, AUTOALIGN_Y),
+            desired_field_relative_angle_degrees=AUTOALIGN_ANGLE))
         controller.b().whileTrue(
             TurnToAngleCommand(self.drive_subsystem, lambda: True)
         )  # for quick test

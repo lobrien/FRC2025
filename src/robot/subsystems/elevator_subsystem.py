@@ -55,11 +55,11 @@ class ElevatorSubsystem(commands2.Subsystem):
         This method runs once every 20 msec in all modes (including simulation).
         """
         # Send data to the dashboard
-        motor_rotations = self.elevator_motor.get_position().value
-        height = self._motor_rot_to_inches(motor_rotations)
-        wpilib.SmartDashboard.putString(
-            "DB/String 4", 'elev: {:5.2f} in."'.format(height)
-        )
+        # motor_rotations = self.elevator_motor.get_position().value
+        # height = self._motor_rot_to_inches(motor_rotations)
+        # wpilib.SmartDashboard.putString(
+        #     "DB/String 4", 'elev: {:5.2f} in."'.format(height)
+        # )
 
 
         wpilib.SmartDashboard.putBoolean("At lowest height", self.lower_limit.get())

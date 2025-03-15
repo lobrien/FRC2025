@@ -1,8 +1,8 @@
 from typing import Optional
 
 import commands2
-# import limelight
-# import limelightresults
+import limelight
+import limelightresults
 import wpimath
 import logging
 from wpilib import SmartDashboard, Field2d
@@ -105,18 +105,18 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.pose = self.odometry.getEstimatedPosition()
 
         # Limelight should be part of this subsystem due to interaction with odometry
-        # discovered_limelights = limelight.discover_limelights(debug=True)
-        # if len(discovered_limelights) == 0:
-        #     logger.warning("No Limelight found!")
-        #     self.limelight = None
-        # else:
-        #     logger.info("Found Limelight!")
-        #     self.limelight = limelight.Limelight(discovered_limelights[0])
-        #     limelight_address = self.limelight.base_url
-        #     logger.debug("Limelight address: %s", limelight_address)
-        #     status = self.limelight.get_status()
-        #     logger.info("Limelight status: %s", status)
-        #     self.limelight.enable_websocket()
+        discovered_limelights = limelight.discover_limelights(debug=True)
+        if len(discovered_limelights) == 0:
+            logger.warning("No Limelight found!")
+            self.limelight = None
+        else:
+            logger.info("Found Limelight!")
+            self.limelight = limelight.Limelight(discovered_limelights[0])
+            limelight_address = self.limelight.base_url
+            logger.debug("Limelight address: %s", limelight_address)
+            status = self.limelight.get_status()
+            logger.info("Limelight status: %s", status)
+            self.limelight.enable_websocket()
 
     # --------------------------------------
     # Public methods for debugging, but not production
@@ -182,9 +182,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.odometry.update(self.get_gyro_heading_rotation2d(), tuple(positions))
 
         # # Update with vision
-        # maybe_result = self._limelight_periodic()
-        # if maybe_result is not None:
-        #     self._on_new_vision_result(maybe_result)
+        maybe_result = self._limelight_periodic()
+        if maybe_result is not None:
+            self._on_new_vision_result(maybe_result)
 
         # Update the dashboard
         self.pose = self.odometry.getEstimatedPosition()
@@ -192,35 +192,35 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         SmartDashboard.putNumber("Robot Y", metersToInches(self.pose.Y()))
         SmartDashboard.putNumber("Gyro Degree", self.get_gyro_heading_degrees())
         SmartDashboard.putNumber("Robot Heading", self.pose.rotation().degrees())
-        logger.debug(f"Robot X: {metersToInches(self.pose.X())}")
-        logger.debug(f"Robot Y: {metersToInches(self.pose.Y())}")
-        logger.debug(f"Gyro Degree: {self.get_gyro_heading_degrees()}")
-        logger.debug(f"Robot Heading: {self.pose.rotation().degrees()}")
+        # logger.debug(f"Robot X: {metersToInches(self.pose.X())}")
+        # logger.debug(f"Robot Y: {metersToInches(self.pose.Y())}")
+        # logger.debug(f"Gyro Degree: {self.get_gyro_heading_degrees()}")
+        # logger.debug(f"Robot Heading: {self.pose.rotation().degrees()}")
 
-        for name, module in zip(
-            ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
-            [
-                self.FrontLeftModule,
-                self.FrontRightModule,
-                self.BackLeftModule,
-                self.BackRightModule,
-            ],
-        ):
-            state = module.get_state()
-            SmartDashboard.putNumber(f"{name} Speed", state.speed)
-            SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
+        # for name, module in zip(
+        #     ["FrontLeft", "FrontRight", "BackLeft", "BackRight"],
+        #     [
+        #         self.FrontLeftModule,
+        #         self.FrontRightModule,
+        #         self.BackLeftModule,
+        #         self.BackRightModule,
+        #     ],
+        # ):
+            # state = module.get_state()
+            # SmartDashboard.putNumber(f"{name} Speed", state.speed)
+            # SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
 
-        # if maybe_result is not None:
-        #     SmartDashboard.putNumberArray("Limelight botpose", maybe_result.botpose)
-        #     SmartDashboard.putNumber("Limelight timestamp", maybe_result.timestamp)
+        if maybe_result is not None:
+            SmartDashboard.putNumberArray("Limelight botpose", maybe_result.botpose)
+            SmartDashboard.putNumber("Limelight timestamp", maybe_result.timestamp)
 
-        SmartDashboard.putNumber("Heartbeat", self.heartbeat)
-        self.heartbeat += 1
+        # SmartDashboard.putNumber("Heartbeat", self.heartbeat)
+        # self.heartbeat += 1
 
         # Update field sim
         self.field_sim.setRobotPose(self.pose)
         # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
-        # self.field_sim.setModuleStates([module.get_state() for module in self.modules])
+        #self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
     def drive(
         self,
@@ -248,16 +248,16 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
     # Private methods to compute module states
     # --------------------------------------
 
-    # def _limelight_periodic(self) -> Optional[limelightresults.GeneralResult]:
-    #     if self.limelight is None:
-    #         return None
-    #     else:
-    #         # Several results available. See https://docs.limelightvision.io/docs/docs-limelight/apis/limelightlib-python#websocket-based
-    #         generalResult = self.limelight.get_results()
-    #         if generalResult is None:
-    #             return None
-    #         else:
-    #             return generalResult
+    def _limelight_periodic(self) -> Optional[limelightresults.GeneralResult]:
+        if self.limelight is None:
+            return None
+        else:
+            # Several results available. See https://docs.limelightvision.io/docs/docs-limelight/apis/limelightlib-python#websocket-based
+            generalResult = self.limelight.get_results()
+            if generalResult is None:
+                return None
+            else:
+                return generalResult
 
 
     def _speeds_to_states(
@@ -489,22 +489,23 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
             module.stop()
 
-    # def _on_new_vision_result(self, result: limelightresults.GeneralResult):
-    #     # Based on "Using WPILib's Pose Estimator" at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
-    #     # Odd that we used both odometry and gyro to get the yaw, but that's from limelight sample
-    #     estimated_yaw = self.odometry.getEstimatedPosition().rotation().degrees()
-    #     self.limelight.update_robot_orientation(estimated_yaw, 0, 0, 0, 0, 0)
-    #     megatag2_estimate = result.botpose_wpiblue
+    def _on_new_vision_result(self, result: limelightresults.GeneralResult):
+        # Based on "Using WPILib's Pose Estimator" at https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2
+        # Odd that we used both odometry and gyro to get the yaw, but that's from limelight sample
+        estimated_yaw = self.odometry.getEstimatedPosition().rotation().degrees()
+        self.limelight.update_robot_orientation(estimated_yaw, 0, 0, 0, 0, 0)
+        megatag2_estimate = result.botpose_wpiblue
 
-    #     # If our angular velocity is > 360 degrees per second, ignore vision updates
-    #     angular_velocity = self.gyro.get_yaw_rate().value
-    #     if abs(angular_velocity) > 360:
-    #         reject_update = True
-    #     # If we didn't actually see any tags, ignore vision updates
-    #     if megatag2_estimate.tagCount == 0:
-    #         reject_update = True
-    #     if not reject_update:
-    #         self.odometry.addVisionMeasurement(megatag2_estimate, result.timestamp)
+        reject_update = False
+        # If our angular velocity is > 360 degrees per second, ignore vision updates
+        # angular_velocity = self.gyro.get_yaw_rate().value
+        # if abs(angular_velocity) > 360:
+        #     reject_update = True
+        # If we didn't actually see any tags, ignore vision updates
+        if megatag2_estimate.tagCount == 0:
+            reject_update = True
+        if not reject_update:
+            self.odometry.addVisionMeasurement(megatag2_estimate, result.timestamp)
 
 def clamp(val, min_val, max_val):
     """Returns a number clamped to minval and maxval."""

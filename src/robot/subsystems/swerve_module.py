@@ -169,13 +169,17 @@ class SwerveModule:
         """
         Reports module data to dashboards.
         """
+        # wpilib.SmartDashboard.putString(
+        #     f"{self.name}_turn_degrees",
+        #     "degrees: {:5.1f}".format(self._get_full_turn_angle_from_motor()),
+        # )
+        # wpilib.SmartDashboard.putString(
+        #     f"{self.name}_can_coder_pos_rotations",
+        #     "rotations: {:5.3f}".format(self._get_can_coder_pos_normalized()),
+        # )
         wpilib.SmartDashboard.putString(
-            f"{self.name}_turn_degrees",
-            "degrees: {:5.1f}".format(self._get_full_turn_angle_from_motor()),
-        )
-        wpilib.SmartDashboard.putString(
-            f"{self.name}_can_coder_pos_rotations",
-            "rotations: {:5.3f}".format(self._get_can_coder_pos_normalized()),
+            f"{self.name}_drive_motor_rotations",
+            "rotations: {:5.3f}".format(self.drive_motor.get_position().value),
         )
 
     def set_desired_state(self, desired_state: SwerveModuleState) -> None:
@@ -192,9 +196,9 @@ class SwerveModule:
         drive_effort = _calc_drive_effort(
             inches_per_second(metersToInches(optimized_state.speed))
         )  # SwerveModuleStates use meters/second
-        wpilib.SmartDashboard.putString(
-            f"{self.name}_drive_effort", "{:5.2f}".format(drive_effort)
-        )
+        # wpilib.SmartDashboard.putString(
+        #     f"{self.name}_drive_effort", "{:5.2f}".format(drive_effort)
+        # )
         geared_rotations = self._degrees_to_turn_count(optimized_state.angle.degrees())
         request = self.position_request.with_position(geared_rotations)
 
