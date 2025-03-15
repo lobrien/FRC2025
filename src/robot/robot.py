@@ -78,6 +78,7 @@ class Robot(commands2.TimedCommandRobot):
 
     def disabledInit(self):
         # Cancel all currently running commands
+        self.autonomous_command = self.container.get_auto_command()
         CommandScheduler.getInstance().cancelAll()
 
     # Test lifecycle methods

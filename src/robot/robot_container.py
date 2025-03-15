@@ -82,7 +82,7 @@ class RobotContainer:
         # Add options
         auto_chooser.addOption("Side Step", AutoConsts.SIDE_STEP)
         auto_chooser.addOption("Sequence", AutoConsts.SEQUENCE)
-        auto_chooser.addOption("Mid Score L3", AutoConsts.MID_SCORE_L_THREE)
+        auto_chooser.addOption("Mid Takeout Algae", AutoConsts.MID_TAKEOUT_ALGAE)
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:
@@ -97,8 +97,8 @@ class RobotContainer:
         elif auto_reader == AutoConsts.SEQUENCE:  # added new Auto Command
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
-        elif auto_reader == AutoConsts.MID_SCORE_L_THREE:
-            return Autos.forward_elevator_and_score(self.drive_subsystem, self.elevator_subsystem, self.coral_subsystem)
+        elif auto_reader == AutoConsts.MID_TAKEOUT_ALGAE:
+            return Autos.forward_and_takeout_algae(self.drive_subsystem)
             
 
     # def get_teleop_command(self):
