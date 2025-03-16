@@ -210,10 +210,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             # SmartDashboard.putNumber(f"{name} Speed", state.speed)
             # SmartDashboard.putNumber(f"{name} Angle", state.angle.degrees())
 
-        if maybe_result is not None:
-            SmartDashboard.putNumberArray("Limelight botpose", maybe_result.botpose)
-            SmartDashboard.putNumber("Limelight timestamp", maybe_result.timestamp)
-
         # SmartDashboard.putNumber("Heartbeat", self.heartbeat)
         # self.heartbeat += 1
 
@@ -543,7 +539,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         #     reject_update = True
         # SmartDashboard.putBoolean("RejectUpdate", reject_update)
         if not reject_update:
-             self.odometry.addVisionMeasurement(botpose, result.timestamp)
+            ts = result["Results"]["ts"]
+            self.odometry.addVisionMeasurement(botpose, ts)
         # SmartDashboard.putString("_on_new_vision_result", "complete")
         SmartDashboard.putString("limelight_botpose", str(botpose))
         SmartDashboard.putString("odometry_botpose", str(self.odometry.getEstimatedPosition()))
