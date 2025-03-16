@@ -45,7 +45,7 @@ class DriveConstants:
     TRACK_HALF_WIDTH: inches = metersToInches(0.27)  # meters (21.25 in track width)
     WHEELBASE_HALF_LENGTH: inches = metersToInches(0.27)  # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0 / 35.0  # Kraken
-    DRIVE_GEAR_RATIO = 9  # temp
+    DRIVE_GEAR_RATIO = 6.2
     WHEEL_DIA: inches = 4  # 4" diameter
     WHEEL_RADIUS: inches = WHEEL_DIA / 2
 
