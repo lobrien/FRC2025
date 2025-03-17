@@ -82,7 +82,7 @@ class RobotContainer:
         # Add options
         auto_chooser.addOption("Side Step", AutoConsts.SIDE_STEP)
         auto_chooser.addOption("Sequence", AutoConsts.SEQUENCE)
-        auto_chooser.addOption("Mid Takeout Algae", AutoConsts.MID_TAKEOUT_ALGAE)
+        auto_chooser.addOption("Mid Score L3", AutoConsts.MID_SCORE_L_THREE)
         return auto_chooser
 
     def get_auto_command(self) -> commands2.Command:

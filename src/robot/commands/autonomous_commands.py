@@ -46,7 +46,6 @@ class Autos:
         drive: DriveSubsystem,
     ):
         """Autonomous routine that drives forward and moves elevator to level 3
-        TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
         field_relative_goal_1 = robot_relative_to_field(
             drive.get_pose(),
