@@ -36,7 +36,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(40.875), 0.0, 0.0))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(92), 0.0, 0.0))
 
     def forward_and_takeout_algae(
         drive: DriveSubsystem,
@@ -44,8 +44,8 @@ class Autos:
         """Autonomous routine that drives forward and moves elevator to level 3
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
-        return (DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(-7.574), Rotation2d(0.0)))
-            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(47.127), inchesToMeters(11.574), Rotation2d(0.0))))
+        return (DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(-18.75), Rotation2d(0.0)))
+            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(20.75), Rotation2d(0.0))))
             .andThen(PrintSomethingCommand("Third command"))
             )
         # return commands2.cmd.sequence(

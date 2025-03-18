@@ -45,7 +45,7 @@ class DriveConstants:
     TRACK_HALF_WIDTH: inches = metersToInches(0.27)  # meters (21.25 in track width)
     WHEELBASE_HALF_LENGTH: inches = metersToInches(0.27)  # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0 / 35.0  # Kraken
-    DRIVE_GEAR_RATIO = 6.2
+    DRIVE_GEAR_RATIO = 6.2 #606.1 / 96.5
     WHEEL_DIA: inches = 4  # 4" diameter
     WHEEL_RADIUS: inches = WHEEL_DIA / 2
 
@@ -74,14 +74,14 @@ class DriveConstants:
     # For X and Y, 1 meter error results in a motor command of 1.0 (full voltage).
     # Converted to 1/0.0254 = 39 inches => full voltage.
     # For rotation, 90 degrees error => full voltage.
-    PIDX_KP: float = 1.0 * 0.8448 # X dimension PID controller's proportional constant
-    PIDY_KP: float = 1.0 * 0.8948   # Y dimension PID controller's proportional constant
+    PIDX_KP: float = 1.0 * 0.9592 # X dimension PID controller's proportional constant
+    PIDY_KP: float = 1.0 * 0.9592   # Y dimension PID controller's proportional constant
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
 
     # Horizontal (x or y) maxima and tolerances
-    HORIZ_MAX_V: inches_per_second = 39.0  # Maximum velocity in inches/second
+    HORIZ_MAX_V: inches_per_second = 39.0 * 1.5# Maximum velocity in inches/second
     HORIZ_MAX_A: inches_per_second_squared = (
-        78.0  # Maximum acceleration in inches/second/second
+        78.0 * 1.5 # Maximum acceleration in inches/second/second
     )
     HORIZ_POS_TOL: inches = (
         4.0  # Position tolerance in inches (within this distance is "close enough")

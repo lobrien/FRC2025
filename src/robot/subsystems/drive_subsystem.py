@@ -529,7 +529,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         # megatag2_estimate = result.botpose_wpiblue
         # SmartDashboard.putString("megatag2", str(megatag2_estimate))
 
-        reject_update = False
+        reject_update = True
         # # If our angular velocity is > 360 degrees per second, ignore vision updates
         # # angular_velocity = self.gyro.get_yaw_rate().value
         # # if abs(angular_velocity) > 360:
