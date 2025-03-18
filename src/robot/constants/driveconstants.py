@@ -79,7 +79,7 @@ class DriveConstants:
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
 
     # Horizontal (x or y) maxima and tolerances
-    HORIZ_MAX_V: inches_per_second = 39.0 * 1.5# Maximum velocity in inches/second
+    HORIZ_MAX_V: inches_per_second = 39.0  # Maximum velocity in inches/second
     HORIZ_MAX_A: inches_per_second_squared = (
         78.0 * 1.5 # Maximum acceleration in inches/second/second
     )
