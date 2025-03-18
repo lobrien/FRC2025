@@ -46,7 +46,7 @@ class Autos:
         """
         return (DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(-18.75), Rotation2d(0.0)))
             .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(20.75), Rotation2d(0.0))))
-            .andThen(PrintSomethingCommand("Third command"))
+            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(88), inchesToMeters(20.75), Rotation2d(0.0))))
             )
         # return commands2.cmd.sequence(
         #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
