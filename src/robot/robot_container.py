@@ -110,7 +110,7 @@ class RobotContainer:
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
         elif auto_reader == AutoConsts.MID_TAKEOUT_ALGAE:
-            return Autos.forward_and_takeout_algae(self.drive_subsystem)
+            return Autos.forward_and_takeout_algae(self.drive_subsystem, self.coral_subsystem)
             
 
     # def get_teleop_command(self):

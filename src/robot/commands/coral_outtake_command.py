@@ -19,7 +19,7 @@ class CoralOuttake(commands2.Command):
         self.coral.outtake()
 
     def isFinished(self) -> bool:
-        return False
+        return True
     
     def end(self, was_interrupted: bool):
         #stop 

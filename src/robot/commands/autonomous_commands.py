@@ -11,6 +11,7 @@ from commands.coral_outtake_command import CoralOuttake
 from constants.elevatorconstants import ElevatorConstants
 from subsystems.coral_subsystem import CoralSubsystem
 from commands.print_something_command import PrintSomethingCommand
+from commands.coral_idle_command import CoralIdle
 
 
 class Autos:
@@ -40,14 +41,15 @@ class Autos:
 
     def forward_and_takeout_algae(
         drive: DriveSubsystem,
+        coral: CoralSubsystem
     ):
         """Autonomous routine that drives forward and moves elevator to level 3
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
-        return (DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(-18.75), Rotation2d(0.0)))
-            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(20.75), Rotation2d(0.0))))
-            .andThen(PrintSomethingCommand("Third command"))
-            )
+        return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(-16.75), Rotation2d(0.0))) \
+            .andThen(CoralOuttake(coral = coral)) \
+            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(25.75), Rotation2d(0.0))))
+            
         # return commands2.cmd.sequence(
         #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
         #     commands2.WaitCommand(seconds = 10),
