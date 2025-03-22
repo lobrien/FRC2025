@@ -7,7 +7,7 @@ from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_to_goal import DriveToGoal
 from subsystems.elevator_subsystem import ElevatorSubsystem
 from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
-from commands.coral_outtake_command import CoralOuttake
+from commands.auto_coral_outtake_command import AutoCoralOuttake
 from constants.elevatorconstants import ElevatorConstants
 from subsystems.coral_subsystem import CoralSubsystem
 from commands.print_something_command import PrintSomethingCommand
@@ -37,7 +37,7 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(92), 0.0, 0.0))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(92), inchesToMeters(0.0), Rotation2d(0.0)))
 
     def forward_and_takeout_algae(
         drive: DriveSubsystem,
@@ -47,7 +47,7 @@ class Autos:
         TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
         """
         return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(-16.75), Rotation2d(0.0))) \
-            .andThen(CoralOuttake(coral = coral)) \
+            .andThen(AutoCoralOuttake(coral = coral)) \
             .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(25.75), Rotation2d(0.0))))
             
         # return commands2.cmd.sequence(

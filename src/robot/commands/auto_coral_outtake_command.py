@@ -2,7 +2,7 @@ import commands2
 from subsystems.coral_subsystem import CoralSubsystem
 
 
-class CoralOuttake(commands2.Command):
+class AutoCoralOuttake(commands2.Command):
     """
     A command for outtaking the coral game pieces 
     :param: coral The subsystem that works with coral
@@ -15,11 +15,10 @@ class CoralOuttake(commands2.Command):
 
     def execute(self):
         # Move intake.
-        print("not hammard!!")
         self.coral.outtake()
 
     def isFinished(self) -> bool:
-        return False
+        return True
     
     def end(self, was_interrupted: bool):
         #stop 
