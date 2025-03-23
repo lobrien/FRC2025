@@ -83,6 +83,7 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
 
         self.heartbeat = 0
+        self.slow_mode = False
 
         # Simulation support
         self.field_sim = Field2d()
