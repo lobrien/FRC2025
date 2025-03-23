@@ -26,7 +26,6 @@ class ElevatorNudgeUpCommand(commands2.Command):
         self.elev.move_to_goal()
 
     def isFinished(self):
-        # Since this is the default command, it should only end if it is interrupted.
         return self.elev.is_at_goal()
     
     def end(self, interrupted):
