@@ -82,6 +82,10 @@ class ElevatorSubsystem(commands2.Subsystem):
         # Convert because internally, we use rotations.
         self.goal_pos = self._inches_to_motor_rot(height)
 
+    def get_current_goal_pos_inches(self):
+        return self.goal_pos
+        
+
     def lower_limit_reached(self):
         return not self.lower_limit.get()
     

@@ -29,6 +29,8 @@ from commands.elevator_down_command import ElevatorDown
 from commands.elevator_up_command import ElevatorUp
 from constants.elevatorconstants import ElevatorConstants
 from commands.vision_auto_alignment_command import VisionAutoAlign
+from commands.elevator_nudge_up_command import ElevatorNudgeUpCommand
+from commands.elevator_nudge_down_command import ElevatorNudgeDownCommand
 # from subsystems.vision_subsystem import VisionSubsystem
 
 
@@ -184,6 +186,9 @@ class RobotContainer:
         # controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
         # controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
         # controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
+
+        controller.x().onTrue(ElevatorNudgeDownCommand(elev=self.elevator_subsystem))
+        controller.y().onTrue(ElevatorNudgeUpCommand(elev=self.elevator_subsystem)) 
 
         controller.leftStick().whileTrue(ElevatorUp(self.elevator_subsystem))
         controller.rightStick().whileTrue(ElevatorDown(self.elevator_subsystem))
