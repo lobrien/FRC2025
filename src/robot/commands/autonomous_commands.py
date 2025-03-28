@@ -48,7 +48,7 @@ class Autos:
         """
         return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(-16.75), Rotation2d(0.0))) \
             .andThen(AutoCoralOuttake(coral = coral)) \
-            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(25.75), Rotation2d(0.0))))
+            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(37.75), Rotation2d(0.0))))
             
         # return commands2.cmd.sequence(
         #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),

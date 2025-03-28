@@ -31,6 +31,8 @@ from constants.elevatorconstants import ElevatorConstants
 from commands.vision_auto_alignment_command import VisionAutoAlign
 from commands.elevator_nudge_up_command import ElevatorNudgeUpCommand
 from commands.elevator_nudge_down_command import ElevatorNudgeDownCommand
+from commands.slow_mode_off_command import SlowModeOffCommand
+from commands.slow_mode_on_command import SlowModeOnCommand
 # from subsystems.vision_subsystem import VisionSubsystem
 
 
@@ -164,9 +166,8 @@ class RobotContainer:
             drive=self.drive_subsystem,
             desired_field_relative_position_inches=(AUTOALIGN_X, AUTOALIGN_Y),
             desired_field_relative_angle_degrees=AUTOALIGN_ANGLE))
-        controller.b().whileTrue(
-            TurnToAngleCommand(self.drive_subsystem, lambda: True)
-        )  # for quick test
+        controller.y().onTrue(SlowModeOffCommand(drive = self.drive_subsystem))
+        controller.x().onTrue(SlowModeOnCommand(drive = self.drive_subsystem))
 
         controller.leftBumper().and_(controller.rightBumper()).whileTrue(
             ResetGyroCommand(self.drive_subsystem)
@@ -180,22 +181,22 @@ class RobotContainer:
             OperatorInterfaceConstants.OPERATOR_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
-        controller.b().whileTrue(CoralOuttake(coral=self.coral_subsystem))  
+        controller.a().onTrue(CoralIntake(coral = self.coral_subsystem))
+        controller.b().whileTrue(CoralOuttake(coral = self.coral_subsystem))  
 
         # controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
         # controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
         # controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
 
-        controller.x().onTrue(ElevatorNudgeDownCommand(elev=self.elevator_subsystem))
-        controller.y().onTrue(ElevatorNudgeUpCommand(elev=self.elevator_subsystem)) 
+        # controller.x().onTrue(ElevatorNudgeDownCommand(elev = self.elevator_subsystem))
+        # controller.y().onTrue(ElevatorNudgeUpCommand(elev = self.elevator_subsystem)) 
 
         controller.leftStick().whileTrue(ElevatorUp(self.elevator_subsystem))
         controller.rightStick().whileTrue(ElevatorDown(self.elevator_subsystem))
         
-        controller.leftBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elev=self.elevator_subsystem))
-        controller.leftTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.HOME, elev=self.elevator_subsystem))
-        controller.rightTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.FEEDER, elev=self.elevator_subsystem))
-        controller.rightBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.CLIMB, elev=self.elevator_subsystem))
+        controller.leftBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elev  =self.elevator_subsystem))
+        controller.leftTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.HOME, elev = self.elevator_subsystem))
+        controller.rightTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.FEEDER, elev = self.elevator_subsystem))
+        controller.rightBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.CLIMB, elev = self.elevator_subsystem))
 
         return controller

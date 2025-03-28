@@ -17,12 +17,19 @@ class DriveWithJoystickCommand(
         self.addRequirements(drive)  # Requires this subsystem
 
     def execute(self):  # What actions it does
+        if self.drive_subsystem.slow_mode == True:
+            speed_divisor = 8
+            rotation_divisor = 16
+        else:
+            speed_divisor = 2
+            rotation_divisor = 4
+
         x_speed, y_speed, rot_speed = (
             self.drive_percent_fn()
         )  # Set turn and drive speed to values got from function
-        x_speed = x_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
-        y_speed = y_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1
-        rot_speed = rot_speed * DriveConstants.MAX_DEGREES_PER_SECOND * -1
+        x_speed = x_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1 / speed_divisor
+        y_speed = y_speed * DriveConstants.MAX_SPEED_INCHES_PER_SECOND * -1 / speed_divisor
+        rot_speed = rot_speed * DriveConstants.MAX_DEGREES_PER_SECOND * -1 / rotation_divisor
 
         self.drive_subsystem.drive(
             x_speed_inches_per_second=y_speed,

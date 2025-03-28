@@ -178,6 +178,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
             module.periodic()
 
+        # self.get_speed_mode()
+        
+        SmartDashboard.putBoolean("Slow mode", self.slow_mode)
+
         # Update the odometry
         positions = [module.get_position() for module in self.modules]
         self.odometry.update(self.get_gyro_heading_rotation2d(), tuple(positions))
@@ -255,6 +259,9 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
                 return None
             else:
                 return generalResult
+            
+    def get_speed_mode(self) -> bool:
+        return self.slow_mode
 
 
     def _speeds_to_states(
