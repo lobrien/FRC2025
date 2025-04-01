@@ -43,8 +43,11 @@ class Autos:
         drive: DriveSubsystem,
         coral: CoralSubsystem
     ):
-        """Autonomous routine that drives forward and delivers a coral to L1 then moves sideways and knocks lower alage off the reef
+        """Autonomous routine that drives forward and shoots coral into level 1, then knocks out algae from reef. 
+
+            We used the command .andThen to properly chain code and used the \ to make the code more readable
         """
         return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(-16.75), Rotation2d(0.0))) \
             .andThen(AutoCoralOuttake(coral = coral)) \
             .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(37.75), Rotation2d(0.0))))
+            
