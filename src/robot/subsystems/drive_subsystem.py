@@ -82,8 +82,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         self.kinematics = SwerveDrive4Kinematics(*self._get_module_translations())
         self.odometry = self._initialize_odometry(kinematics=self.kinematics)
 
-        self.heartbeat = 0
         self.slow_mode = False
+
+        self.speed_divisor = 2
+        self.rotation_divisor = 4
 
         # Simulation support
         self.field_sim = Field2d()
@@ -178,6 +180,8 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         for module in self.modules:
             module.periodic()
 
+        self.check_and_set_slow_mode()
+
         # self.get_speed_mode()
         
         SmartDashboard.putBoolean("Slow mode", self.slow_mode)
@@ -220,8 +224,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
 
         # Update field sim
         self.field_sim.setRobotPose(self.pose)
-        # TODO: Compare to 2024's self.fieldSim.getObject("Swerve Modules").setPoses(self.module_poses)
-        #self.field_sim.setModuleStates([module.get_state() for module in self.modules])
 
     def drive(
         self,
@@ -292,8 +294,6 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         x_speed_meters_per_second = inchesToMeters(x_speed_inches_per_second)
         y_speed_meters_per_second = inchesToMeters(y_speed_inches_per_second)
         rot_speed_radians = degreesToRadians(rot_speed_degrees_per_second)
-        # TODO: When self.get_heading_rotation2d() was there every 45 degree rotated it was 90 degree off in driving, but then we just set the value negative it works <-- IS THIS COMMENT HELPFUL?
-        # TODO: Does the previous comment describe a bug?
         cs = ChassisSpeeds.fromRobotRelativeSpeeds(
             x_speed_meters_per_second,
             y_speed_meters_per_second,
@@ -553,6 +553,17 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
         SmartDashboard.putString("limelight_botpose", str(botpose))
         SmartDashboard.putString("odometry_botpose", str(self.odometry.getEstimatedPosition()))
 
-def clamp(val, min_val, max_val):
-    """Returns a number clamped to minval and maxval."""
-    return max(min(val, max_val), min_val)
+    def check_and_set_slow_mode(self):
+        if self.drive_subsystem.slow_mode == True:
+            self.speed_divisor = 8
+            self.rotation_divisor = 16
+        else:
+            self.speed_divisor = 2
+            self.rotation_divisor = 4
+            
+        return self.speed_divisor, self.rotation_divisor
+
+
+    def clamp(val, min_val, max_val):
+        """Returns a number clamped to minval and maxval."""
+        return max(min(val, max_val), min_val)

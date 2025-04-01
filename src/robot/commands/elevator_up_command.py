@@ -3,9 +3,8 @@ from subsystems.elevator_subsystem import ElevatorSubsystem
 
 class ElevatorUp(commands2.Command):
     """
-    TODO:
+    Elevator moves up when left joystick is triggered up    
     """
-
     def __init__(self, elevator: ElevatorSubsystem):
         super().__init__()
         self.elevator = elevator

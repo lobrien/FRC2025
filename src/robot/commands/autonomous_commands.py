@@ -43,15 +43,8 @@ class Autos:
         drive: DriveSubsystem,
         coral: CoralSubsystem
     ):
-        """Autonomous routine that drives forward and moves elevator to level 3
-        TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
+        """Autonomous routine that drives forward and delivers a coral to L1 then moves sideways and knocks lower alage off the reef
         """
         return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(-16.75), Rotation2d(0.0))) \
             .andThen(AutoCoralOuttake(coral = coral)) \
             .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(37.75), Rotation2d(0.0))))
-            
-        # return commands2.cmd.sequence(
-        #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
-        #     commands2.WaitCommand(seconds = 10),
-        #     ElevatorMoveToGoalHeightContinuously(goal_height = ElevatorConstants.LEVEL_THREE,elev = elevator).andThen(coral.outtake())
-        # )

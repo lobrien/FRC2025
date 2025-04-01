@@ -3,7 +3,7 @@ from subsystems.elevator_subsystem import ElevatorSubsystem
 
 class ElevatorDown(commands2.Command):
     """
-    TODO:
+    Elevator goes down when left joystick triggered down :
     """
 
     def __init__(self, elevator: ElevatorSubsystem):

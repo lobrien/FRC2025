@@ -3,7 +3,7 @@ from subsystems.drive_subsystem import DriveSubsystem
 
 class SlowModeOnCommand(commands2.Command):
     """
-    TODO:
+    Slow mode on
     """
 
     def __init__(self, drive: DriveSubsystem):

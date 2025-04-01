@@ -64,8 +64,7 @@ class DriveConstants:
     MAX_DEGREES_PER_SECOND: degrees_per_second = (
         72.85
     )  # degrees per second
-
-    # TODO: These are from Mako, not Kraken. We need to tune them for Kraken.
+    
     # PID controller constants (gains)
     # Proportional constant only at the moment, all others assumed zero.
     # For X and Y, 1 meter error results in a motor command of 1.0 (full voltage).

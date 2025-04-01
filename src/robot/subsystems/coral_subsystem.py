@@ -20,7 +20,7 @@ class CoralSubsystem(commands2.Subsystem):
 
         # Basic parts of the configuration.
         config.IdleMode(rev.SparkMax.IdleMode.kBrake)
-        config.inverted(False) #TODO: update?
+        config.inverted(False) #SparkMax lock (breaks)
 
         # Apply it to the motor.
         self.coral_motor.configure(config, rev.SparkMax.ResetMode.kResetSafeParameters, rev.SparkMax.PersistMode.kPersistParameters)
@@ -29,13 +29,13 @@ class CoralSubsystem(commands2.Subsystem):
         """
         This makes the motor move the wheels, like *shoop*
         """
-        self.coral_motor.set(0.17) # TODO: update?
+        self.coral_motor.set(0.17) #positive imput spinning wheel inward at 17%
 
     def outtake(self):
         """
         This makes the motor move the wheels the other way, like *woosh*
         """
-        self.coral_motor.set(-0.25) # TODO: update?
+        self.coral_motor.set(-0.25) #negative imput spinning wheel outward at 25%
 
     def stop(self):
         """
