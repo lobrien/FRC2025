@@ -561,9 +561,10 @@ class DriveSubsystem(commands2.Subsystem):  # Name what type of class this is
             self.speed_divisor = 2
             self.rotation_divisor = 4
             
-        return self.speed_divisor, self.rotation_divisor
+       #Removed return line BRYC
 
-
-    def clamp(val, min_val, max_val):
+    #Unidented the clamp to not make it part of the class BRYC
+def clamp(val, min_val, max_val):
         """Returns a number clamped to minval and maxval."""
         return max(min(val, max_val), min_val)
+        
