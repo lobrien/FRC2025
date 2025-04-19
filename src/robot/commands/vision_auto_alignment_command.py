@@ -37,8 +37,7 @@ class VisionAutoAlign(commands2.Command):
             if bot_pose is None:
                 logger.error("No botpose available, cannot align")
                 return True
-            # TODO: These indices need to be confirmed and put into constants (e.g., "BOTPOSE_X_INDEX")
-            robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
+            robot_relative_pose = self.desired_pose.relativeTo(bot_pose)
             if VisionAutoAlign._close_enough(robot_relative_pose, VisionConsts.ALIGN_TRANSFORM_TOLERANCE, VisionConsts.ALIGN_ROTATION_TOLERANCE):
                 return True
             else:
