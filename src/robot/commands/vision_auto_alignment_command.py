@@ -4,6 +4,7 @@ from wpimath.units import metersToInches, inchesToMeters, degreesToRadians
 import logging
 
 from constants.new_types import inches, degrees, inches_per_second
+from constants.visionconstants import VisionConsts
 from subsystems.drive_subsystem import DriveSubsystem
 
 logger = logging.getLogger(__name__)
@@ -38,8 +39,7 @@ class VisionAutoAlign(commands2.Command):
                 return True
             # TODO: These indices need to be confirmed and put into constants (e.g., "BOTPOSE_X_INDEX")
             robot_relative_pose = self.desired_pose.relativeTo(Pose2d(bot_pose[0], bot_pose[1], bot_pose[5]))
-            # TODO: Convert these tolerances to constants
-            if VisionAutoAlign._close_enough(robot_relative_pose, inches(1), degrees(5)):
+            if VisionAutoAlign._close_enough(robot_relative_pose, VisionConsts.ALIGN_TRANSFORM_TOLERANCE, VisionConsts.ALIGN_ROTATION_TOLERANCE):
                 return True
             else:
                 return False
