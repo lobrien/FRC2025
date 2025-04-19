@@ -12,13 +12,9 @@ from commands.print_something_command import PrintSomethingCommand
 from constants.operatorinterfaceconstants import OperatorInterfaceConstants
 from subsystems.drive_subsystem import DriveSubsystem
 from subsystems.coral_subsystem import CoralSubsystem
-from subsystems.algae_subsystem import AlgaeSubsystem
 from commands.drive_with_joystick_command import DriveWithJoystickCommand
 from commands.turn_to_angle_command import TurnToAngleCommand
 from commands.reset_gyro_command import ResetGyroCommand
-from commands.algae_intake_command import AlgaeIntake
-from commands.algae_outtake_command import AlgaeOuttake
-from commands.algae_idle_command import AlgaeIdle
 from commands.coral_intake_command import CoralIntake
 from commands.coral_outtake_command import CoralOuttake
 from commands.coral_idle_command import CoralIdle
@@ -29,6 +25,10 @@ from commands.elevator_down_command import ElevatorDown
 from commands.elevator_up_command import ElevatorUp
 from constants.elevatorconstants import ElevatorConstants
 from commands.vision_auto_alignment_command import VisionAutoAlign
+from commands.elevator_nudge_up_command import ElevatorNudgeUpCommand
+from commands.elevator_nudge_down_command import ElevatorNudgeDownCommand
+from commands.slow_mode_off_command import SlowModeOffCommand
+from commands.slow_mode_on_command import SlowModeOnCommand
 # from subsystems.vision_subsystem import VisionSubsystem
 
 
@@ -48,14 +48,16 @@ from commands.vision_auto_alignment_command import VisionAutoAlign
 # * The `RobotContainer` maps between the input devices and the Commands that operate on the Subsystems.
 class RobotContainer:
     def __init__(self):
+        #Setting subsystem class as varaible, can be used anywhere in the class
         self.drive_subsystem = DriveSubsystem()
         self.elevator_subsystem = ElevatorSubsystem()
         self.coral_subsystem = CoralSubsystem()
-        # self.algae_subsystem = AlgaeSubsystem()
 
+        #Initialize commands for driver + operator controllers 
         self.dr_controller = self._initialize_dr_controller()
         self.op_controller = self._initialize_op_controller()
 
+        #Default state of the mechanism when nothing else is triggered  
         self._initialize_default_commands()
 
         self.auto_chooser = self._initialize_shuffleboard()
@@ -71,10 +73,6 @@ class RobotContainer:
             teleop_command
         )   # set the teleop command as the default for drive subsystem
         # TODO: Reconsider these, given that they are called in auto
-
-        # self.algae_subsystem.setDefaultCommand(
-        #     AlgaeIdle(algae=self.algae_subsystem)
-        # )
 
         self.coral_subsystem.setDefaultCommand(
             CoralIdle(coral=self.coral_subsystem)
@@ -110,13 +108,7 @@ class RobotContainer:
             return Autos.goal_sequence(
                 self.drive_subsystem, [Pose2d(36, 0, 10), Pose2d(0, 48, 0)])
         elif auto_reader == AutoConsts.MID_TAKEOUT_ALGAE:
-            return Autos.forward_and_takeout_algae(self.drive_subsystem)
-            
-
-    # def get_teleop_command(self):
-    #     return DriveWithJoystickCommand(
-    #         drive=self.drive_subsystem, drive_percent_fn=self.get_drive_value_from_joystick
-    #     )
+            return Autos.forward_and_takeout_algae(self.drive_subsystem, self.coral_subsystem)
 
     def get_drive_value_from_joystick(self) -> tuple[float, float, float]:
         """
@@ -162,9 +154,8 @@ class RobotContainer:
             drive=self.drive_subsystem,
             desired_field_relative_position_inches=(AUTOALIGN_X, AUTOALIGN_Y),
             desired_field_relative_angle_degrees=AUTOALIGN_ANGLE))
-        controller.b().whileTrue(
-            TurnToAngleCommand(self.drive_subsystem, lambda: True)
-        )  # for quick test
+        controller.y().onTrue(SlowModeOffCommand(drive = self.drive_subsystem))
+        controller.x().onTrue(SlowModeOnCommand(drive = self.drive_subsystem))
 
         controller.leftBumper().and_(controller.rightBumper()).whileTrue(
             ResetGyroCommand(self.drive_subsystem)
@@ -178,19 +169,15 @@ class RobotContainer:
             OperatorInterfaceConstants.OPERATOR_CONTROLLER_PORT
         )
 
-        controller.a().onTrue(CoralIntake(coral=self.coral_subsystem))
-        controller.b().whileTrue(CoralOuttake(coral=self.coral_subsystem))  
-
-        # controller.x().onTrue(AlgaeIntake(algae=self.algae_subsystem))
-        # controller.y().onTrue(AlgaeOuttake(algae=self.algae_subsystem)) 
-        # controller.y().onFalse(AlgaeIdle(algae=self.algae_subsystem))
+        controller.a().onTrue(CoralIntake(coral = self.coral_subsystem))
+        controller.b().whileTrue(CoralOuttake(coral = self.coral_subsystem))  
 
         controller.leftStick().whileTrue(ElevatorUp(self.elevator_subsystem))
         controller.rightStick().whileTrue(ElevatorDown(self.elevator_subsystem))
         
-        controller.leftBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elev=self.elevator_subsystem))
-        controller.leftTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.HOME, elev=self.elevator_subsystem))
-        controller.rightTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.FEEDER, elev=self.elevator_subsystem))
-        controller.rightBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.CLIMB, elev=self.elevator_subsystem))
+        controller.leftBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.LEVEL_THREE, elev  =self.elevator_subsystem))
+        controller.leftTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.HOME, elev = self.elevator_subsystem))
+        controller.rightTrigger().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.FEEDER, elev = self.elevator_subsystem))
+        controller.rightBumper().onTrue(ElevatorMoveToGoalHeightContinuously(ElevatorConstants.CLIMB, elev = self.elevator_subsystem))
 
         return controller

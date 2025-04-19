@@ -6,4 +6,4 @@ class CoralConsts:
 
     CORAL_MOTOR = 33 # Motor ID number
 
-    CORAL_STOP_CURRENT = 30 # TODO: Check what the AMP was when coral is all the way intaked 
+    CORAL_STOP_CURRENT = 30 #electrical current that happens when the coral is fully intaked  

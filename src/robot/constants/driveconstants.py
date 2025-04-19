@@ -45,14 +45,11 @@ class DriveConstants:
     TRACK_HALF_WIDTH: inches = metersToInches(0.27)  # meters (21.25 in track width)
     WHEELBASE_HALF_LENGTH: inches = metersToInches(0.27)  # meters (21.25 in wheelbase)
     TURN_GEAR_RATIO = 468.0 / 35.0  # Kraken
-    DRIVE_GEAR_RATIO = 6.2
+    DRIVE_GEAR_RATIO = 6.2 #606.1 / 96.5
     WHEEL_DIA: inches = 4  # 4" diameter
     WHEEL_RADIUS: inches = WHEEL_DIA / 2
 
     FREE_SPEED = 3.76  # max velocity collected from giving the motors max input. Not currently used anywhere
-
-    SLOWED_FACTOR = 8
-
     # TODO: Change FREE_SPEED above to the measured motor RPM, and then use that in
     # an explicit calculation of MAX_SPEED_INCHES_PER_SECOND that uses the gear ratio and wheel diameter.
     # Then if either of those constants change, the max speed will change appropriately.
@@ -62,13 +59,12 @@ class DriveConstants:
     # for gear ratio and wheel diameter.
     # The "/ SLOWED_FACTOR" is to slow things down for testing.
     MAX_SPEED_INCHES_PER_SECOND: inches_per_second = (
-        145.7 / SLOWED_FACTOR
+        145.7 
     )  # inches per second
     MAX_DEGREES_PER_SECOND: degrees_per_second = (
-        (72.85 / SLOWED_FACTOR) / 2
+        72.85
     )  # degrees per second
-
-    # TODO: These are from Mako, not Kraken. We need to tune them for Kraken.
+    
     # PID controller constants (gains)
     # Proportional constant only at the moment, all others assumed zero.
     # For X and Y, 1 meter error results in a motor command of 1.0 (full voltage).
@@ -79,7 +75,7 @@ class DriveConstants:
     PID_ROT_KP: float = 1.0 / 90.0  # Rotation controller's proportional constant.
 
     # Horizontal (x or y) maxima and tolerances
-    HORIZ_MAX_V: inches_per_second = 39.0 * 1.5 # Maximum velocity in inches/second
+    HORIZ_MAX_V: inches_per_second = 39.0  # Maximum velocity in inches/second
     HORIZ_MAX_A: inches_per_second_squared = (
         78.0 * 1.5 # Maximum acceleration in inches/second/second
     )

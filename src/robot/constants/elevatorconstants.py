@@ -7,10 +7,6 @@ from constants.new_types import inches
 class ElevatorConstants:
     ELEVATOR_MOTOR = 14  # Motor ID
 
-    STOP_CURRENT = 70 #TODO: Update
-
-    # TODO: Update height offset, and positions
-
     # Mechanical constants
     GEAR_RATIO: float = 1.0
     SCREW_INCHES_PER_ROT = 0.25
@@ -24,9 +20,9 @@ class ElevatorConstants:
     HOME: inches = 12.0  # Elevator at its lowest position. 
     LEVEL_ONE: inches = 12.0
     LEVEL_TWO: inches = 12.0
-    LEVEL_THREE: inches = 27.75
+    LEVEL_THREE: inches = 28.0
     CLIMB: inches = 27.25
-    FEEDER: inches = 16.75
+    FEEDER: inches = 17.875
     TOP: inches = 29.75  #Elevator at its Highest position
 
    

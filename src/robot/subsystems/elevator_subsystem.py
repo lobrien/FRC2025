@@ -63,6 +63,7 @@ class ElevatorSubsystem(commands2.Subsystem):
 
 
         wpilib.SmartDashboard.putBoolean("At lowest height", self.lower_limit.get())
+        wpilib.SmartDashboard.putBoolean("At goal?", self.is_at_goal())
         wpilib.SmartDashboard.putBoolean("At highest height", self.higher_limit.get())
 
         motor_current = self.elevator_motor.get_stator_current().value
@@ -81,6 +82,10 @@ class ElevatorSubsystem(commands2.Subsystem):
         """Set the goal in inches that the elevator drives toward"""
         # Convert because internally, we use rotations.
         self.goal_pos = self._inches_to_motor_rot(height)
+
+    def get_current_goal_pos_inches(self):
+        return self._motor_rot_to_inches(self.goal_pos)
+        
 
     def lower_limit_reached(self):
         return not self.lower_limit.get()

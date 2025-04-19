@@ -30,29 +30,17 @@ class Robot(commands2.TimedCommandRobot):
             print("Robot is not real")
 
         wpilib.CameraServer.launch()
-        # breakpoint()
 
     # Robot overall lifecycle methods
-    def robotInit(self):
-        pass
 
     def robotPeriodic(self):
         CommandScheduler.getInstance().run()
-
-    def robotEnd(self):
-        pass
 
     # Autonomous lifecycle methods
     def autonomousInit(self):
         self.autonomous_command = self.container.get_auto_command()
         if self.autonomous_command is not None:
             self.autonomous_command.schedule()  # Note that this is a single command for all of autonomous
-
-    def autonomousPeriodic(self):
-        pass
-
-    def autonomousEnd(self):
-        pass
 
     def disabledPeriodic(self):
         # Calling this here so when testing or changing the auto plan last minute would be updated
@@ -68,12 +56,6 @@ class Robot(commands2.TimedCommandRobot):
         # Cancel all currently running commands at the start of teleop (i.e., auto)
         CommandScheduler.getInstance().cancelAll()
 
-    def teleopPeriodic(self):
-        pass
-
-    def teleopEnd(self):
-        pass
-
     def disabledInit(self):
         # Cancel all currently running commands
         self.autonomous_command = self.container.get_auto_command()
@@ -84,8 +66,3 @@ class Robot(commands2.TimedCommandRobot):
         # Cancel all running commands
         CommandScheduler.getInstance().cancelAll()
 
-    def testPeriodic(self):
-        pass
-
-    def testEnd(self):
-        pass

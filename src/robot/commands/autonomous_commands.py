@@ -7,10 +7,11 @@ from subsystems.drive_subsystem import DriveSubsystem
 from commands.drive_to_goal import DriveToGoal
 from subsystems.elevator_subsystem import ElevatorSubsystem
 from commands.elevator_command import ElevatorMoveToGoalHeightContinuously
-from commands.coral_outtake_command import CoralOuttake
+from commands.auto_coral_outtake_command import AutoCoralOuttake
 from constants.elevatorconstants import ElevatorConstants
 from subsystems.coral_subsystem import CoralSubsystem
 from commands.print_something_command import PrintSomethingCommand
+from commands.coral_idle_command import CoralIdle
 
 
 class Autos:
@@ -36,20 +37,17 @@ class Autos:
     @staticmethod
     def forward(drive: DriveSubsystem):
         """Autonomous routine that drives forward"""
-        return DriveToGoal(drive, Pose2d(inchesToMeters(92), 0.0, 0.0))
+        return DriveToGoal(drive, Pose2d(inchesToMeters(92), inchesToMeters(0.0), Rotation2d(0.0)))
 
     def forward_and_takeout_algae(
         drive: DriveSubsystem,
+        coral: CoralSubsystem
     ):
-        """Autonomous routine that drives forward and moves elevator to level 3
-        TODO: Must understand why ad8336 (2025-02-10) worked. Only change was flip order. But wpilib docs say order doesn't matter.
+        """Autonomous routine that drives forward and shoots coral into level 1, then knocks out algae from reef. 
+
+            We used the command .andThen to properly chain code and used the \ to make the code more readable
         """
-        return (DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(-18.75), Rotation2d(0.0)))
-            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(92), inchesToMeters(20.75), Rotation2d(0.0))))
-            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(88), inchesToMeters(20.75), Rotation2d(0.0))))
-            )
-        # return commands2.cmd.sequence(
-        #     DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(69.75), 0.0, 0.0)),
-        #     commands2.WaitCommand(seconds = 10),
-        #     ElevatorMoveToGoalHeightContinuously(goal_height = ElevatorConstants.LEVEL_THREE,elev = elevator).andThen(coral.outtake())
-        # )
+        return DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(-16.75), Rotation2d(0.0))) \
+            .andThen(AutoCoralOuttake(coral = coral)) \
+            .andThen(DriveToGoal(drive_subsystem = drive, goal_pose = Pose2d(inchesToMeters(93.5), inchesToMeters(37.75), Rotation2d(0.0))))
+            
