@@ -72,8 +72,7 @@ class RobotContainer:
         self.drive_subsystem.setDefaultCommand(
             teleop_command
         )   # set the teleop command as the default for drive subsystem
-        # TODO: Reconsider these, given that they are called in auto
-
+       
         self.coral_subsystem.setDefaultCommand(
             CoralIdle(coral=self.coral_subsystem)
         )
